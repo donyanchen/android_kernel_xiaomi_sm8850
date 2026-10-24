@@ -1,52 +1,53 @@
 #!/usr/bin/env python3
 """修复 SukiSU 在 6.12 / GKI 构建下的编译问题。
 
-问题 1：KPM 子目录编译时找不到 klog.h 等头文件。
-        SukiSU 的 klog.h 实际位于 kernel/include/klog.h（部署后是
-        drivers/kernelsu/include/klog.h），而子目录里的源码写的是
-        #include "klog.h"。子目录没有独立 Kbuild，父目录 ccflags 不生效。
-        这里自动定位头文件真实位置，把 include 改写成正确的相对路径。
+问题 1：子目录（core/、feature/、extension/kpm/ ...）编译时找不到 KSU 自身头文件。
+        SukiSU 的头文件分散在 kernel/include/ 与 kernel/uapi/，而子目录源码用的是
+        #include "xxx.h" 形式。子目录没有独立 Kbuild，父目录 ccflags 不生效。
+
+        解法：扫描整个 kernelsu 目录，建立「头文件名 -> 真实相对路径」索引；
+        对每个源文件，若 #include "x.h" 的文件不在同目录，且全树有唯一匹配，
+        就改写成正确的相对路径。
 
 问题 2：netlink_kernel_cfg.cb_mutex 在 Linux 6.9+ 已移除。
 """
 import os
+import re
 import sys
 
 KSU_DIR = "drivers/kernelsu"
-# 需要修正为相对路径的头文件（在 KSU 目录内查找真实位置）
-TARGET_HEADERS = ["klog.h"]
+INCLUDE_RE = re.compile(r'#include\s+"([^"]+)"')
 
 
-def build_header_index():
-    """扫描 KSU 目录，建立 文件名 -> 相对 KSU_DIR 的路径 映射。"""
+def build_index():
+    """头文件名 -> [相对 KSU_DIR 的路径...]"""
     index = {}
-    for target in TARGET_HEADERS:
-        for root, _, files in os.walk(KSU_DIR):
-            if target in files:
-                rel = os.path.relpath(os.path.join(root, target), KSU_DIR)
-                index[target] = rel
-                break
+    for root, _, files in os.walk(KSU_DIR):
+        for f in files:
+            if not f.endswith(".h"):
+                continue
+            rel = os.path.relpath(os.path.join(root, f), KSU_DIR)
+            index.setdefault(f, []).append(rel)
     return index
 
 
 def depth_of(rel_path):
     d = os.path.dirname(rel_path)
-    if not d:
+    if not d or d == ".":
         return 0
-    return len([p for p in d.split(os.sep) if p and p != "."])
+    return len([p for p in d.split(os.sep) if p])
 
 
 def fix_includes():
     if not os.path.isdir(KSU_DIR):
         print("skip includes: kernelsu dir not found")
         return
-    index = build_header_index()
-    print(f"header index: {index}")
-    if not index:
-        print("skip includes: no target headers located")
-        return
+    index = build_index()
+    print(f"headers indexed: {len(index)} names")
 
-    changed = 0
+    changed_files = 0
+    changed_includes = 0
+
     for root, _, files in os.walk(KSU_DIR):
         for f in files:
             if not f.endswith((".c", ".h")):
@@ -56,19 +57,33 @@ def fix_includes():
             depth = depth_of(rel_file)
             if depth == 0:
                 continue
+            src_dir = os.path.dirname(path)
             s = open(path, errors="ignore").read()
             orig = s
-            prefix = "../" * depth
-            for name, real_rel in index.items():
-                # 已经是相对路径的不动
-                s = s.replace(
-                    f'#include "{name}"',
-                    f'#include "{prefix}{real_rel.replace(os.sep, "/")}"',
-                )
+
+            def repl(m):
+                nonlocal changed_includes
+                name = m.group(1)
+                if name.startswith("..") or name.startswith("/"):
+                    return m.group(0)
+                # 同目录存在则保持原样
+                if os.path.isfile(os.path.join(src_dir, name)):
+                    return m.group(0)
+                base = os.path.basename(name)
+                cands = index.get(base, [])
+                if len(cands) != 1:
+                    return m.group(0)
+                prefix = "../" * depth
+                new = f'#include "{prefix}{cands[0].replace(os.sep, "/")}"'
+                changed_includes += 1
+                return new
+
+            s = INCLUDE_RE.sub(repl, s)
             if s != orig:
                 open(path, "w").write(s)
-                changed += 1
-    print(f"patched includes: {changed} file(s)")
+                changed_files += 1
+
+    print(f"patched includes: {changed_includes} in {changed_files} file(s)")
 
 
 def patch_cb_mutex():
