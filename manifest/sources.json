@@ -1,0 +1,97 @@
+{
+  "_comment": "Pudding Kernel 使用的全部外部源码与补丁。构建时按需拉取，不直接 vendoring，避免许可证与体积问题。",
+  "kernel_base": {
+    "name": "Android Common Kernel",
+    "url": "https://android.googlesource.com/kernel/common",
+    "mirror": "https://github.com/sticpaper/android_common_kernel_source",
+    "branch": "android16-6.12-2026-03",
+    "commit": "162041188e96c974a8078481672bfddc1ca10f9a",
+    "version": "6.12.69",
+    "license": "GPL-2.0",
+    "purpose": "内核主源码"
+  },
+  "root": {
+    "sukisu": {
+      "name": "SukiSU Ultra",
+      "url": "https://github.com/SukiSU-Ultra/SukiSU-Ultra",
+      "ref": "main",
+      "method": "kernel/setup.sh",
+      "license": "GPL-2.0",
+      "purpose": "KernelSU 分支，内建 KSU + KPM + SUSFS 支持"
+    },
+    "susfs": {
+      "name": "SUSFS",
+      "url": "https://gitlab.com/simonpunk/susfs4ksu",
+      "method": "SukiSU setup.sh 集成",
+      "license": "GPL-2.0",
+      "purpose": "挂载/路径隐藏"
+    }
+  },
+  "optimizations": {
+    "xiaomi_port": {
+      "name": "opt_gki_kernel (小米优化移植包)",
+      "url": "https://github.com/donothavename/opt_gki_kernel_android13-5.15",
+      "method": "setup.sh @ after_patch",
+      "license": "GPL-2.0",
+      "purpose": "小米内存/调度优化移植到 GKI",
+      "modules": {
+        "mi_rmap_efficiency": "mm/mi_rmap_efficiency.c",
+        "mi_mem_engine_unfairmem": "mm/sew_unfairmem.c",
+        "kshrink_slabd": "mm/slabd.c",
+        "kshrink_lruvecd": "mm/kshrink_lruvecd.c",
+        "unionpower": "drivers/mihw/unionpower/",
+        "boottime": "drivers/xiaomi/boottime/",
+        "binder_sched_opt": "drivers/android/binder_sched_opt.c",
+        "ssg_iosched": "block/ssg-iosched.c",
+        "os4port_mm": "sew_mi_reclaim / sew_rss_monitor / sew_scene_swappiness / sew_dynamic_readahead / sew_bootmonitor",
+        "os4port_sched": "sew_qos_inherit / sew_rtload / sew_yield_penalty",
+        "sew_mmap_bypass": "mm/sew_mmap_bypass.c",
+        "sew_alloc_adjust": "mm/sew_alloc_adjust.c",
+        "boeffla_wl_blocker": "drivers/base/power/boeffla_wl_blocker.c",
+        "mi_sw_sync": "drivers/dma-buf/sw_sync.c",
+        "opt_string": "arch/arm64/lib/memcmp.S / strcmp.S",
+        "clear_page": "arch/arm64/lib/clear_page.S"
+      }
+    },
+    "adios": {
+      "name": "ADIOS IO Scheduler 3.3.0",
+      "url": "https://github.com/firelzrd/adios",
+      "patch": "patches/stable/0001-linux6.12.44-ADIOS-3.3.0.patch",
+      "license": "GPL-2.0",
+      "purpose": "低延迟 IO 调度器"
+    },
+    "lz4kd": {
+      "name": "LZ4KD 内核解压算法",
+      "url": "https://github.com/cctv18/oppo_oplus_realme_sm8850",
+      "patch": "other_patch/lz4kd.patch",
+      "license": "GPL-2.0",
+      "purpose": "内核镜像/内存压缩算法优化"
+    }
+  },
+  "unavailable": {
+    "_comment": "以下特性在真机上存在但源码未公开，无法移植",
+    "launch_boost_iorap2": {
+      "evidence": "NikoRurQwQRuaaMeow 仓库只有 Kconfig/Makefile，无 .c",
+      "status": "无源码"
+    },
+    "mi_mem_engine_full": {
+      "evidence": "Xiaomi 未开源，仅第三方部分移植",
+      "status": "部分可用（unfairmem）"
+    },
+    "xaiomi_alloc_stack_page": {
+      "evidence": "ACK Kconfig 中不存在，小米私有补丁",
+      "status": "无源码"
+    },
+    "nemo_scheduler": {
+      "evidence": "169 文件私有调度框架，GitHub 无公开仓库",
+      "status": "无源码"
+    }
+  },
+  "reference": {
+    "_comment": "调研过程中查阅过的仓库，未直接使用",
+    "cctv18/oppo_oplus_realme_sm8850": "构建流程参考",
+    "hgn284/xiaomi_17pro_max_sm8850": "OS4 官方配置与 ABI 符号清单来源",
+    "MiCode/Xiaomi_Kernel_OpenSource": "小米开源内核（无 6.12 分支，最新 6.11）",
+    "sticpaper/*": "老机型内核集合（4.19~5.15），无 6.12"
+  }
+}
