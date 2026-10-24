@@ -149,22 +149,18 @@ jobs:
       - name: 应用小米优化移植包
         if: inputs.sew_opt
         run: |
-          set -o pipefail
           curl -sL -o /tmp/sew.tar.gz \
             "https://github.com/donothavename/opt_gki_kernel_android13-5.15/archive/refs/heads/main.tar.gz"
           mkdir -p /tmp/sew && tar xzf /tmp/sew.tar.gz -C /tmp/sew
           SEW_DIR=$(ls -d /tmp/sew/*/ | head -1)
           echo "移植包: $SEW_DIR"
-          # 新版 ACK 已移除 android/gki_aarch64_modules，补空占位供移植包的前置检查
-          mkdir -p "$GITHUB_WORKSPACE/ws/common/android"
-          touch "$GITHUB_WORKSPACE/ws/common/android/gki_aarch64_modules"
           export KERNEL_ROOT="$GITHUB_WORKSPACE/ws"
           export DEFCONFIG="arch/arm64/configs/gki_defconfig"
-          export CUSTOM_EXTERNAL_MODULE_STAGE=after_patch
-          cd "$SEW_DIR"
-          bash setup.sh 2>&1 | tail -40 || echo "⚠️ 移植包应用过程有错误，继续编译观察"
-          echo "--- 检查是否有新文件落地"
-          ls "$KERNEL_ROOT/common/mm" | grep -E "^sew_|mi_rmap|slabd" | head -10 || echo "（无）"
+          bash "$GITHUB_WORKSPACE/scripts/apply_sew.sh" "$SEW_DIR" 2>&1 | tail -50 || true
+          echo "--- 落地文件检查 ---"
+          ls "$KERNEL_ROOT/common/mm" 2>/dev/null | grep -E "^sew_|mi_rmap|slabd" | head
+          ls "$KERNEL_ROOT/common/drivers/xiaomi" 2>/dev/null | head -3
+          ls "$KERNEL_ROOT/common/drivers/mihw" 2>/dev/null | head -3
 
       - name: 配置内核
         run: |
