@@ -155,6 +155,9 @@ jobs:
           mkdir -p /tmp/sew && tar xzf /tmp/sew.tar.gz -C /tmp/sew
           SEW_DIR=$(ls -d /tmp/sew/*/ | head -1)
           echo "移植包: $SEW_DIR"
+          # 新版 ACK 已移除 android/gki_aarch64_modules，补空占位供移植包的前置检查
+          mkdir -p "$GITHUB_WORKSPACE/ws/common/android"
+          touch "$GITHUB_WORKSPACE/ws/common/android/gki_aarch64_modules"
           export KERNEL_ROOT="$GITHUB_WORKSPACE/ws"
           export DEFCONFIG="arch/arm64/configs/gki_defconfig"
           export CUSTOM_EXTERNAL_MODULE_STAGE=after_patch
