@@ -1,29 +1,56 @@
 #!/usr/bin/env python3
-"""修复 SukiSU 在 6.12 上的两个编译问题。
+"""修复 SukiSU 在 6.12 / GKI 构建下的编译问题。
 
-1. KPM 子目录编译时找不到父目录的 klog.h —— 需要 -I$(src)
-2. netlink_kernel_cfg.cb_mutex 在 Linux 6.9+ 已移除 —— 需要版本保护
+问题 1：KPM 子目录编译时找不到父目录的 klog.h、policy 等头文件。
+        子目录没有独立 Kbuild，父目录 ccflags 不生效，KCFLAGS 也不被采用，
+        直接把 #include "klog.h" 改写成正确的相对路径最可靠。
+
+问题 2：netlink_kernel_cfg.cb_mutex 在 Linux 6.9+ 已移除。
 """
 import os
+import re
 import sys
 
+KSU_DIR = "drivers/kernelsu"
+LOCAL_HEADERS = ["klog.h"]
 
-def patch_kbuild(path):
-    if not os.path.isfile(path):
-        print(f"skip kbuild: {path} not found")
+
+def depth_of(rel_path):
+    """返回相对于 drivers/kernelsu 的目录层数。"""
+    d = os.path.dirname(rel_path)
+    if not d:
+        return 0
+    return len([p for p in d.split(os.sep) if p])
+
+
+def fix_includes():
+    if not os.path.isdir(KSU_DIR):
+        print("skip includes: kernelsu dir not found")
         return
-    s = open(path).read()
-    if "-I$(src)" in s:
-        print("skip kbuild: -I$(src) already present")
-        return
-    s = s.rstrip("\n") + "\n\n# 子目录（extension/kpm）编译时需要父目录头文件\nccflags-y += -I$(src)\n"
-    open(path, "w").write(s)
-    print("patched: -I$(src) added to Kbuild")
+    changed = 0
+    for root, _, files in os.walk(KSU_DIR):
+        for f in files:
+            if not f.endswith((".c", ".h")):
+                continue
+            path = os.path.join(root, f)
+            depth = depth_of(os.path.relpath(path, KSU_DIR))
+            if depth == 0:
+                continue
+            s = open(path, errors="ignore").read()
+            orig = s
+            prefix = "../" * depth
+            for h in LOCAL_HEADERS:
+                s = s.replace(f'#include "{h}"', f'#include "{prefix}{h}"')
+            if s != orig:
+                open(path, "w").write(s)
+                changed += 1
+    print(f"patched includes: {changed} file(s)")
 
 
-def patch_cb_mutex(path):
+def patch_cb_mutex():
+    path = os.path.join(KSU_DIR, "extension/kpm/super_access.c")
     if not os.path.isfile(path):
-        print(f"skip cb_mutex: {path} not found")
+        print("skip cb_mutex: file not found")
         return
     s = open(path).read()
     target = "DEFINE_MEMBER(netlink_kernel_cfg, cb_mutex)\n"
@@ -43,8 +70,8 @@ def patch_cb_mutex(path):
 
 
 def main():
-    patch_kbuild("drivers/kernelsu/Kbuild")
-    patch_cb_mutex("drivers/kernelsu/extension/kpm/super_access.c")
+    fix_includes()
+    patch_cb_mutex()
     return 0
 
 
