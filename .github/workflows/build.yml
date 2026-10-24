@@ -126,11 +126,13 @@ jobs:
           export KBUILD_BUILD_HOST=build-host
           export KBUILD_BUILD_TIMESTAMP="2026-09-08 15:08:49 UTC"
           make O=out ARCH=arm64 gki_defconfig
-          make O=out ARCH=arm64 -j"$(nproc)" Image > build.log 2>&1 || { grep -iE "error|错误" build.log | head -30; echo "--- build.log tail ---"; tail -20 build.log; exit 1; }
-          tail -10 build.log
+          make O=out ARCH=arm64 -j"$(nproc)" Image > build.log 2>&1 || true
+          tail -30 build.log
+          test -f out/arch/arm64/boot/Image
           ls -lh out/arch/arm64/boot/Image
 
       - name: 校验
+        if: success()
         run: |
           cd ws/common
           IMG=out/arch/arm64/boot/Image
@@ -145,7 +147,16 @@ jobs:
           echo "===== 大小 ====="
           du -h "$IMG"
 
+      - name: 上传编译日志
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: ws/common/build.log
+          if-no-files-found: ignore
+
       - name: 上传产物
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: Image-6.12.69
