@@ -78,8 +78,7 @@ jobs:
       - name: 兼容性补丁
         run: |
           cd ws/common
-          python3 "$GITHUB_WORKSPACE/patches/fix_cb_mutex.py" \
-            drivers/kernelsu/extension/kpm/super_access.c
+          python3 "$GITHUB_WORKSPACE/patches/fix_ksu_612.py"
 
       - name: 版本串（每次构建动态生成）
         id: ver
