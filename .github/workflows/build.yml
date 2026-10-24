@@ -65,21 +65,8 @@ jobs:
       - name: 兼容性补丁
         run: |
           cd ws/common
-          P=drivers/kernelsu/extension/kpm/super_access.c
-          if [ -f "$P" ]; then
-            python3 - "$P" <<'PYEOF'
-import sys
-p = sys.argv[1]
-s = open(p).read()
-old = "DEFINE_MEMBER(netlink_kernel_cfg, cb_mutex)\n"
-if old in s and "KERNEL_VERSION(6, 9, 0)" not in s:
-    s = s.replace(old, "#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 9, 0)\n" + old + "#endif\n", 1)
-    open(p, 'w').write(s)
-    print("cb_mutex: patched")
-else:
-    print("cb_mutex: skip")
-PYEOF
-          fi
+          python3 "$GITHUB_WORKSPACE/patches/fix_cb_mutex.py" \
+            drivers/kernelsu/extension/kpm/super_access.c
 
       - name: 版本串（每次构建动态生成）
         id: ver
@@ -106,20 +93,20 @@ PYEOF
           fi
           if [ "${{ inputs.features }}" = "true" ]; then
             cat >> "$C" <<'CFGEOF'
-CONFIG_SCHED_CLASS_EXT=y
-CONFIG_UCLAMP_BUCKETS_COUNT=20
-CONFIG_LRU_GEN=y
-CONFIG_LRU_GEN_ENABLED=y
-CONFIG_ZSWAP=y
-CONFIG_ZRAM_WRITEBACK=y
-CONFIG_MQ_IOSCHED_KYBER=y
-CONFIG_TCP_CONG_BBR=y
-CONFIG_NETFILTER_XT_SET=y
-CONFIG_IP_SET=y
-CONFIG_WIREGUARD=y
-CONFIG_F2FS_FS_COMPRESSION=y
-CONFIG_EROFS_FS_ZIP=y
-CFGEOF
+            CONFIG_SCHED_CLASS_EXT=y
+            CONFIG_UCLAMP_BUCKETS_COUNT=20
+            CONFIG_LRU_GEN=y
+            CONFIG_LRU_GEN_ENABLED=y
+            CONFIG_ZSWAP=y
+            CONFIG_ZRAM_WRITEBACK=y
+            CONFIG_MQ_IOSCHED_KYBER=y
+            CONFIG_TCP_CONG_BBR=y
+            CONFIG_NETFILTER_XT_SET=y
+            CONFIG_IP_SET=y
+            CONFIG_WIREGUARD=y
+            CONFIG_F2FS_FS_COMPRESSION=y
+            CONFIG_EROFS_FS_ZIP=y
+            CFGEOF
           fi
           tail -16 "$C"
 
