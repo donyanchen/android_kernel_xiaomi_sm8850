@@ -18,6 +18,11 @@ on:
         required: true
         default: true
         type: boolean
+      sew_opt:
+        description: '应用小米优化移植包（mi_rmap/kshrink/unfairmem/unionpower 等，5.15→6.12 移植，可能失败）'
+        required: true
+        default: false
+        type: boolean
 
 jobs:
   build:
@@ -124,6 +129,23 @@ jobs:
             echo "⚠️ ADIOS 补丁不适用，跳过"
             grep -E "FAILED|Hunk|can't find" /tmp/dry.log | head -6
           fi
+
+      - name: 应用小米优化移植包
+        if: inputs.sew_opt
+        run: |
+          set -o pipefail
+          curl -sL -o /tmp/sew.tar.gz \
+            "https://github.com/donothavename/opt_gki_kernel_android13-5.15/archive/refs/heads/main.tar.gz"
+          mkdir -p /tmp/sew && tar xzf /tmp/sew.tar.gz -C /tmp/sew
+          SEW_DIR=$(ls -d /tmp/sew/*/ | head -1)
+          echo "移植包: $SEW_DIR"
+          export KERNEL_ROOT="$GITHUB_WORKSPACE/ws/common"
+          export DEFCONFIG="arch/arm64/configs/gki_defconfig"
+          export CUSTOM_EXTERNAL_MODULE_STAGE=after_patch
+          cd "$SEW_DIR"
+          bash setup.sh 2>&1 | tail -40 || echo "⚠️ 移植包应用过程有错误，继续编译观察"
+          echo "--- 检查是否有新文件落地"
+          ls "$KERNEL_ROOT/mm" | grep -E "^sew_|mi_rmap|slabd" | head -10 || echo "（无）"
 
       - name: 配置内核
         run: |
