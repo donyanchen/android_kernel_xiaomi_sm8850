@@ -212,6 +212,34 @@ jobs:
           echo "===== 大小 ====="
           du -h "$IMG"
 
+      - name: GKI ABI 校验
+        if: success()
+        run: |
+          cd ws/common
+          echo "===== 基准（小米17 官方内核）====="
+          echo "  struct module : 1600 字节 / 75 成员"
+          echo "  kobject_uevent_env CRC : 0x8bb6d45c"
+          echo
+          echo "===== ④ 关键符号 CRC ====="
+          if [ -f Module.symvers ]; then
+            grep -E "\bkobject_uevent_env\b" Module.symvers || echo "  ⚠ 未找到符号"
+          else
+            echo "  ⚠ 无 Module.symvers"
+          fi
+          echo
+          echo "===== ③ struct module 尺寸 ====="
+          if command -v pahole >/dev/null && [ -f vmlinux ]; then
+            pahole -C module vmlinux 2>/dev/null | tail -2 || echo "  pahole 读取失败"
+          else
+            echo "  ⚠ pahole 或 vmlinux 缺失"
+          fi
+          echo
+          echo "===== ABI 敏感配置检查 ====="
+          for k in STACK_TRACER FUNCTION_TRACER FTRACE FUNCTION_GRAPH_TRACER DEBUG_INFO_BTF; do
+            v=$(grep -E "^(CONFIG_${k}=|# CONFIG_${k} is not set)" .config 2>/dev/null | head -1)
+            printf "  %-24s %s\n" "$k" "${v:-未定义}"
+          done
+
       - name: 上传编译日志
         if: always()
         uses: actions/upload-artifact@v4
@@ -225,4 +253,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Image-6.12.69
-          path: ws/common/arch/arm64/boot/Image
+          path: |
+            ws/common/arch/arm64/boot/Image
+            ws/common/Module.symvers
+            ws/common/.config
