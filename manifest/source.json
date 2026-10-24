@@ -1,0 +1,56 @@
+{
+  "device": {
+    "codename": "pudding",
+    "model": "25113PN0EC",
+    "platform": "SM8850 / canoe",
+    "os": "HyperOS 4.0.5.0.XPCCNXM (Android 17)"
+  },
+  "kernel": {
+    "version": "6.12.69",
+    "kmi": "android16-6.12",
+    "vermagic": "6.12.69-android16-6-4k",
+    "device_vermagic": "6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64",
+    "vendor_modules": 404
+  },
+  "sources": {
+    "ack": {
+      "url": "https://android.googlesource.com/kernel/common",
+      "branch": "android16-6.12-2026-03",
+      "commit": "162041188e96c974a8078481672bfddc1ca10f9a",
+      "commit_date": "2026-10-20T13:28:11+00:00",
+      "makefile_version": "6.12.69",
+      "mirror": "https://github.com/aosp-mirror/kernel_common"
+    },
+    "sukisu": {
+      "url": "https://github.com/SukiSU-Ultra/SukiSU-Ultra",
+      "ref": "main",
+      "method": "kernel/setup.sh",
+      "note": "每次构建实时拉取 main，确保为当时最新"
+    },
+    "susfs": {
+      "note": "由 SukiSU 的 setup.sh 集成"
+    }
+  },
+  "toolchain": {
+    "clang": {
+      "url": "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r536225.tar.gz",
+      "version": "r536225"
+    },
+    "rust": {
+      "url": "https://android.googlesource.com/platform/prebuilts/rust/+archive/refs/heads/main/linux-x86/1.82.0.tar.gz",
+      "version": "1.82.0"
+    }
+  },
+  "build": {
+    "defconfig": "arch/arm64/configs/gki_defconfig",
+    "fragment": "configs/pudding.fragment",
+    "target": "Image",
+    "env": {
+      "ARCH": "arm64",
+      "LLVM": "1",
+      "KBUILD_BUILD_USER": "kleaf",
+      "KBUILD_BUILD_HOST": "build-host",
+      "KBUILD_BUILD_TIMESTAMP": "2026-09-08 15:08:49 UTC"
+    }
+  }
+}
