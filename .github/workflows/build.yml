@@ -55,7 +55,7 @@ jobs:
       - name: 配置工具链
         run: |
           cd ws
-          CLANG_BIN=$(find . -maxdepth 4 -type f -name clang -path "*/bin/*" | head -1)
+          CLANG_BIN=$(find . -maxdepth 4 -type f -name clang -path "*clang*/bin/*" | head -1)
           CLANG_BIN=$(dirname "$CLANG_BIN")
           echo "clang bin: $CLANG_BIN"
           ls "$CLANG_BIN" | grep -E "^(clang|ld.lld)$" || true
@@ -87,10 +87,11 @@ jobs:
           DISP="6.12.69-android16-6-g${SHA}-abogki${RUN}-4k"
           echo "显示版本: $DISP"
           echo "DISP=$DISP" >> "$GITHUB_ENV"
-          sed -i "s|\"Linux version \" UTS_RELEASE|\"Linux version \" \"$DISP\"|" init/version.c 2>/dev/null || true
-          sed -i "s|release = UTS_RELEASE;|release = \"$DISP\";|" init/utsname.c 2>/dev/null || true
-          echo "version.c 命中: $(grep -c "$DISP" init/version.c 2>/dev/null || echo 0)"
-          echo "utsname.c 命中: $(grep -c "$DISP" init/utsname.c 2>/dev/null || echo 0)"
+          VF=init/version-timestamp.c
+          sed -i "s|\"Linux version \" UTS_RELEASE|\"Linux version \" \"$DISP\"|" "$VF"
+          sed -i "s|release\t= UTS_RELEASE,|release\t= \"$DISP\",|" "$VF"
+          echo "version-timestamp.c 命中: $(grep -c "$DISP" "$VF" || echo 0)"
+          grep -n "linux_banner\|release" "$VF" | head -4
 
       - name: 配置内核
         run: |
@@ -115,7 +116,7 @@ jobs:
       - name: 编译
         run: |
           cd ws/common
-          CLANG_BIN=$(find "$PWD/.." -maxdepth 4 -type f -name clang -path "*/bin/*" | head -1 | xargs -r dirname)
+          CLANG_BIN=$(find "$PWD/.." -maxdepth 4 -type f -name clang -path "*clang*/bin/*" | head -1 | xargs -r dirname)
           export PATH="$CLANG_BIN:$PATH"
           export ARCH=arm64
           export CC=clang
@@ -124,7 +125,8 @@ jobs:
           export KBUILD_BUILD_HOST=build-host
           export KBUILD_BUILD_TIMESTAMP="2026-09-08 15:08:49 UTC"
           make O=out ARCH=arm64 gki_defconfig
-          make O=out ARCH=arm64 -j"$(nproc)" Image 2>&1 | tail -60
+          make O=out ARCH=arm64 -j"$(nproc)" Image > build.log 2>&1 || { grep -iE "error|错误" build.log | head -30; echo "--- build.log tail ---"; tail -20 build.log; exit 1; }
+          tail -10 build.log
           ls -lh out/arch/arm64/boot/Image
 
       - name: 校验
