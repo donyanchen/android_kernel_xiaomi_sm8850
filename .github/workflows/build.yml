@@ -1,0 +1,171 @@
+name: Build Kernel
+
+on:
+  workflow_dispatch:
+    inputs:
+      ack_branch:
+        description: 'ACK 源码分支'
+        required: true
+        default: 'android16-6.12-2026-03'
+        type: string
+      kernel_name:
+        description: '版本后缀（必须匹配 vendor 模块 vermagic，勿改）'
+        required: true
+        default: 'android16-6-4k'
+        type: string
+      kpm:
+        description: '启用内建 KPM'
+        required: true
+        default: true
+        type: boolean
+      susfs:
+        description: '启用 SUSFS'
+        required: true
+        default: true
+        type: boolean
+      features:
+        description: '额外特性配置（sched_ext / MGLRU / ZSWAP / 网络等）'
+        required: true
+        default: true
+        type: boolean
+
+env:
+  TZ: Asia/Shanghai
+  CLANG_VER: r536225
+  KERNEL_NAME: ${{ inputs.kernel_name }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装依赖
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq bc bison build-essential flex libssl-dev \
+            libelf-dev lz4 zstd python3 zip unzip aria2 ccache rsync git curl cpio
+          ccache -M 2G || true
+
+      - name: 下载 ACK 源码
+        run: |
+          mkdir -p ws && cd ws
+          aria2c -s16 -x16 -k1M --file-allocation=none \
+            "https://github.com/cctv18/android_gki_kernel_common/archive/refs/heads/${{ inputs.ack_branch }}.zip" -o ack.zip
+          unzip -q ack.zip
+          mv android_gki_kernel_common-* common
+          ls common | head
+
+      - name: 下载工具链
+        run: |
+          cd ws
+          BASE=https://github.com/cctv18/oneplus_sm8650_toolchain/releases/download/LLVM-Clang19-${{ env.CLANG_VER }}
+          aria2c -s16 -x16 -k1M --file-allocation=none "$BASE/clang-${{ env.CLANG_VER }}.zip" -o clang.zip
+          aria2c -s16 -x16 -k1M --file-allocation=none "$BASE/rust.zip" -o rust.zip
+          aria2c -s16 -x16 -k1M --file-allocation=none "$BASE/build-tools.zip" -o build-tools.zip
+          unzip -q clang.zip; unzip -q rust.zip; unzip -qo build-tools.zip
+          ls -d */ | head
+
+      - name: 集成 SukiSU
+        run: |
+          cd ws/common
+          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/refs/heads/main/kernel/setup.sh" | bash -s main
+          echo "--- 拷贝 uapi 头文件"
+          UAPI_SRC=$(find . -maxdepth 3 -type d -name uapi | head -1)
+          echo "uapi source: $UAPI_SRC"
+          mkdir -p drivers/kernelsu/uapi
+          cp -f "$UAPI_SRC"/*.h drivers/kernelsu/uapi/ 2>/dev/null || true
+          ls drivers/kernelsu/uapi/ | head
+
+      - name: 应用兼容性补丁
+        run: |
+          cd ws/common
+          echo "--- 6.12: netlink_kernel_cfg.cb_mutex 已移除"
+          P=drivers/kernelsu/extension/kpm/super_access.c
+          if [ -f "$P" ]; then
+            python3 - "$P" <<'EOF'
+import sys
+p=sys.argv[1]
+s=open(p).read()
+old="DEFINE_MEMBER(netlink_kernel_cfg, cb_mutex)\n"
+if old in s and "KERNEL_VERSION(6, 9, 0)" not in s:
+    s=s.replace(old, "#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 9, 0)\n"+old+"#endif\n", 1)
+    open(p,'w').write(s)
+    print("patched cb_mutex")
+else:
+    print("skip cb_mutex")
+EOF
+          fi
+
+          echo "--- 显示版本伪装（不影响 vermagic）"
+          DISP="6.12.69-android16-6-g43b5ab7e247d-abogki561813157-4k"
+          sed -i "s|\"Linux version \" UTS_RELEASE|\"Linux version \" \"$DISP\"|" init/version.c 2>/dev/null || true
+          sed -i "s|release = UTS_RELEASE;|release = \"$DISP\";|" init/utsname.c 2>/dev/null || true
+          grep -c "$DISP" init/version.c init/utsname.c 2>/dev/null || true
+
+      - name: 配置内核
+        run: |
+          cd ws/common
+          C=arch/arm64/configs/gki_defconfig
+          echo "CONFIG_LOCALVERSION_AUTO=n" >> $C
+          sed -i "s/-4k/-${{ env.KERNEL_NAME }}/g" $C 2>/dev/null || true
+
+          if [ "${{ inputs.kpm }}" = "true" ]; then
+            echo "CONFIG_KPM=y" >> $C
+            echo "CONFIG_KALLSYMS_ALL=y" >> $C
+          fi
+
+          if [ "${{ inputs.features }}" = "true" ]; then
+            cat >> $C <<'EOF'
+CONFIG_SCHED_CLASS_EXT=y
+CONFIG_UCLAMP_BUCKETS_COUNT=20
+CONFIG_LRU_GEN=y
+CONFIG_LRU_GEN_ENABLED=y
+CONFIG_ZSWAP=y
+CONFIG_ZRAM_WRITEBACK=y
+CONFIG_MQ_IOSCHED_KYBER=y
+CONFIG_TCP_CONG_BBR=y
+CONFIG_NETFILTER_XT_SET=y
+CONFIG_IP_SET=y
+CONFIG_IP_SET_MAX=256
+CONFIG_WIREGUARD=y
+CONFIG_F2FS_FS_COMPRESSION=y
+CONFIG_EROFS_FS_ZIP=y
+CONFIG_EROFS_FS_ZIP_LZMA=y
+EOF
+          fi
+
+          grep -E "CONFIG_KPM|CONFIG_SCHED_CLASS_EXT|CONFIG_LOCALVERSION" $C | head
+
+      - name: 编译
+        run: |
+          cd ws/common
+          export PATH=$PWD/../clang-${{ env.CLANG_VER }}/bin:$PATH
+          export ARCH=arm64
+          export CC=clang
+          export LLVM=1
+          export KBUILD_BUILD_USER=kleaf
+          export KBUILD_BUILD_HOST=build-host
+          export KBUILD_BUILD_TIMESTAMP="2026-09-08 15:08:49 UTC"
+          make O=out ARCH=arm64 gki_defconfig
+          make O=out ARCH=arm64 -j$(nproc) Image 2>&1 | tail -40
+          ls -lh out/arch/arm64/boot/Image
+
+      - name: 校验
+        run: |
+          cd ws/common
+          echo "=== vermagic ==="
+          strings -a out/arch/arm64/boot/Image | grep -E "^6\.12\..*SMP preempt" | head -2
+          echo "=== 显示串 ==="
+          strings -a out/arch/arm64/boot/Image | grep -E "^6\.12\.69-android16-6-g" | head -2
+          echo "=== KPM ==="
+          strings -a out/arch/arm64/boot/Image | grep -E "KPM is (built in|\*not\* built in)" | head -2
+          echo "=== SUSFS ==="
+          strings -a out/arch/arm64/boot/Image | grep -c susfs
+
+      - name: 上传
+        uses: actions/upload-artifact@v4
+        with:
+          name: Image-${{ env.KERNEL_NAME }}
+          path: ws/common/out/arch/arm64/boot/Image
