@@ -49,17 +49,19 @@ jobs:
           curl -L --retry 3 -o clang.zip "$BASE/clang-r536225.zip"
           curl -L --retry 3 -o rust.zip "$BASE/rust.zip"
           curl -L --retry 3 -o build-tools.zip "$BASE/build-tools.zip"
-          unzip -q clang.zip; unzip -q rust.zip; unzip -qo build-tools.zip
-          ls -d */ | head -6
+          unzip -q clang.zip -d clang19
+          unzip -q rust.zip -d rust
+          unzip -qo build-tools.zip -d build-tools
+          ls -d */ | head -8
+          ls clang19/bin/clang clang19/bin/ld.lld
 
       - name: 配置工具链
         run: |
           cd ws
-          CLANG_BIN=$(find . -maxdepth 4 -type f -name clang -path "*clang*/bin/*" | head -1)
-          CLANG_BIN=$(dirname "$CLANG_BIN")
-          echo "clang bin: $CLANG_BIN"
-          ls "$CLANG_BIN" | grep -E "^(clang|ld.lld)$" || true
-          echo "$CLANG_BIN" >> "$GITHUB_PATH"
+          echo "$PWD/clang19/bin" >> "$GITHUB_PATH"
+          echo "$PWD/build-tools/bin" >> "$GITHUB_PATH"
+          echo "$PWD/rust/bin" >> "$GITHUB_PATH"
+          ls -l clang19/bin/clang clang19/bin/ld.lld || true
 
       - name: 集成 SukiSU
         run: |
@@ -116,8 +118,7 @@ jobs:
       - name: 编译
         run: |
           cd ws/common
-          CLANG_BIN=$(find "$PWD/.." -maxdepth 4 -type f -name clang -path "*clang*/bin/*" | head -1 | xargs -r dirname)
-          export PATH="$CLANG_BIN:$PATH"
+          export PATH="$PWD/../clang19/bin:$PWD/../build-tools/bin:$PWD/../rust/bin:$PATH"
           export ARCH=arm64
           export CC=clang
           export LLVM=1
