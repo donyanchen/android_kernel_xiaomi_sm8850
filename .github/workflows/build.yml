@@ -130,6 +130,22 @@ jobs:
             grep -E "FAILED|Hunk|can't find" /tmp/dry.log | head -6
           fi
 
+      - name: 应用 LZ4KD 补丁
+        id: lz4kd
+        continue-on-error: true
+        run: |
+          cd ws/common
+          URL="https://raw.githubusercontent.com/cctv18/oppo_oplus_realme_sm8850/main/other_patch/lz4kd.patch"
+          curl -sL -o /tmp/lz4kd.patch "$URL"
+          echo "补丁大小: $(wc -c < /tmp/lz4kd.patch) 字节"
+          if patch -p1 --dry-run -F3 --no-backup-if-mismatch < /tmp/lz4kd.patch > /tmp/lz4kd.log 2>&1; then
+            patch -p1 -F3 --no-backup-if-mismatch < /tmp/lz4kd.patch
+            echo "✅ LZ4KD 补丁应用成功"
+          else
+            echo "⚠️ LZ4KD 补丁与当前源码不匹配，跳过"
+            grep -E "FAILED|Hunk|can't find" /tmp/lz4kd.log | head -5
+          fi
+
       - name: 应用小米优化移植包
         if: inputs.sew_opt
         run: |
