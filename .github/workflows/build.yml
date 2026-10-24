@@ -52,11 +52,21 @@ jobs:
           unzip -q clang.zip; unzip -q rust.zip; unzip -qo build-tools.zip
           ls -d */ | head -6
 
+      - name: 配置工具链
+        run: |
+          cd ws
+          CLANG_BIN=$(find . -maxdepth 4 -type f -name clang -path "*/bin/*" | head -1)
+          CLANG_BIN=$(dirname "$CLANG_BIN")
+          echo "clang bin: $CLANG_BIN"
+          ls "$CLANG_BIN" | grep -E "^(clang|ld.lld)$" || true
+          echo "$CLANG_BIN" >> "$GITHUB_PATH"
+
       - name: 集成 SukiSU
         run: |
           cd ws/common
           curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/refs/heads/main/kernel/setup.sh" | bash -s main
-          UAPI_SRC=$(find . -maxdepth 3 -type d -name uapi | head -1)
+          UAPI_SRC=$(find . -maxdepth 3 -type d -name uapi | grep -i kernelsu | head -1)
+          [ -z "$UAPI_SRC" ] && UAPI_SRC=$(find . -maxdepth 3 -type d -name uapi | head -1)
           echo "uapi 来源: $UAPI_SRC"
           mkdir -p drivers/kernelsu/uapi
           cp -f "$UAPI_SRC"/*.h drivers/kernelsu/uapi/ 2>/dev/null || true
@@ -105,7 +115,8 @@ jobs:
       - name: 编译
         run: |
           cd ws/common
-          export PATH="$PWD/../clang-r536225/bin:$PATH"
+          CLANG_BIN=$(find "$PWD/.." -maxdepth 4 -type f -name clang -path "*/bin/*" | head -1 | xargs -r dirname)
+          export PATH="$CLANG_BIN:$PATH"
           export ARCH=arm64
           export CC=clang
           export LLVM=1
