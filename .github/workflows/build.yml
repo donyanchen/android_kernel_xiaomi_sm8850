@@ -155,13 +155,13 @@ jobs:
           mkdir -p /tmp/sew && tar xzf /tmp/sew.tar.gz -C /tmp/sew
           SEW_DIR=$(ls -d /tmp/sew/*/ | head -1)
           echo "移植包: $SEW_DIR"
-          export KERNEL_ROOT="$GITHUB_WORKSPACE/ws/common"
+          export KERNEL_ROOT="$GITHUB_WORKSPACE/ws"
           export DEFCONFIG="arch/arm64/configs/gki_defconfig"
           export CUSTOM_EXTERNAL_MODULE_STAGE=after_patch
           cd "$SEW_DIR"
           bash setup.sh 2>&1 | tail -40 || echo "⚠️ 移植包应用过程有错误，继续编译观察"
           echo "--- 检查是否有新文件落地"
-          ls "$KERNEL_ROOT/mm" | grep -E "^sew_|mi_rmap|slabd" | head -10 || echo "（无）"
+          ls "$KERNEL_ROOT/common/mm" | grep -E "^sew_|mi_rmap|slabd" | head -10 || echo "（无）"
 
       - name: 配置内核
         run: |
