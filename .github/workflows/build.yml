@@ -36,8 +36,8 @@ jobs:
       - name: 下载 ACK 源码
         run: |
           mkdir -p ws && cd ws
-          aria2c -s16 -x16 -k1M --file-allocation=none \
-            "https://github.com/cctv18/android_gki_kernel_common/archive/refs/heads/${{ inputs.ack_branch }}.zip" -o ack.zip
+          curl -L --retry 3 -o ack.zip \
+            "https://github.com/cctv18/android_gki_kernel_common/archive/refs/heads/${{ inputs.ack_branch }}.zip"
           unzip -q ack.zip
           mv android_gki_kernel_common-* common
           echo "源码版本: $(head -3 common/Makefile | tail -3 | tr '\n' ' ')"
@@ -46,9 +46,9 @@ jobs:
         run: |
           cd ws
           BASE="https://github.com/cctv18/oneplus_sm8650_toolchain/releases/download/LLVM-Clang19-r536225"
-          aria2c -s16 -x16 -k1M --file-allocation=none "$BASE/clang-r536225.zip" -o clang.zip
-          aria2c -s16 -x16 -k1M --file-allocation=none "$BASE/rust.zip" -o rust.zip
-          aria2c -s16 -x16 -k1M --file-allocation=none "$BASE/build-tools.zip" -o build-tools.zip
+          curl -L --retry 3 -o clang.zip "$BASE/clang-r536225.zip"
+          curl -L --retry 3 -o rust.zip "$BASE/rust.zip"
+          curl -L --retry 3 -o build-tools.zip "$BASE/build-tools.zip"
           unzip -q clang.zip; unzip -q rust.zip; unzip -qo build-tools.zip
           ls -d */ | head -6
 
