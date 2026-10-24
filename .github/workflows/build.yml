@@ -109,12 +109,33 @@ jobs:
           echo "version-timestamp.c 命中: $(grep -c "$DISP" "$VF" || echo 0)"
           grep -n "linux_banner\|release" "$VF" | head -4
 
+      - name: 应用 ADIOS IO 调度器补丁
+        id: adios
+        run: |
+          cd ws/common
+          URL="https://raw.githubusercontent.com/firelzrd/adios/main/patches/stable/0001-linux6.12.44-ADIOS-3.3.0.patch"
+          curl -sL -o /tmp/adios.patch "$URL"
+          echo "补丁大小: $(wc -c < /tmp/adios.patch) 字节"
+          if patch -p1 --dry-run -F3 --no-backup-if-mismatch < /tmp/adios.patch > /tmp/dry.log 2>&1; then
+            patch -p1 -F3 --no-backup-if-mismatch < /tmp/adios.patch
+            echo "ADIOS_OK=1" >> "$GITHUB_ENV"
+            echo "✅ ADIOS 补丁应用成功"
+          else
+            echo "⚠️ ADIOS 补丁不适用，跳过"
+            grep -E "FAILED|Hunk|can't find" /tmp/dry.log | head -6
+          fi
+
       - name: 配置内核
         run: |
           cd ws/common
           C=arch/arm64/configs/gki_defconfig
           sed -i '/^CONFIG_LOCALVERSION=/d' "$C"
           cat "$GITHUB_WORKSPACE/configs/pudding.fragment" >> "$C"
+          if [ "$ADIOS_OK" = "1" ]; then
+            echo "CONFIG_MQ_IOSCHED_ADIOS=y" >> "$C"
+            echo "CONFIG_MQ_IOSCHED_DEFAULT_ADIOS=y" >> "$C"
+            echo "--- ADIOS 配置已追加"
+          fi
           echo "--- 追加的配置 ---"
           tail -25 "$C"
 
