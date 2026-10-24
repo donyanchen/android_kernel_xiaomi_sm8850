@@ -34,6 +34,14 @@ jobs:
             aria2 ccache rsync cpio libncurses-dev kmod
           ccache -M 2G || true
 
+      - name: ccache 缓存
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ccache-${{ inputs.ack_branch }}-${{ github.run_id }}
+          restore-keys: |
+            ccache-${{ inputs.ack_branch }}-
+
       - name: 下载 ACK 源码
         run: |
           mkdir -p ws && cd ws
@@ -99,6 +107,8 @@ jobs:
         run: |
           cd ws/common
           C=arch/arm64/configs/gki_defconfig
+          sed -i '/^CONFIG_LOCALVERSION=/d' "$C"
+          echo 'CONFIG_LOCALVERSION="-android16-6-4k"' >> "$C"
           echo "CONFIG_LOCALVERSION_AUTO=n" >> "$C"
           if [ "${{ inputs.kpm }}" = "true" ]; then
             echo "CONFIG_KPM=y" >> "$C"
@@ -120,7 +130,9 @@ jobs:
           cd ws/common
           export PATH="$PWD/../clang19/bin:$PWD/../build-tools/bin:$PWD/../rust/bin:$PATH"
           export ARCH=arm64
-          export CC=clang
+          export CC="ccache clang"
+          export CCACHE_DIR="$HOME/.ccache"
+          export CCACHE_COMPILERCHECK=none
           export LLVM=1
           echo "pahole: $(pahole --version 2>/dev/null || echo 未安装)"
           export KBUILD_BUILD_USER=kleaf
