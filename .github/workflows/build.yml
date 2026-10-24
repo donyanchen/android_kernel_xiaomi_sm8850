@@ -30,7 +30,8 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq bc bison build-essential flex libssl-dev \
-            libelf-dev lz4 zstd python3 zip unzip aria2 ccache rsync cpio
+            libelf-dev libdw-dev dwarves pahole lz4 zstd python3 zip unzip \
+            aria2 ccache rsync cpio libncurses-dev kmod
           ccache -M 2G || true
 
       - name: 下载 ACK 源码
