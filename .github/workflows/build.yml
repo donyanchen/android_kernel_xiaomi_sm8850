@@ -125,17 +125,17 @@ jobs:
           export KBUILD_BUILD_USER=kleaf
           export KBUILD_BUILD_HOST=build-host
           export KBUILD_BUILD_TIMESTAMP="2026-09-08 15:08:49 UTC"
-          make O=out ARCH=arm64 gki_defconfig
-          make O=out ARCH=arm64 -j"$(nproc)" Image > build.log 2>&1 || true
+          make ARCH=arm64 gki_defconfig > build.log 2>&1
+          make ARCH=arm64 -j"$(nproc)" Image >> build.log 2>&1 || true
           tail -30 build.log
-          test -f out/arch/arm64/boot/Image
-          ls -lh out/arch/arm64/boot/Image
+          test -f arch/arm64/boot/Image
+          ls -lh arch/arm64/boot/Image
 
       - name: 校验
         if: success()
         run: |
           cd ws/common
-          IMG=out/arch/arm64/boot/Image
+          IMG=arch/arm64/boot/Image
           echo "===== vermagic（必须等于 6.12.69-android16-6-4k）====="
           strings -a "$IMG" | grep -E "^6\.12\..*SMP preempt" | head -2
           echo "===== 显示串 ====="
@@ -160,4 +160,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Image-6.12.69
-          path: ws/common/out/arch/arm64/boot/Image
+          path: ws/common/arch/arm64/boot/Image
