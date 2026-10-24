@@ -30,7 +30,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq bc bison build-essential flex libssl-dev \
-            libelf-dev libdw-dev dwarves pahole lz4 zstd python3 zip unzip \
+            libelf-dev libdw-dev lz4 zstd python3 zip unzip \
             aria2 ccache rsync cpio libncurses-dev kmod
           ccache -M 2G || true
 
@@ -122,6 +122,7 @@ jobs:
           export ARCH=arm64
           export CC=clang
           export LLVM=1
+          echo "pahole: $(pahole --version 2>/dev/null || echo 未安装)"
           export KBUILD_BUILD_USER=kleaf
           export KBUILD_BUILD_HOST=build-host
           export KBUILD_BUILD_TIMESTAMP="2026-09-08 15:08:49 UTC"
