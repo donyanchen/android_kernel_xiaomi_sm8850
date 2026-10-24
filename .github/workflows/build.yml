@@ -155,7 +155,8 @@ jobs:
           SEW_DIR=$(ls -d /tmp/sew/*/ | head -1)
           echo "移植包: $SEW_DIR"
           export KERNEL_ROOT="$GITHUB_WORKSPACE/ws"
-          export DEFCONFIG="arch/arm64/configs/gki_defconfig"
+          export DEFCONFIG="$GITHUB_WORKSPACE/ws/common/arch/arm64/configs/gki_defconfig"
+          echo "DEFCONFIG 存在: $([ -f "$DEFCONFIG" ] && echo yes || echo no)"
           bash "$GITHUB_WORKSPACE/scripts/apply_sew.sh" "$SEW_DIR" 2>&1 | tail -50 || true
           echo "--- 落地文件检查 ---"
           ls "$KERNEL_ROOT/common/mm" 2>/dev/null | grep -E "^sew_|mi_rmap|slabd" | head
