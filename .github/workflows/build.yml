@@ -122,8 +122,6 @@ jobs:
           export ARCH=arm64
           export CC=clang
           export LLVM=1
-          export KCFLAGS="-I$PWD/drivers/kernelsu -I$PWD/drivers/kernelsu/uapi"
-          echo "KCFLAGS=$KCFLAGS"
           export KBUILD_BUILD_USER=kleaf
           export KBUILD_BUILD_HOST=build-host
           export KBUILD_BUILD_TIMESTAMP="2026-09-08 15:08:49 UTC"
