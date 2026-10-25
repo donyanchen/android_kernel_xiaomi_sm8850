@@ -1,0 +1,71 @@
+name: Source Snapshot
+
+# 把 ACK 源码压缩包上传到本仓库的 Release，作为构建缓存的镜像源。
+# 好处：
+#   1. 源码留在本仓库，不依赖外部站点可用性
+#   2. 构建时从 GitHub 自己的 CDN 取，比 android.googlesource.com 快
+#   3. 版本固定，可复现
+
+on:
+  workflow_dispatch:
+    inputs:
+      ack_branch:
+        description: 'ACK 分支'
+        required: true
+        default: 'android16-6.12-2026-03'
+        type: string
+      tag:
+        description: 'Release 标签'
+        required: true
+        default: 'ack-source'
+        type: string
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 下载 ACK 源码
+        run: |
+          BRANCH="${{ inputs.ack_branch }}"
+          echo "分支: $BRANCH"
+          curl -L --retry 3 --retry-delay 5 -o ack.tar.gz \
+            "https://android.googlesource.com/kernel/common/+archive/refs/heads/${BRANCH}.tar.gz"
+          ls -lh ack.tar.gz
+
+      - name: 记录版本信息
+        run: |
+          mkdir -p dist
+          mv ack.tar.gz "dist/common-${BRANCH}.tar.gz"
+          {
+            echo "# ACK 源码快照"
+            echo ""
+            echo "- 分支: ${{ inputs.ack_branch }}"
+            echo "- 来源: https://android.googlesource.com/kernel/common"
+            echo "- 生成时间: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "- 文件: common-${{ inputs.ack_branch }}.tar.gz"
+            echo "- SHA256: $(sha256sum dist/*.tar.gz | cut -d' ' -f1)"
+          } > dist/README.md
+          cat dist/README.md
+          ls -lh dist/
+
+      - name: 发布 Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ inputs.tag }}"
+          TITLE="ACK 源码快照 ${{ inputs.ack_branch }}"
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $TAG 已存在，追加附件"
+          else
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
+              --title "$TITLE" \
+              --notes "Android Common Kernel 源码快照，供本仓库构建使用。"
+          fi
+          gh release upload "$TAG" dist/*.tar.gz dist/README.md \
+            --repo "$GITHUB_REPOSITORY" --clobber
+          echo "完成: https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
