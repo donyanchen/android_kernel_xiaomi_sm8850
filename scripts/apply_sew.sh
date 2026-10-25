@@ -38,12 +38,13 @@ existing = [
     "android_vh_alloc_pages_slowpath_start",
     "android_vh_direct_reclaim_end",
     "android_vh_throttle_direct_reclaim_bypass",
+    "android_rvh_before_do_sched_yield",
 ]
 lines = open(p).read().split("\n")
 out = []
 skipped = 0
 for ln in lines:
-    is_inject = ("sed -i" in ln) and ("DECLARE_HOOK" in ln)
+    is_inject = ("sed -i" in ln) and (("DECLARE_HOOK" in ln) or ("DECLARE_RESTRICTED_HOOK" in ln))
     hits = [h for h in existing if h in ln]
     if is_inject and hits:
         out.append("# [pudding] ACK 已含 " + hits[0] + "，跳过注入: " + ln.strip()[:60])
@@ -53,6 +54,12 @@ for ln in lines:
 open(p, "w").write("\n".join(out))
 print(f"  跳过 {skipped} 条重复 vendor hook 注入")
 PYEOF2
+fi
+
+# 禁用 clear_page 汇编优化：其指令在 KVM hyp 上下文无法汇编
+OTHER_SH="$SEW_DIR/scripts/other_opt.sh"
+if [ -f "$OTHER_SH" ]; then
+  sed -i 's/^\s*add_clear_page\s*$/    : # [pudding] clear_page 汇编在 KVM hyp 下无法汇编，已禁用/' "$OTHER_SH"
 fi
 
 source scripts/libabk.sh
