@@ -48,7 +48,7 @@ for ln in lines:
     is_inject = ("sed -i" in ln) and (
         ("DECLARE_HOOK" in ln)
         or ("DECLARE_RESTRICTED_HOOK" in ln)
-        or ("\\ntrace_android_" in ln)
+        or ("trace_android_" in ln)
     )
     hits = [h for h in existing if h in ln]
     if is_inject and hits:
