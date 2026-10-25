@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
-# Pudding Kernel — 小米优化移植包执行器
+# Pudding Kernel — 小米优化移植包执行器（6.12 适配版）
 #
-# 不直接跑上游 setup.sh（它的 builtin_zram 依赖新版 ACK 已删除的
-# android/gki_aarch64_modules），这里只调用需要的函数：
-#   sew_kernel_opt  —— mi_rmap / unfairmem / kshrink_slabd / unionpower /
-#                      boottime / binder_sched_opt / ssg-iosched / OS4 移植
-#   other_opt       —— f2fs 与 IO 相关优化
-#   set_defconfig   —— 默认配置调整
+# 移植包原本针对 Linux 5.15 编写，部分模块在 6.12 上不兼容。
+# 这里保留能编的模块，禁用会破坏编译的模块。
+#
+# 禁用原因（实测）：
+#   add_kshrink_lruvecd   改 mm/vmscan.c，插入不存在的变量 list，
+#                         并在 trace 结构里造成 duplicate member android_vendor_data1
+#   add_mi_rmap_efficiency 同类问题，改 mm/vmscan.c 与 vmscan.h
+#   add_os4port_sched     sew_qos_inherit.c 需要 union futex_key 的完整定义，
+#                         6.12 的 futex.h 未导出该类型
+#   opt_page_clear        自写 clear_page.S 的指令在 KVM hyp 上下文无法汇编
 set -uo pipefail
 
 SEW_DIR="${1:-}"
@@ -24,13 +28,10 @@ cd "$SEW_DIR" || exit 2
 
 [ -f module.conf ] && source module.conf
 
-# ---------------------------------------------------------------- 预处理
-# 移植包按 Linux 5.15 编写，会向 mm.h / vmscan.h 注入 vendor hook 声明。
-# 但 ACK android16-6.12 已经把其中 4 个上游合入了（小米自己提交的），
-# 重复注入会导致 redefinition 编译错误。这里在应用前把对应的 sed 语句注释掉。
+# --- 预处理：跳过与 ACK 已含 hook 冲突的注入 ---
 SEW_SH="$SEW_DIR/scripts/sew_opt.sh"
 if [ -f "$SEW_SH" ]; then
-  python3 - "$SEW_SH" <<'PYEOF2'
+  python3 - "$SEW_SH" <<'PYEOF'
 import sys
 p = sys.argv[1]
 existing = [
@@ -39,38 +40,35 @@ existing = [
     "android_vh_direct_reclaim_end",
     "android_vh_throttle_direct_reclaim_bypass",
     "android_rvh_before_do_sched_yield",
-    # 该 hook 注入会与 ACK 的 trace 结构冲突（duplicate member android_vendor_data1）
     "android_vh_handle_failed_page_trylock_mglru",
 ]
 lines = open(p).read().split("\n")
-out = []
-skipped = 0
+out, skipped = [], 0
 for ln in lines:
-    is_inject = ("sed -i" in ln) and (("DECLARE_HOOK" in ln) or ("DECLARE_RESTRICTED_HOOK" in ln))
+    is_inject = ("sed -i" in ln) and (
+        ("DECLARE_HOOK" in ln) or ("DECLARE_RESTRICTED_HOOK" in ln)
+    )
     hits = [h for h in existing if h in ln]
     if is_inject and hits:
-        out.append("# [pudding] ACK 已含 " + hits[0] + "，跳过注入: " + ln.strip()[:60])
+        out.append("# [pudding] ACK 已含 " + hits[0] + "，跳过注入")
         skipped += 1
     else:
         out.append(ln)
 open(p, "w").write("\n".join(out))
 print(f"  跳过 {skipped} 条重复 vendor hook 注入")
-PYEOF2
-fi
-
-# 禁用 clear_page 汇编优化：其指令在 KVM hyp 上下文无法汇编
-OTHER_SH="$SEW_DIR/scripts/other_opt.sh"
-if [ -f "$OTHER_SH" ]; then
-  sed -i 's/^\s*add_clear_page\s*$/    : # [pudding] clear_page 汇编在 KVM hyp 下无法汇编，已禁用/' "$OTHER_SH"
+PYEOF
 fi
 
 source scripts/libabk.sh
 source scripts/sew_opt.sh
-
-# --- 禁用与 6.12 不兼容的模块（会改坏 vmscan.c）---
-add_kshrink_lruvecd() { abk_log "跳过 add_kshrink_lruvecd（6.12 下 vmscan.c 补丁不成立）"; }
 source scripts/other_opt.sh
 source scripts/set_defconfig.sh
+
+# --- 禁用与 6.12 不兼容的模块 ---
+add_kshrink_lruvecd()   { abk_log "跳过 add_kshrink_lruvecd（vmscan.c 不兼容）"; }
+add_mi_rmap_efficiency() { abk_log "跳过 add_mi_rmap_efficiency（vmscan.c 不兼容）"; }
+add_os4port_sched()     { abk_log "跳过 add_os4port_sched（futex_key 类型不可见）"; }
+opt_page_clear()        { abk_log "跳过 opt_page_clear（clear_page.S 在 KVM hyp 无法汇编）"; }
 
 abk_log "KERNEL_ROOT=$KERNEL_ROOT"
 abk_log "DEFCONFIG=$DEFCONFIG"
