@@ -1,30 +1,29 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Pudding Kernel — 闭源符号桩函数（自动生成）
+ * Pudding Kernel — 闭源符号桩（自动生成）
  *
- * 目的：小米/高通闭源代码导出的符号，提供空实现并 EXPORT_SYMBOL，
- *       使 404 个厂商模块可以正常加载。
+ * 目的：为小米/高通闭源代码导出的符号提供定义，使 404 个厂商模块可加载。
  *
  * 数据来源（全部从真机提取）：
- *   · /proc/kallsyms 的 __ksymtab_* 条目          14,734 项
+ *   · /proc/kallsyms 的 __ksymtab_*                       14,734 项
  *   · 404 个厂商 .ko 的 __versions 依赖表
- *   · 404 个 .ko 的 aarch64 反汇编（30,288 个调用点）
+ *   · 404 个 .ko 的 aarch64 反汇编                         30,288 个调用点
+ *   · 404 个 .ko 的 .symtab 符号类型（FUNC / OBJECT）
  *
- * 签名推断策略：
- *   · 变参函数 → 显式声明 ...
- *   · 置信度 >= 0.8 → 采用推断值
- *   · 其余 → 最小参数兜底
- *
- * 符号总数：842
+ * 符号总数：842（函数 811，变量 31）
  */
 
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
 #include <linux/errno.h>
+#include <linux/device.h>
+#include <linux/kobject.h>
+#include <linux/soc/qcom/qmi.h>
 
-/* ---------------- adc_* (4) ---------------- */
+/* ==================== 函数桩 ==================== */
 
+/* ---- adc_* (4) ---- */
 int adc_tm_absolute_rthr_gen3(void *a0)
 {
 	return 0;
@@ -49,8 +48,7 @@ int adc_tm_scale_therm_voltage_100k_gen3(void *a0, void *a1)
 }
 EXPORT_SYMBOL(adc_tm_scale_therm_voltage_100k_gen3);
 
-/* ---------------- add_* (4) ---------------- */
-
+/* ---- add_* (4) ---- */
 int add_common_data_to_buf(void *a0, void *a1, void *a2, void *a3, void *a4)
 {
 	return 0;
@@ -75,8 +73,7 @@ int add_input_event_timeline_before_event_time(void *a0, void *a1, void *a2, voi
 }
 EXPORT_SYMBOL(add_input_event_timeline_before_event_time);
 
-/* ---------------- altmode_* (5) ---------------- */
-
+/* ---- altmode_* (5) ---- */
 int altmode_deregister_client(void *a0)
 {
 	return 0;
@@ -107,8 +104,7 @@ int altmode_send_data(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(altmode_send_data);
 
-/* ---------------- arc4_* (2) ---------------- */
-
+/* ---- arc4_* (2) ---- */
 int arc4_crypt(void *a0, void *a1, void *a2, void *a3)
 {
 	return 0;
@@ -121,56 +117,42 @@ int arc4_setkey(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(arc4_setkey);
 
-/* ---------------- attach_* (1) ---------------- */
-
+/* ---- attach_* (1) ---- */
 int attach_mpam_msc(void *a0, void *a1, void *a2)
 {
 	return 0;
 }
 EXPORT_SYMBOL(attach_mpam_msc);
 
-/* ---------------- bm_* (1) ---------------- */
-
+/* ---- bm_* (1) ---- */
 int bm_send_nl(void *a0, void *a1)
 {
 	return 0;
 }
 EXPORT_SYMBOL(bm_send_nl);
 
-/* ---------------- bootprof_* (1) ---------------- */
-
+/* ---- bootprof_* (1) ---- */
 int bootprof_lock(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(bootprof_lock);
 
-/* ---------------- boottime_* (1) ---------------- */
-
+/* ---- boottime_* (1) ---- */
 int boottime_ok(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(boottime_ok);
 
-/* ---------------- bridge_* (1) ---------------- */
-
-int bridge_tunnel_header(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(bridge_tunnel_header);
-
-/* ---------------- btfm_* (1) ---------------- */
-
+/* ---- btfm_* (1) ---- */
 void * btfm_get_btfmcodec(void)
 {
 	return NULL;
 }
 EXPORT_SYMBOL(btfm_get_btfmcodec);
 
-/* ---------------- btfmcodec_* (2) ---------------- */
-
+/* ---- btfmcodec_* (2) ---- */
 int btfmcodec_register_hw_ep(void *a0)
 {
 	return 0;
@@ -183,8 +165,7 @@ int btfmcodec_unregister_hw_ep(void *a0)
 }
 EXPORT_SYMBOL(btfmcodec_unregister_hw_ep);
 
-/* ---------------- btpower_* (2) ---------------- */
-
+/* ---- btpower_* (2) ---- */
 void * btpower_get_chipset_version(void)
 {
 	return NULL;
@@ -197,24 +178,21 @@ int btpower_register_slimdev(void *a0)
 }
 EXPORT_SYMBOL(btpower_register_slimdev);
 
-/* ---------------- build_* (1) ---------------- */
-
+/* ---- build_* (1) ---- */
 int build_fingerprint(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(build_fingerprint);
 
-/* ---------------- camlog_* (1) ---------------- */
-
+/* ---- camlog_* (1) ---- */
 int camlog_send_message(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(camlog_send_message);
 
-/* ---------------- cdev_* (5) ---------------- */
-
+/* ---- cdev_* (5) ---- */
 int cdev_tevent_add_int(void *a0, void *a1, void *a2)
 {
 	return 0;
@@ -227,9 +205,9 @@ int cdev_tevent_add_str(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(cdev_tevent_add_str);
 
-int cdev_tevent_alloc(void *a0)
+void * cdev_tevent_alloc(void *a0)
 {
-	return 0;
+	return NULL;
 }
 EXPORT_SYMBOL(cdev_tevent_alloc);
 
@@ -245,8 +223,7 @@ int cdev_tevent_write(void *a0)
 }
 EXPORT_SYMBOL(cdev_tevent_write);
 
-/* ---------------- cdsprm_* (10) ---------------- */
-
+/* ---- cdsprm_* (10) ---- */
 int cdsprm_compute_core_set_priority(void *a0)
 {
 	return 0;
@@ -307,11 +284,10 @@ int cdsprm_unregister_cdspl3gov(void *a0)
 }
 EXPORT_SYMBOL(cdsprm_unregister_cdspl3gov);
 
-/* ---------------- charger_* (30) ---------------- */
-
-int charger_partition_alloc(void *a0, void *a1, void *a2)
+/* ---- charger_* (30) ---- */
+void * charger_partition_alloc(void *a0, void *a1, void *a2)
 {
-	return 0;
+	return NULL;
 }
 EXPORT_SYMBOL(charger_partition_alloc);
 
@@ -489,24 +465,21 @@ int charger_partition_write_soc_limit(void *a0)
 }
 EXPORT_SYMBOL(charger_partition_write_soc_limit);
 
-/* ---------------- cld80211_* (1) ---------------- */
-
+/* ---- cld80211_* (1) ---- */
 void * cld80211_get_genl_family(void)
 {
 	return NULL;
 }
 EXPORT_SYMBOL(cld80211_get_genl_family);
 
-/* ---------------- cma_* (1) ---------------- */
-
+/* ---- cma_* (1) ---- */
 int cma_pool_init_shrinker(void)
 {
 	return 0;
 }
 EXPORT_SYMBOL(cma_pool_init_shrinker);
 
-/* ---------------- cmd_* (3) ---------------- */
-
+/* ---- cmd_* (3) ---- */
 int cmd_db_read_addr(void *a0)
 {
 	return 0;
@@ -525,16 +498,14 @@ int cmd_db_ready(void *a0, void *a1)
 }
 EXPORT_SYMBOL(cmd_db_ready);
 
-/* ---------------- connector_* (1) ---------------- */
-
+/* ---- connector_* (1) ---- */
 bool connector_antiburn_is_triggered(void *a0, void *a1)
 {
 	return false;
 }
 EXPORT_SYMBOL(connector_antiburn_is_triggered);
 
-/* ---------------- core_* (2) ---------------- */
-
+/* ---- core_* (2) ---- */
 int core_ctl_notifier_register(void *a0)
 {
 	return 0;
@@ -547,24 +518,21 @@ void core_ctl_notifier_unregister(void)
 }
 EXPORT_SYMBOL(core_ctl_notifier_unregister);
 
-/* ---------------- coredump_* (1) ---------------- */
-
+/* ---- coredump_* (1) ---- */
 int coredump_cleanup(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(coredump_cleanup);
 
-/* ---------------- cpu_* (1) ---------------- */
-
+/* ---- cpu_* (1) ---- */
 int cpu_logical_to_phys(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(cpu_logical_to_phys);
 
-/* ---------------- crm_* (5) ---------------- */
-
+/* ---- crm_* (5) ---- */
 int crm_dump_regs(void *a0)
 {
 	return 0;
@@ -595,8 +563,7 @@ int crm_write_pwr_states(void *a0, void *a1)
 }
 EXPORT_SYMBOL(crm_write_pwr_states);
 
-/* ---------------- cs35l43_* (2) ---------------- */
-
+/* ---- cs35l43_* (2) ---- */
 int cs35l43_resume_runtime(void *a0)
 {
 	return 0;
@@ -609,17 +576,16 @@ int cs35l43_suspend_runtime(void *a0)
 }
 EXPORT_SYMBOL(cs35l43_suspend_runtime);
 
-/* ---------------- cscfg_* (10) ---------------- */
-
+/* ---- cscfg_* (10) ---- */
 int cscfg_activate_config(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(cscfg_activate_config);
 
-int cscfg_config_sysfs_get_active_cfg(void *a0)
+void * cscfg_config_sysfs_get_active_cfg(void *a0)
 {
-	return 0;
+	return NULL;
 }
 EXPORT_SYMBOL(cscfg_config_sysfs_get_active_cfg);
 
@@ -671,32 +637,14 @@ int cscfg_unregister_csdev(void *a0)
 }
 EXPORT_SYMBOL(cscfg_unregister_csdev);
 
-/* ---------------- current_* (1) ---------------- */
-
-int current_log_level(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(current_log_level);
-
-/* ---------------- cx_* (1) ---------------- */
-
+/* ---- cx_* (1) ---- */
 void * cx_stats_get_ss_vote_info(void *a0, void *a1)
 {
 	return NULL;
 }
 EXPORT_SYMBOL(cx_stats_get_ss_vote_info);
 
-/* ---------------- data_* (1) ---------------- */
-
-int data_ep_id_type_v01_ei(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(data_ep_id_type_v01_ei);
-
-/* ---------------- ddr_* (5) ---------------- */
-
+/* ---- ddr_* (5) ---- */
 void * ddr_stats_get_change_his(void *a0)
 {
 	return NULL;
@@ -727,8 +675,7 @@ void * ddr_stats_get_ss_vote_info(void *a0, void *a1)
 }
 EXPORT_SYMBOL(ddr_stats_get_ss_vote_info);
 
-/* ---------------- debug_* (2) ---------------- */
-
+/* ---- debug_* (2) ---- */
 int debug_symbol_available(void)
 {
 	return 0;
@@ -741,32 +688,21 @@ int debug_symbol_lookup_name(void *a0)
 }
 EXPORT_SYMBOL(debug_symbol_lookup_name);
 
-/* ---------------- deregister_* (1) ---------------- */
-
+/* ---- deregister_* (1) ---- */
 int deregister_cld_cmd_cb(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(deregister_cld_cmd_cb);
 
-/* ---------------- detach_* (1) ---------------- */
-
+/* ---- detach_* (1) ---- */
 int detach_mpam_msc(void *a0, void *a1, void *a2)
 {
 	return 0;
 }
 EXPORT_SYMBOL(detach_mpam_msc);
 
-/* ---------------- dhms_* (1) ---------------- */
-
-int dhms_mem_alloc_addr_info_type_v01_ei(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(dhms_mem_alloc_addr_info_type_v01_ei);
-
-/* ---------------- digital_* (3) ---------------- */
-
+/* ---- digital_* (3) ---- */
 void digital_cdc_rsc_mgr_hw_vote_disable(void *a0, void *a1)
 {
 	/* no-op */
@@ -785,8 +721,7 @@ void digital_cdc_rsc_mgr_hw_vote_reset(void *a0)
 }
 EXPORT_SYMBOL(digital_cdc_rsc_mgr_hw_vote_reset);
 
-/* ---------------- disp_* (3) ---------------- */
-
+/* ---- disp_* (3) ---- */
 int disp_kernel_timer_log_printk(void *a0, void *a1)
 {
 	return 0;
@@ -805,25 +740,10 @@ int disp_log_printk_utc(void *a0)
 }
 EXPORT_SYMBOL(disp_log_printk_utc);
 
-/* ---------------- dms_* (2) ---------------- */
-
-int dms_get_mac_address_req_msg_v01_ei(void *a0)
+/* ---- dss_* (3) ---- */
+void dss_reg_dump(void *a0)
 {
-	return 0;
-}
-EXPORT_SYMBOL(dms_get_mac_address_req_msg_v01_ei);
-
-int dms_get_mac_address_resp_msg_v01_ei(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(dms_get_mac_address_resp_msg_v01_ei);
-
-/* ---------------- dss_* (3) ---------------- */
-
-int dss_reg_dump(void *a0)
-{
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(dss_reg_dump);
 
@@ -839,8 +759,7 @@ int dss_reg_w(void *a0, void *a1, void *a2, void *a3)
 }
 EXPORT_SYMBOL(dss_reg_w);
 
-/* ---------------- dump_* (3) ---------------- */
-
+/* ---- dump_* (3) ---- */
 int dump_enabled(void)
 {
 	return 0;
@@ -859,8 +778,7 @@ int dump_user_backtrace(void *a0)
 }
 EXPORT_SYMBOL(dump_user_backtrace);
 
-/* ---------------- etm_* (2) ---------------- */
-
+/* ---- etm_* (2) ---- */
 void * etm_event_get_path(void *a0)
 {
 	return NULL;
@@ -873,24 +791,21 @@ int etm_perf_symlink(void *a0)
 }
 EXPORT_SYMBOL(etm_perf_symlink);
 
-/* ---------------- firmware_* (1) ---------------- */
-
+/* ---- firmware_* (1) ---- */
 int firmware_request_from_smcinvoke(void *a0, void *a1, void *a2)
 {
 	return 0;
 }
 EXPORT_SYMBOL(firmware_request_from_smcinvoke);
 
-/* ---------------- freq_* (1) ---------------- */
-
+/* ---- freq_* (1) ---- */
 int freq_reg_info(void *a0, void *a1)
 {
 	return 0;
 }
 EXPORT_SYMBOL(freq_reg_info);
 
-/* ---------------- fsa4480_* (3) ---------------- */
-
+/* ---- fsa4480_* (3) ---- */
 int fsa4480_reg_notifier(void *a0, void *a1)
 {
 	return 0;
@@ -909,24 +824,21 @@ int fsa4480_unreg_notifier(void *a0, void *a1)
 }
 EXPORT_SYMBOL(fsa4480_unreg_notifier);
 
-/* ---------------- gdsc_* (1) ---------------- */
-
+/* ---- gdsc_* (1) ---- */
 int gdsc_gx_do_nothing_enable(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(gdsc_gx_do_nothing_enable);
 
-/* ---------------- geni_* (1) ---------------- */
-
+/* ---- geni_* (1) ---- */
 int geni_gsi_common_request_channel(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(geni_gsi_common_request_channel);
 
-/* ---------------- ghd_* (4) ---------------- */
-
+/* ---- ghd_* (4) ---- */
 void * ghd_rm_get_vmid(void *a0, void *a1)
 {
 	return NULL;
@@ -951,8 +863,7 @@ int ghd_rm_mem_share(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5,
 }
 EXPORT_SYMBOL(ghd_rm_mem_share);
 
-/* ---------------- gpi_* (2) ---------------- */
-
+/* ---- gpi_* (2) ---- */
 int gpi_dump_for_geni(void *a0)
 {
 	return 0;
@@ -965,16 +876,7 @@ int gpi_update_multi_desc_flag(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(gpi_update_multi_desc_flag);
 
-/* ---------------- gprbus_* (1) ---------------- */
-
-int gprbus(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(gprbus);
-
-/* ---------------- gsihal_* (2) ---------------- */
-
+/* ---- gsihal_* (2) ---- */
 void * gsihal_get_reg_nk_ofst(void *a0, void *a1, void *a2)
 {
 	return NULL;
@@ -987,8 +889,7 @@ int gsihal_write_reg_nk(void *a0, void *a1, void *a2, void *a3)
 }
 EXPORT_SYMBOL(gsihal_write_reg_nk);
 
-/* ---------------- has_* (2) ---------------- */
-
+/* ---- has_* (2) ---- */
 bool has_subsystem_slept(void)
 {
 	return false;
@@ -1001,8 +902,7 @@ bool has_system_slept(void *a0)
 }
 EXPORT_SYMBOL(has_system_slept);
 
-/* ---------------- hdcp1_* (8) ---------------- */
-
+/* ---- hdcp1_* (8) ---- */
 void hdcp1_deinit(void *a0)
 {
 	/* no-op */
@@ -1051,8 +951,7 @@ void hdcp1_stop(void *a0)
 }
 EXPORT_SYMBOL(hdcp1_stop);
 
-/* ---------------- hdcp2_* (8) ---------------- */
-
+/* ---- hdcp2_* (8) ---- */
 int hdcp2_app_comm(void *a0, void *a1, void *a2)
 {
 	return 0;
@@ -1101,8 +1000,7 @@ int hdcp2_set_hdcp_key_verify_retries(void *a0)
 }
 EXPORT_SYMBOL(hdcp2_set_hdcp_key_verify_retries);
 
-/* ---------------- hw_* (2) ---------------- */
-
+/* ---- hw_* (2) ---- */
 int hw_monitor_notifier_register(void *a0)
 {
 	return 0;
@@ -1115,8 +1013,7 @@ void hw_monitor_notifier_unregister(void *a0)
 }
 EXPORT_SYMBOL(hw_monitor_notifier_unregister);
 
-/* ---------------- hwmon_* (7) ---------------- */
-
+/* ---- hwmon_* (7) ---- */
 int hwmon_device_register(void *a0)
 {
 	return 0;
@@ -1159,16 +1056,14 @@ int hwmon_sanitize_name(void *a0)
 }
 EXPORT_SYMBOL(hwmon_sanitize_name);
 
-/* ---------------- hyp_* (1) ---------------- */
-
+/* ---- hyp_* (1) ---- */
 int hyp_assign_table(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5)
 {
 	return 0;
 }
 EXPORT_SYMBOL(hyp_assign_table);
 
-/* ---------------- hypsys_* (5) ---------------- */
-
+/* ---- hypsys_* (5) ---- */
 int hypsys_event_add_int(void *a0, void *a1, void *a2)
 {
 	return 0;
@@ -1181,9 +1076,9 @@ int hypsys_event_add_str(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(hypsys_event_add_str);
 
-int hypsys_event_alloc(void *a0)
+void * hypsys_event_alloc(void *a0)
 {
-	return 0;
+	return NULL;
 }
 EXPORT_SYMBOL(hypsys_event_alloc);
 
@@ -1199,54 +1094,14 @@ int hypsys_event_report(void *a0, void *a1, void *a2, void *a3)
 }
 EXPORT_SYMBOL(hypsys_event_report);
 
-/* ---------------- ieee802_* (1) ---------------- */
-
+/* ---- ieee802_* (1) ---- */
 int ieee802_11_parse_elems_full(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(ieee802_11_parse_elems_full);
 
-/* ---------------- ims_* (6) ---------------- */
-
-int ims_private_service_mt_invite_ind_msg_v01_ei(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(ims_private_service_mt_invite_ind_msg_v01_ei);
-
-int ims_private_service_subscribe_ind_req_msg_v01_ei(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(ims_private_service_subscribe_ind_req_msg_v01_ei);
-
-int ims_private_service_subscribe_ind_rsp_msg_v01_ei(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(ims_private_service_subscribe_ind_rsp_msg_v01_ei);
-
-int ims_private_service_wfc_call_status_ind_msg_v01_ei(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(ims_private_service_wfc_call_status_ind_msg_v01_ei);
-
-int ims_private_service_wfc_call_twt_config_req_msg_v01_ei(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(ims_private_service_wfc_call_twt_config_req_msg_v01_ei);
-
-int ims_private_service_wfc_call_twt_config_rsp_msg_v01_ei(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(ims_private_service_wfc_call_twt_config_rsp_msg_v01_ei);
-
-/* ---------------- init_* (3) ---------------- */
-
+/* ---- init_* (3) ---- */
 int init_si_mem_object_sg(void *a0, void *a1, void *a2, void *a3, void *a4)
 {
 	return 0;
@@ -1265,8 +1120,7 @@ int init_si_object_user(void *a0, void *a1, void *a2, void *a3, void *a4, void *
 }
 EXPORT_SYMBOL(init_si_object_user);
 
-/* ---------------- ipahal_* (2) ---------------- */
-
+/* ---- ipahal_* (2) ---- */
 void * ipahal_get_ep_bit(void *a0)
 {
 	return NULL;
@@ -1279,11 +1133,10 @@ void * ipahal_get_ep_reg_idx(void)
 }
 EXPORT_SYMBOL(ipahal_get_ep_reg_idx);
 
-/* ---------------- ipc_* (4) ---------------- */
-
-int ipc_log_context_create(void *a0, void *a1, void *a2)
+/* ---- ipc_* (4) ---- */
+void * ipc_log_context_create(void *a0, void *a1, void *a2)
 {
-	return 0;
+	return NULL;
 }
 EXPORT_SYMBOL(ipc_log_context_create);
 
@@ -1305,8 +1158,7 @@ void ipc_log_string(void *ctxt, const char *fmt, ...)
 }
 EXPORT_SYMBOL(ipc_log_string);
 
-/* ---------------- is_* (5) ---------------- */
-
+/* ---- is_* (5) ---- */
 bool is_mem_buf_dma_buf(void *a0)
 {
 	return false;
@@ -1337,16 +1189,14 @@ bool is_qos_task(void *a0)
 }
 EXPORT_SYMBOL(is_qos_task);
 
-/* ---------------- kern_* (1) ---------------- */
-
+/* ---- kern_* (1) ---- */
 int kern_qi_set_qos(void *a0, void *a1)
 {
 	return 0;
 }
 EXPORT_SYMBOL(kern_qi_set_qos);
 
-/* ---------------- kgsl_* (5) ---------------- */
-
+/* ---- kgsl_* (5) ---- */
 int kgsl_add_rcu_notifier(void *a0)
 {
 	return 0;
@@ -1377,16 +1227,14 @@ int kgsl_gpu_stat(void *a0)
 }
 EXPORT_SYMBOL(kgsl_gpu_stat);
 
-/* ---------------- llc_* (1) ---------------- */
-
+/* ---- llc_* (1) ---- */
 void * llc_stats_get_active_scids(void *a0)
 {
 	return NULL;
 }
 EXPORT_SYMBOL(llc_stats_get_active_scids);
 
-/* ---------------- llcc_* (8) ---------------- */
-
+/* ---- llcc_* (8) ---- */
 int llcc_configure_staling_mode(void *a0, void *a1)
 {
 	return 0;
@@ -1435,32 +1283,21 @@ int llcc_slice_putd(void *a0)
 }
 EXPORT_SYMBOL(llcc_slice_putd);
 
-/* ---------------- low_* (1) ---------------- */
-
-int low_lat_mem_kobject(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(low_lat_mem_kobject);
-
-/* ---------------- lpd_* (1) ---------------- */
-
+/* ---- lpd_* (1) ---- */
 bool lpd_is_charging_limit(void)
 {
 	return false;
 }
 EXPORT_SYMBOL(lpd_is_charging_limit);
 
-/* ---------------- map_* (1) ---------------- */
-
+/* ---- map_* (1) ---- */
 int map_debug_bases(void *a0, void *a1, void *a2)
 {
 	return 0;
 }
 EXPORT_SYMBOL(map_debug_bases);
 
-/* ---------------- matt_* (3) ---------------- */
-
+/* ---- matt_* (3) ---- */
 int matt_register_ulp(void *a0)
 {
 	return 0;
@@ -1479,8 +1316,7 @@ int matt_unregister_ulp(void *a0)
 }
 EXPORT_SYMBOL(matt_unregister_ulp);
 
-/* ---------------- mca_* (94) ---------------- */
-
+/* ---- mca_* (94) ---- */
 int __mca_log_debug(const char *fmt, const char *func, int line, ...)
 {
 	return 0;
@@ -1529,15 +1365,15 @@ bool mca_bmd_is_batt_missing(void)
 }
 EXPORT_SYMBOL(mca_bmd_is_batt_missing);
 
-int mca_cancel_delayed_work(void *a0)
+void mca_cancel_delayed_work(void *dwork)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(mca_cancel_delayed_work);
 
-int mca_cancel_work(void *a0)
+void mca_cancel_work(void *work)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(mca_cancel_work);
 
@@ -1607,9 +1443,9 @@ int mca_event_report_uevent(void *a0)
 }
 EXPORT_SYMBOL(mca_event_report_uevent);
 
-int mca_find_votable(void *a0)
+void * mca_find_votable(const char *name)
 {
-	return 0;
+	return NULL;
 }
 EXPORT_SYMBOL(mca_find_votable);
 
@@ -1631,7 +1467,7 @@ void * mca_get_effective_client(void *a0)
 }
 EXPORT_SYMBOL(mca_get_effective_client);
 
-void * mca_get_effective_client_locked(void *a0)
+void * mca_get_effective_client_locked(void *votable)
 {
 	return NULL;
 }
@@ -1643,9 +1479,9 @@ void * mca_get_effective_result(void *a0)
 }
 EXPORT_SYMBOL(mca_get_effective_result);
 
-void * mca_get_effective_result_locked(void *a0)
+int mca_get_effective_result_locked(void *votable)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mca_get_effective_result_locked);
 
@@ -1667,27 +1503,27 @@ bool mca_is_client_vote_enabled(void *a0, void *a1)
 }
 EXPORT_SYMBOL(mca_is_client_vote_enabled);
 
-bool mca_is_client_vote_enabled_locked(void *a0)
+bool mca_is_client_vote_enabled_locked(void *votable, void *client)
 {
 	return false;
 }
 EXPORT_SYMBOL(mca_is_client_vote_enabled_locked);
 
-bool mca_is_override_vote_enabled(void *a0)
+bool mca_is_override_vote_enabled(void *votable)
 {
 	return false;
 }
 EXPORT_SYMBOL(mca_is_override_vote_enabled);
 
-bool mca_is_override_vote_enabled_locked(void *a0)
+bool mca_is_override_vote_enabled_locked(void *votable)
 {
 	return false;
 }
 EXPORT_SYMBOL(mca_is_override_vote_enabled_locked);
 
-int mca_lock_votable(void *a0)
+void mca_lock_votable(void *votable)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(mca_lock_votable);
 
@@ -1703,7 +1539,7 @@ void * mca_log_get_charge_boot_mode(void)
 }
 EXPORT_SYMBOL(mca_log_get_charge_boot_mode);
 
-void * mca_log_get_rtc_time(void *a0)
+void * mca_log_get_rtc_time(void)
 {
 	return NULL;
 }
@@ -1715,15 +1551,15 @@ int mca_mod_delayed_work(void *a0, void *a1)
 }
 EXPORT_SYMBOL(mca_mod_delayed_work);
 
-void * mca_panel_get_hbm_state(void *a0)
+bool mca_panel_get_hbm_state(void)
 {
-	return NULL;
+	return false;
 }
 EXPORT_SYMBOL(mca_panel_get_hbm_state);
 
-void * mca_panel_get_screen_state(void *a0)
+int mca_panel_get_screen_state(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mca_panel_get_screen_state);
 
@@ -1763,13 +1599,13 @@ int mca_parse_dts_u32(void *np, const char *name, int *out)
 }
 EXPORT_SYMBOL(mca_parse_dts_u32);
 
-int mca_parse_dts_u32_array(void *a0, void *a1, void *a2, void *a3)
+int mca_parse_dts_u32_array(void *np, const char *name, int *out, int n)
 {
 	return 0;
 }
 EXPORT_SYMBOL(mca_parse_dts_u32_array);
 
-int mca_parse_dts_u32_count(void *a0, void *a1, void *a2, void *a3)
+int mca_parse_dts_u32_count(void *np, const char *name, int *out)
 {
 	return 0;
 }
@@ -1799,7 +1635,7 @@ int mca_parse_dts_u8_count(void *a0, void *a1, void *a2, void *a3)
 }
 EXPORT_SYMBOL(mca_parse_dts_u8_count);
 
-int mca_path_control_enable_gate(void *a0)
+int mca_path_control_enable_gate(void *ctrl, bool en)
 {
 	return 0;
 }
@@ -1817,13 +1653,13 @@ int mca_queue_delayed_work(void *a0, void *a1)
 }
 EXPORT_SYMBOL(mca_queue_delayed_work);
 
-int mca_queue_work(void *a0)
+int mca_queue_work(void *wq, void *work)
 {
 	return 0;
 }
 EXPORT_SYMBOL(mca_queue_work);
 
-int mca_rerun_election(void *a0)
+int mca_rerun_election(int id)
 {
 	return 0;
 }
@@ -1835,9 +1671,9 @@ void mca_set_wls_charger_thermal_remove(void *a0)
 }
 EXPORT_SYMBOL(mca_set_wls_charger_thermal_remove);
 
-void * mca_smartchg_get_board_temp(void *a0)
+int mca_smartchg_get_board_temp(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mca_smartchg_get_board_temp);
 
@@ -1847,9 +1683,9 @@ void * mca_smartchg_get_limit_soc(void)
 }
 EXPORT_SYMBOL(mca_smartchg_get_limit_soc);
 
-void * mca_smartchg_get_scene(void *a0)
+int mca_smartchg_get_scene(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mca_smartchg_get_scene);
 
@@ -1913,7 +1749,7 @@ int mca_strategy_ops_register(void *a0, void *a1, void *a2, void *a3, void *a4)
 }
 EXPORT_SYMBOL(mca_strategy_ops_register);
 
-void * mca_subpmic_proxy_get_otg_wls_mutex(void *a0)
+void * mca_subpmic_proxy_get_otg_wls_mutex(void)
 {
 	return NULL;
 }
@@ -1961,13 +1797,13 @@ int mca_sysfs_remove_link_group(void *a0, void *a1, void *a2, void *a3)
 }
 EXPORT_SYMBOL(mca_sysfs_remove_link_group);
 
-int mca_unlock_votable(void *a0)
+void mca_unlock_votable(void *votable)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(mca_unlock_votable);
 
-int mca_vote(void *a0, void *a1, void *a2, void *a3)
+int mca_vote(void *votable, void *client, int val, int *out)
 {
 	return 0;
 }
@@ -1985,9 +1821,9 @@ int mca_wireless_rev_enable_reverse_charge(void *a0)
 }
 EXPORT_SYMBOL(mca_wireless_rev_enable_reverse_charge);
 
-void * mca_wireless_rev_get_firmware_state(void *a0)
+int mca_wireless_rev_get_firmware_state(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mca_wireless_rev_get_firmware_state);
 
@@ -2009,9 +1845,9 @@ void * mca_wireless_rev_get_reverse_chg_state(void *a0)
 }
 EXPORT_SYMBOL(mca_wireless_rev_get_reverse_chg_state);
 
-void * mca_wireless_rev_get_user_reverse_chg(void *a0)
+bool mca_wireless_rev_get_user_reverse_chg(void)
 {
-	return NULL;
+	return false;
 }
 EXPORT_SYMBOL(mca_wireless_rev_get_user_reverse_chg);
 
@@ -2021,7 +1857,7 @@ int mca_wireless_rev_set_firmware_state(void *a0)
 }
 EXPORT_SYMBOL(mca_wireless_rev_set_firmware_state);
 
-int mca_wireless_rev_set_reverse_chg(void *a0)
+int mca_wireless_rev_set_reverse_chg(bool en)
 {
 	return 0;
 }
@@ -2045,52 +1881,14 @@ int mca_wireless_rev_update_fw_version(void *a0)
 }
 EXPORT_SYMBOL(mca_wireless_rev_update_fw_version);
 
-/* ---------------- mem_* (7) ---------------- */
-
-int mem_alloc_generic_req_msg_data_v01_ei(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(mem_alloc_generic_req_msg_data_v01_ei);
-
-int mem_alloc_generic_resp_msg_data_v01_ei(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(mem_alloc_generic_resp_msg_data_v01_ei);
-
-int mem_free_generic_req_msg_data_v01_ei(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(mem_free_generic_req_msg_data_v01_ei);
-
-int mem_free_generic_resp_msg_data_v01_ei(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(mem_free_generic_resp_msg_data_v01_ei);
-
+/* ---- mem_* (1) ---- */
 int mem_object_to_dma_buf(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(mem_object_to_dma_buf);
 
-int mem_query_size_req_msg_data_v01_ei(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(mem_query_size_req_msg_data_v01_ei);
-
-int mem_query_size_resp_msg_data_v01_ei(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(mem_query_size_resp_msg_data_v01_ei);
-
-/* ---------------- memcheck_* (7) ---------------- */
-
+/* ---- memcheck_* (5) ---- */
 int memcheck_ashmem_info_show(void *a0)
 {
 	return 0;
@@ -2109,12 +1907,6 @@ int memcheck_dmabuf_info_show(void)
 }
 EXPORT_SYMBOL(memcheck_dmabuf_info_show);
 
-int memcheck_kgsl_memstat(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(memcheck_kgsl_memstat);
-
 int memcheck_slab_info_show(void *a0)
 {
 	return 0;
@@ -2127,22 +1919,14 @@ int memcheck_vmalloc_info_show(void *a0)
 }
 EXPORT_SYMBOL(memcheck_vmalloc_info_show);
 
-int memcheck_walk_process_privates(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(memcheck_walk_process_privates);
-
-/* ---------------- memdup_* (1) ---------------- */
-
+/* ---- memdup_* (1) ---- */
 int memdup_user_trace(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5, void *a6, void *a7)
 {
 	return 0;
 }
 EXPORT_SYMBOL(memdup_user_trace);
 
-/* ---------------- mi_* (25) ---------------- */
-
+/* ---- mi_* (24) ---- */
 int mi_dflt_bwmon_update_cur_freq_hook(void *a0, void *a1)
 {
 	return 0;
@@ -2161,33 +1945,33 @@ int mi_dflt_calculate_mon_sampling_freq_hook(void *a0, void *a1)
 }
 EXPORT_SYMBOL(mi_dflt_calculate_mon_sampling_freq_hook);
 
-int mi_dflt_get_bwmon_enable(void)
+void * mi_dflt_get_bwmon_enable(void)
 {
-	return 0;
+	return NULL;
 }
 EXPORT_SYMBOL(mi_dflt_get_bwmon_enable);
 
-int mi_dflt_get_bwmon_sample_start(void *a0)
+void * mi_dflt_get_bwmon_sample_start(void *a0)
 {
-	return 0;
+	return NULL;
 }
 EXPORT_SYMBOL(mi_dflt_get_bwmon_sample_start);
 
-int mi_dflt_get_latency_enable(void)
+void * mi_dflt_get_latency_enable(void)
 {
-	return 0;
+	return NULL;
 }
 EXPORT_SYMBOL(mi_dflt_get_latency_enable);
 
-int mi_dflt_get_latency_enable_from_user(void)
+void * mi_dflt_get_latency_enable_from_user(void)
 {
-	return 0;
+	return NULL;
 }
 EXPORT_SYMBOL(mi_dflt_get_latency_enable_from_user);
 
-int mi_dflt_get_latency_vote_start(void)
+void * mi_dflt_get_latency_vote_start(void)
 {
-	return 0;
+	return NULL;
 }
 EXPORT_SYMBOL(mi_dflt_get_latency_vote_start);
 
@@ -2275,12 +2059,6 @@ int mi_smart_refill_init(void *a0)
 }
 EXPORT_SYMBOL(mi_smart_refill_init);
 
-int mi_smart_refill_pools(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(mi_smart_refill_pools);
-
 int mi_smart_refill_pools_init(void *a0, void *a1)
 {
 	return 0;
@@ -2293,24 +2071,14 @@ int mi_smart_refill_update(void)
 }
 EXPORT_SYMBOL(mi_smart_refill_update);
 
-/* ---------------- micam_* (1) ---------------- */
-
-int micam_amu_data(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(micam_amu_data);
-
-/* ---------------- mist_* (1) ---------------- */
-
+/* ---- mist_* (1) ---- */
 int mist_ddr_vote_enable(void)
 {
 	return 0;
 }
 EXPORT_SYMBOL(mist_ddr_vote_enable);
 
-/* ---------------- mitee_* (3) ---------------- */
-
+/* ---- mitee_* (3) ---- */
 int mitee_smc_notify_connect(void *a0, void *a1)
 {
 	return 0;
@@ -2329,22 +2097,14 @@ int mitee_smc_notify_signal(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(mitee_smc_notify_signal);
 
-/* ---------------- miui_* (2) ---------------- */
-
+/* ---- miui_* (1) ---- */
 int miui_cluster_packing_callback(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(miui_cluster_packing_callback);
 
-int miui_power_enhance(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(miui_power_enhance);
-
-/* ---------------- mmrm_* (7) ---------------- */
-
+/* ---- mmrm_* (7) ---- */
 bool mmrm_client_check_scaling_supported(void *a0, void *a1)
 {
 	return false;
@@ -2387,8 +2147,7 @@ int mmrm_client_set_value_in_range(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(mmrm_client_set_value_in_range);
 
-/* ---------------- msc_* (12) ---------------- */
-
+/* ---- msc_* (12) ---- */
 void * msc_system_get_device_capability(void *a0, void *a1, void *a2)
 {
 	return NULL;
@@ -2461,8 +2220,7 @@ int msc_system_set_partition(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(msc_system_set_partition);
 
-/* ---------------- ncm_* (6) ---------------- */
-
+/* ---- ncm_* (6) ---- */
 int ncm_ipa_cleanup(void *a0)
 {
 	return 0;
@@ -2499,16 +2257,14 @@ int ncm_ipa_pipe_disconnect_notify(void *a0, void *a1, void *a2, void *a3, void 
 }
 EXPORT_SYMBOL(ncm_ipa_pipe_disconnect_notify);
 
-/* ---------------- nfc_* (1) ---------------- */
-
+/* ---- nfc_* (1) ---- */
 int nfc_to_touch_event(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(nfc_to_touch_event);
 
-/* ---------------- nl80211_* (3) ---------------- */
-
+/* ---- nl80211_* (3) ---- */
 int nl80211_chan_width_to_mhz(void *a0)
 {
 	return 0;
@@ -2527,32 +2283,28 @@ int nl80211_send_chandef(void *a0, void *a1)
 }
 EXPORT_SYMBOL(nl80211_send_chandef);
 
-/* ---------------- notify_* (1) ---------------- */
-
+/* ---- notify_* (1) ---- */
 int notify_raw_data_update(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(notify_raw_data_update);
 
-/* ---------------- nvt_* (1) ---------------- */
-
+/* ---- nvt_* (1) ---- */
 void * nvt_get_lcm_id_notify(void *a0)
 {
 	return NULL;
 }
 EXPORT_SYMBOL(nvt_get_lcm_id_notify);
 
-/* ---------------- oem_* (1) ---------------- */
-
+/* ---- oem_* (1) ---- */
 int oem_corectl_cpu_busy(void *a0, void *a1)
 {
 	return 0;
 }
 EXPORT_SYMBOL(oem_corectl_cpu_busy);
 
-/* ---------------- panel_* (3) ---------------- */
-
+/* ---- panel_* (3) ---- */
 int panel_event_notification_trigger(void *a0, void *a1)
 {
 	return 0;
@@ -2571,25 +2323,23 @@ void panel_event_notifier_unregister(void *a0)
 }
 EXPORT_SYMBOL(panel_event_notifier_unregister);
 
-/* ---------------- pcie_* (1) ---------------- */
-
+/* ---- pcie_* (1) ---- */
 int pcie_pdc_cfg_irq(void *a0, void *a1, void *a2)
 {
 	return 0;
 }
 EXPORT_SYMBOL(pcie_pdc_cfg_irq);
 
-/* ---------------- pdr_* (4) ---------------- */
-
+/* ---- pdr_* (4) ---- */
 int pdr_add_lookup(void *a0, void *a1, void *a2)
 {
 	return 0;
 }
 EXPORT_SYMBOL(pdr_add_lookup);
 
-int pdr_handle_alloc(void *a0, void *a1)
+void * pdr_handle_alloc(void *a0, void *a1)
 {
-	return 0;
+	return NULL;
 }
 EXPORT_SYMBOL(pdr_handle_alloc);
 
@@ -2605,8 +2355,7 @@ int pdr_restart_pd(void *a0, void *a1)
 }
 EXPORT_SYMBOL(pdr_restart_pd);
 
-/* ---------------- pen_* (2) ---------------- */
-
+/* ---- pen_* (2) ---- */
 int pen_charge_state_notifier_register_client(void *a0)
 {
 	return 0;
@@ -2619,8 +2368,7 @@ int pen_charge_state_notifier_unregister_client(void *a0)
 }
 EXPORT_SYMBOL(pen_charge_state_notifier_unregister_client);
 
-/* ---------------- phy_* (4) ---------------- */
-
+/* ---- phy_* (4) ---- */
 void phy_core_exit(void)
 {
 	/* no-op */
@@ -2645,8 +2393,7 @@ int phy_write(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(phy_write);
 
-/* ---------------- ping_* (2) ---------------- */
-
+/* ---- ping_* (2) ---- */
 int ping_subsystem(void *a0)
 {
 	return 0;
@@ -2659,8 +2406,7 @@ int ping_subsystem_init(void *a0, void *a1)
 }
 EXPORT_SYMBOL(ping_subsystem_init);
 
-/* ---------------- pmic_* (3) ---------------- */
-
+/* ---- pmic_* (3) ---- */
 int pmic_glink_register_client(void *a0, void *a1)
 {
 	return 0;
@@ -2679,8 +2425,7 @@ int pmic_glink_write(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(pmic_glink_write);
 
-/* ---------------- powerinsight_* (10) ---------------- */
-
+/* ---- powerinsight_* (10) ---- */
 int powerinsight_gpu_close_opp_cost(void)
 {
 	return 0;
@@ -2741,40 +2486,28 @@ int powerinsight_wifi_wake_reason(void *a0)
 }
 EXPORT_SYMBOL(powerinsight_wifi_wake_reason);
 
-/* ---------------- product_* (1) ---------------- */
-
+/* ---- product_* (1) ---- */
 int product_name_get(void)
 {
 	return 0;
 }
 EXPORT_SYMBOL(product_name_get);
 
-/* ---------------- provide_* (1) ---------------- */
-
+/* ---- provide_* (1) ---- */
 int provide_qseecom_kernel_fun_ops(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(provide_qseecom_kernel_fun_ops);
 
-/* ---------------- put_* (1) ---------------- */
-
+/* ---- put_* (1) ---- */
 int put_si_object(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(put_si_object);
 
-/* ---------------- pwrkey_* (1) ---------------- */
-
-int pwrkey_irq_notifier_list(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(pwrkey_irq_notifier_list);
-
-/* ---------------- qcom_* (167) ---------------- */
-
+/* ---- qcom_* (166) ---- */
 int qcom_adc5_avg_samples_from_dt(void *a0)
 {
 	return 0;
@@ -2895,9 +2628,9 @@ int qcom_clk_crmb_set_rate(void *a0, void *a1, void *a2, void *a3, void *a4, voi
 }
 EXPORT_SYMBOL(qcom_clk_crmb_set_rate);
 
-int qcom_clk_dump(void *a0, void *a1, void *a2)
+void qcom_clk_dump(void *a0, void *a1, void *a2)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(qcom_clk_dump);
 
@@ -2961,21 +2694,15 @@ int qcom_destroy_ramdump_device(void *a0)
 }
 EXPORT_SYMBOL(qcom_destroy_ramdump_device);
 
-int qcom_device_shutdown_in_progress(void *a0)
+void qcom_dump(void *a0, void *a1)
 {
-	return 0;
-}
-EXPORT_SYMBOL(qcom_device_shutdown_in_progress);
-
-int qcom_dump(void *a0, void *a1)
-{
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(qcom_dump);
 
-int qcom_elf_dump(void *a0, void *a1, void *a2)
+void qcom_elf_dump(void *a0, void *a1, void *a2)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(qcom_elf_dump);
 
@@ -2991,9 +2718,9 @@ int qcom_free_io_pgtable_ops(void *a0)
 }
 EXPORT_SYMBOL(qcom_free_io_pgtable_ops);
 
-int qcom_fw_elf_dump(void *a0)
+void qcom_fw_elf_dump(void *a0)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(qcom_fw_elf_dump);
 
@@ -3159,9 +2886,9 @@ void * qcom_iommu_get_fault_ids(void *a0, void *a1)
 }
 EXPORT_SYMBOL(qcom_iommu_get_fault_ids);
 
-int qcom_iommu_get_mappings_configuration(void)
+void * qcom_iommu_get_mappings_configuration(void)
 {
-	return 0;
+	return NULL;
 }
 EXPORT_SYMBOL(qcom_iommu_get_mappings_configuration);
 
@@ -3591,9 +3318,9 @@ void qcom_scm_pas_metadata_release(void *a0, void *a1)
 }
 EXPORT_SYMBOL(qcom_scm_pas_metadata_release);
 
-int qcom_scm_pas_shutdown(void *a0)
+void qcom_scm_pas_shutdown(void *a0)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(qcom_scm_pas_shutdown);
 
@@ -3663,9 +3390,9 @@ int qcom_smd_unregister_edge(void)
 }
 EXPORT_SYMBOL(qcom_smd_unregister_edge);
 
-int qcom_smem_alloc(void *a0, void *a1, void *a2)
+void * qcom_smem_alloc(void *a0, void *a1, void *a2)
 {
-	return 0;
+	return NULL;
 }
 EXPORT_SYMBOL(qcom_smem_alloc);
 
@@ -3777,24 +3504,21 @@ int qcom_vadc_scale(void *a0)
 }
 EXPORT_SYMBOL(qcom_vadc_scale);
 
-/* ---------------- qlpmm_* (1) ---------------- */
-
+/* ---- qlpmm_* (1) ---- */
 void * qlpmm_get_subsystem_lpm_data(void *a0, void *a1)
 {
 	return NULL;
 }
 EXPORT_SYMBOL(qlpmm_get_subsystem_lpm_data);
 
-/* ---------------- qmap_* (1) ---------------- */
-
+/* ---- qmap_* (1) ---- */
 int qmap_encapsulate_skb(void *a0, void *a1, void *a2, void *a3, void *a4)
 {
 	return 0;
 }
 EXPORT_SYMBOL(qmap_encapsulate_skb);
 
-/* ---------------- qmp_* (3) ---------------- */
-
+/* ---- qmp_* (3) ---- */
 int qmp_get(void *a0)
 {
 	return 0;
@@ -3813,8 +3537,7 @@ int qmp_send(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(qmp_send);
 
-/* ---------------- qptm_* (11) ---------------- */
-
+/* ---- qptm_* (11) ---- */
 int qptm_available_node_count(void)
 {
 	return 0;
@@ -3881,8 +3604,7 @@ int qptm_power_data_update(void)
 }
 EXPORT_SYMBOL(qptm_power_data_update);
 
-/* ---------------- qrtr_* (5) ---------------- */
-
+/* ---- qrtr_* (5) ---- */
 int qrtr_endpoint_post(void *a0, void *a1, void *a2)
 {
 	return 0;
@@ -3913,8 +3635,7 @@ int qrtr_print_wakeup_reason(void *a0)
 }
 EXPORT_SYMBOL(qrtr_print_wakeup_reason);
 
-/* ---------------- qseecom_* (3) ---------------- */
-
+/* ---- qseecom_* (3) ---- */
 int qseecom_send_command(void *a0, void *a1, void *a2, void *a3, void *a4)
 {
 	return 0;
@@ -3933,8 +3654,7 @@ int qseecom_start_app(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(qseecom_start_app);
 
-/* ---------------- qtee_* (5) ---------------- */
-
+/* ---- qtee_* (5) ---- */
 int qtee_shmbridge_allocate_shm(void *a0, void *a1)
 {
 	return 0;
@@ -3965,8 +3685,7 @@ int qtee_shmbridge_register(void *a0, void *a1, void *a2, void *a3, void *a4, vo
 }
 EXPORT_SYMBOL(qtee_shmbridge_register);
 
-/* ---------------- qti_* (2) ---------------- */
-
+/* ---- qti_* (2) ---- */
 void * qti_battery_charger_get_prop(void *a0, void *a1, void *a2)
 {
 	return NULL;
@@ -3979,8 +3698,7 @@ int qti_smmu_proxy_register_callbacks(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(qti_smmu_proxy_register_callbacks);
 
-/* ---------------- qts_* (3) ---------------- */
-
+/* ---- qts_* (3) ---- */
 int qts_client_register(void *a0)
 {
 	return 0;
@@ -3999,8 +3717,7 @@ int qts_ts_suspend(void *a0)
 }
 EXPORT_SYMBOL(qts_ts_suspend);
 
-/* ---------------- qvadj_* (2) ---------------- */
-
+/* ---- qvadj_* (2) ---- */
 void * qvadj_get_cur_voltage_overrides(void *a0, void *a1)
 {
 	return NULL;
@@ -4013,16 +3730,14 @@ int qvadj_set_next_voltage_overrides(void *a0)
 }
 EXPORT_SYMBOL(qvadj_set_next_voltage_overrides);
 
-/* ---------------- rate_* (1) ---------------- */
-
+/* ---- rate_* (1) ---- */
 int rate_control_set_rates(void *a0, void *a1, void *a2)
 {
 	return 0;
 }
 EXPORT_SYMBOL(rate_control_set_rates);
 
-/* ---------------- reboot_* (2) ---------------- */
-
+/* ---- reboot_* (2) ---- */
 int reboot_mode_register(void *a0)
 {
 	return 0;
@@ -4035,8 +3750,7 @@ void reboot_mode_unregister(void *a0)
 }
 EXPORT_SYMBOL(reboot_mode_unregister);
 
-/* ---------------- reg_* (2) ---------------- */
-
+/* ---- reg_* (2) ---- */
 int reg_initiator_name(void *a0)
 {
 	return 0;
@@ -4049,16 +3763,14 @@ int reg_query_regdb_wmm(void *a0)
 }
 EXPORT_SYMBOL(reg_query_regdb_wmm);
 
-/* ---------------- regulator_* (1) ---------------- */
-
+/* ---- regulator_* (1) ---- */
 int regulator_proxy_consumer_sync_state(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(regulator_proxy_consumer_sync_state);
 
-/* ---------------- regulatory_* (4) ---------------- */
-
+/* ---- regulatory_* (4) ---- */
 int regulatory_hint(void *a0)
 {
 	return 0;
@@ -4083,19 +3795,10 @@ int regulatory_set_wiphy_regd_sync(void *a0, void *a1)
 }
 EXPORT_SYMBOL(regulatory_set_wiphy_regd_sync);
 
-/* ---------------- rfc1042_* (1) ---------------- */
-
-int rfc1042_header(void *a0)
+/* ---- rfkill_* (8) ---- */
+void * rfkill_alloc(void *a0, void *a1, void *a2, void *a3, void *a4)
 {
-	return 0;
-}
-EXPORT_SYMBOL(rfc1042_header);
-
-/* ---------------- rfkill_* (8) ---------------- */
-
-int rfkill_alloc(void *a0, void *a1, void *a2, void *a3, void *a4)
-{
-	return 0;
+	return NULL;
 }
 EXPORT_SYMBOL(rfkill_alloc);
 
@@ -4141,8 +3844,7 @@ void rfkill_unregister(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(rfkill_unregister);
 
-/* ---------------- rpmh_* (4) ---------------- */
-
+/* ---- rpmh_* (4) ---- */
 int rpmh_drv_start(void)
 {
 	return 0;
@@ -4167,8 +3869,7 @@ int rpmh_write_sleep_and_wake_no_child(void)
 }
 EXPORT_SYMBOL(rpmh_write_sleep_and_wake_no_child);
 
-/* ---------------- sched_* (4) ---------------- */
-
+/* ---- sched_* (4) ---- */
 int sched_entity_freq_enable(void *a0)
 {
 	return 0;
@@ -4193,19 +3894,17 @@ int sched_lpm_disallowed_time(void *a0, void *a1)
 }
 EXPORT_SYMBOL(sched_lpm_disallowed_time);
 
-/* ---------------- schedule_* (1) ---------------- */
-
+/* ---- schedule_* (1) ---- */
 int schedule_resume_suspend_work(void *a0, void *a1)
 {
 	return 0;
 }
 EXPORT_SYMBOL(schedule_resume_suspend_work);
 
-/* ---------------- sdca_* (2) ---------------- */
-
-int sdca_devices_debugfs_dentry_create(void *a0, void *a1)
+/* ---- sdca_* (2) ---- */
+void * sdca_devices_debugfs_dentry_create(void *a0, void *a1)
 {
-	return 0;
+	return NULL;
 }
 EXPORT_SYMBOL(sdca_devices_debugfs_dentry_create);
 
@@ -4215,8 +3914,7 @@ void sdca_devices_debugfs_dentry_remove(void *a0)
 }
 EXPORT_SYMBOL(sdca_devices_debugfs_dentry_remove);
 
-/* ---------------- sde_* (2) ---------------- */
-
+/* ---- sde_* (2) ---- */
 int sde_i2c_byte_read(void *a0)
 {
 	return 0;
@@ -4229,16 +3927,14 @@ int sde_i2c_byte_write(void *a0)
 }
 EXPORT_SYMBOL(sde_i2c_byte_write);
 
-/* ---------------- should_* (1) ---------------- */
-
+/* ---- should_* (1) ---- */
 int should_boost_bus_dcvs(void)
 {
 	return 0;
 }
 EXPORT_SYMBOL(should_boost_bus_dcvs);
 
-/* ---------------- si_* (3) ---------------- */
-
+/* ---- si_* (3) ---- */
 int si_core_client_env_open(void *a0, void *a1, void *a2, void *a3)
 {
 	return 0;
@@ -4257,8 +3953,7 @@ int si_object_do_invoke(void *a0, void *a1, void *a2, void *a3, void *a4)
 }
 EXPORT_SYMBOL(si_object_do_invoke);
 
-/* ---------------- sipa_* (8) ---------------- */
-
+/* ---- sipa_* (8) ---- */
 void * sipa_get_channels(void *a0)
 {
 	return NULL;
@@ -4277,9 +3972,9 @@ void sipa_i2c_remove(void *a0)
 }
 EXPORT_SYMBOL(sipa_i2c_remove);
 
-int sipa_i2c_shutdown(void *a0)
+void sipa_i2c_shutdown(void *a0)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(sipa_i2c_shutdown);
 
@@ -4289,9 +3984,9 @@ int sipa_multi_channel_load_fw(void *a0)
 }
 EXPORT_SYMBOL(sipa_multi_channel_load_fw);
 
-int sipa_multi_channel_power_off(void *a0)
+void sipa_multi_channel_power_off(void *a0)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(sipa_multi_channel_power_off);
 
@@ -4301,22 +3996,13 @@ int sipa_multi_channel_power_on_and_set_scene(void *a0)
 }
 EXPORT_SYMBOL(sipa_multi_channel_power_on_and_set_scene);
 
-int sipa_multi_channel_reg_dump(void *a0)
+void sipa_multi_channel_reg_dump(void *a0)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(sipa_multi_channel_reg_dump);
 
-/* ---------------- slimbus_* (1) ---------------- */
-
-int slimbus_bus(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(slimbus_bus);
-
-/* ---------------- smmu_* (2) ---------------- */
-
+/* ---- smmu_* (2) ---- */
 void * smmu_proxy_get_csf_version(void *a0)
 {
 	return NULL;
@@ -4329,8 +4015,7 @@ int smmu_proxy_switch_sid(void *a0, void *a1, void *a2, void *a3, void *a4, void
 }
 EXPORT_SYMBOL(smmu_proxy_switch_sid);
 
-/* ---------------- socinfo_* (9) ---------------- */
-
+/* ---- socinfo_* (9) ---- */
 void * socinfo_get_feature_code(void)
 {
 	return NULL;
@@ -4385,24 +4070,14 @@ void * socinfo_get_subpart_info(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(socinfo_get_subpart_info);
 
-/* ---------------- soundwire_* (1) ---------------- */
-
-int soundwire_type(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(soundwire_type);
-
-/* ---------------- spec_* (1) ---------------- */
-
+/* ---- spec_* (1) ---- */
 int spec_sync_wait_bind_array(void *a0, void *a1)
 {
 	return 0;
 }
 EXPORT_SYMBOL(spec_sync_wait_bind_array);
 
-/* ---------------- spf_* (2) ---------------- */
-
+/* ---- spf_* (2) ---- */
 int spf_core_apm_close_all(void)
 {
 	return 0;
@@ -4415,16 +4090,14 @@ bool spf_core_is_apm_ready(void *a0)
 }
 EXPORT_SYMBOL(spf_core_is_apm_ready);
 
-/* ---------------- spmi_* (1) ---------------- */
-
+/* ---- spmi_* (1) ---- */
 int spmi_pmic_arb_map_address(void *a0, void *a1, void *a2)
 {
 	return 0;
 }
 EXPORT_SYMBOL(spmi_pmic_arb_map_address);
 
-/* ---------------- stm_* (8) ---------------- */
-
+/* ---- stm_* (8) ---- */
 int stm_data_write(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5)
 {
 	return 0;
@@ -4473,17 +4146,16 @@ int stm_unregister_protocol(void *a0)
 }
 EXPORT_SYMBOL(stm_unregister_protocol);
 
-/* ---------------- strategy_* (38) ---------------- */
-
+/* ---- strategy_* (38) ---- */
 bool strategy_class_fg_dual_is_chip_ok(void *a0)
 {
 	return false;
 }
 EXPORT_SYMBOL(strategy_class_fg_dual_is_chip_ok);
 
-void * strategy_class_fg_get_authentic(void *a0)
+bool strategy_class_fg_get_authentic(void)
 {
-	return NULL;
+	return false;
 }
 EXPORT_SYMBOL(strategy_class_fg_get_authentic);
 
@@ -4511,9 +4183,9 @@ void * strategy_class_fg_get_fastcharge(void)
 }
 EXPORT_SYMBOL(strategy_class_fg_get_fastcharge);
 
-void * strategy_class_fg_get_fcc(void *a0)
+int strategy_class_fg_get_fcc(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_get_fcc);
 
@@ -4541,15 +4213,15 @@ void * strategy_class_fg_get_model_name(void *a0)
 }
 EXPORT_SYMBOL(strategy_class_fg_get_model_name);
 
-void * strategy_class_fg_get_pack_vendor_id(void *a0)
+int strategy_class_fg_get_pack_vendor_id(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_get_pack_vendor_id);
 
-void * strategy_class_fg_get_rm(void *a0)
+int strategy_class_fg_get_rm(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_get_rm);
 
@@ -4565,9 +4237,9 @@ void * strategy_class_fg_get_vacc(void *a0)
 }
 EXPORT_SYMBOL(strategy_class_fg_get_vacc);
 
-void * strategy_class_fg_get_voltage_mean(void *a0)
+int strategy_class_fg_get_voltage_mean(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_get_voltage_mean);
 
@@ -4703,8 +4375,7 @@ int strategy_class_wireless_ops_set_parallel_charge(void *a0)
 }
 EXPORT_SYMBOL(strategy_class_wireless_ops_set_parallel_charge);
 
-/* ---------------- stream_* (3) ---------------- */
-
+/* ---- stream_* (3) ---- */
 int stream_agg_add_channel(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5, void *a6, void *a7)
 {
 	return 0;
@@ -4723,8 +4394,7 @@ int stream_agg_remove_channel(void *a0, void *a1, void *a2, void *a3)
 }
 EXPORT_SYMBOL(stream_agg_remove_channel);
 
-/* ---------------- subsystem_* (3) ---------------- */
-
+/* ---- subsystem_* (3) ---- */
 int subsystem_sleep_debug_enable(void *a0)
 {
 	return 0;
@@ -4743,16 +4413,14 @@ void subsystem_sleep_stats_dbg_unregister(void)
 }
 EXPORT_SYMBOL(subsystem_sleep_stats_dbg_unregister);
 
-/* ---------------- swrm_* (1) ---------------- */
-
+/* ---- swrm_* (1) ---- */
 int swrm_wcd_notify(void *a0, void *a1, void *a2)
 {
 	return 0;
 }
 EXPORT_SYMBOL(swrm_wcd_notify);
 
-/* ---------------- sysmon_* (7) ---------------- */
-
+/* ---- sysmon_* (7) ---- */
 int sysmon_stats_query_ddr_residency(void *a0)
 {
 	return 0;
@@ -4795,8 +4463,7 @@ int sysmon_stats_query_sleep(void *a0)
 }
 EXPORT_SYMBOL(sysmon_stats_query_sleep);
 
-/* ---------------- sysstats_* (4) ---------------- */
-
+/* ---- sysstats_* (4) ---- */
 int sysstats_register_iterate_kgsl_process_privates(void *a0)
 {
 	return 0;
@@ -4821,16 +4488,14 @@ int sysstats_unregister_kgsl_stats_cb(void)
 }
 EXPORT_SYMBOL(sysstats_unregister_kgsl_stats_cb);
 
-/* ---------------- system_* (1) ---------------- */
-
+/* ---- system_* (1) ---- */
 int system_heap_allocate_async_read(void *a0, void *a1, void *a2, void *a3, void *a4)
 {
 	return 0;
 }
 EXPORT_SYMBOL(system_heap_allocate_async_read);
 
-/* ---------------- tas25xx_* (8) ---------------- */
-
+/* ---- tas25xx_* (8) ---- */
 bool tas25xx_check_if_algo_ctrl_bypassed(void *a0)
 {
 	return false;
@@ -4879,32 +4544,28 @@ int tas25xx_register_misc(void *a0)
 }
 EXPORT_SYMBOL(tas25xx_register_misc);
 
-/* ---------------- tmecom_* (1) ---------------- */
-
+/* ---- tmecom_* (1) ---- */
 int tmecom_process_request(void *a0, void *a1, void *a2, void *a3)
 {
 	return 0;
 }
 EXPORT_SYMBOL(tmecom_process_request);
 
-/* ---------------- tmelog_* (1) ---------------- */
-
+/* ---- tmelog_* (1) ---- */
 int tmelog_process_request(void *a0, void *a1, void *a2, void *a3)
 {
 	return 0;
 }
 EXPORT_SYMBOL(tmelog_process_request);
 
-/* ---------------- to_* (1) ---------------- */
-
+/* ---- to_* (1) ---- */
 int to_pdrv_policy_node(void)
 {
 	return 0;
 }
 EXPORT_SYMBOL(to_pdrv_policy_node);
 
-/* ---------------- trigger_* (2) ---------------- */
-
+/* ---- trigger_* (2) ---- */
 void trigger_dump_disable(void *a0)
 {
 	/* no-op */
@@ -4917,8 +4578,7 @@ int trigger_dump_enable(void *a0)
 }
 EXPORT_SYMBOL(trigger_dump_enable);
 
-/* ---------------- ufs_* (3) ---------------- */
-
+/* ---- ufs_* (3) ---- */
 int ufs_ffu_reboot_reason_reboot(void *a0)
 {
 	return 0;
@@ -4937,8 +4597,7 @@ int ufs_scsi_write_partition(void *a0, void *a1, void *a2, void *a3)
 }
 EXPORT_SYMBOL(ufs_scsi_write_partition);
 
-/* ---------------- unregister_* (9) ---------------- */
-
+/* ---- unregister_* (9) ---- */
 int unregister_cam_freq_hook(void)
 {
 	return 0;
@@ -4993,8 +4652,7 @@ int unregister_xiaomi_stylus_input_dev(void *a0)
 }
 EXPORT_SYMBOL(unregister_xiaomi_stylus_input_dev);
 
-/* ---------------- update_* (8) ---------------- */
-
+/* ---- update_* (8) ---- */
 int update_abnormal_event(void *a0)
 {
 	return 0;
@@ -5043,16 +4701,14 @@ int update_weak_doubletap_value(void *a0)
 }
 EXPORT_SYMBOL(update_weak_doubletap_value);
 
-/* ---------------- wakeup_* (1) ---------------- */
-
+/* ---- wakeup_* (1) ---- */
 int wakeup_xswapds(void)
 {
 	return 0;
 }
 EXPORT_SYMBOL(wakeup_xswapds);
 
-/* ---------------- walt_* (3) ---------------- */
-
+/* ---- walt_* (3) ---- */
 void * walt_get_cpus_in_state1(void *a0)
 {
 	return NULL;
@@ -5071,16 +4727,14 @@ void * walt_get_halted_cpus(void)
 }
 EXPORT_SYMBOL(walt_get_halted_cpus);
 
-/* ---------------- waltgov_* (1) ---------------- */
-
+/* ---- waltgov_* (1) ---- */
 int waltgov_cam_cpu(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(waltgov_cam_cpu);
 
-/* ---------------- wcnss_* (5) ---------------- */
-
+/* ---- wcnss_* (5) ---- */
 bool wcnss_check_pool_lists(void)
 {
 	return false;
@@ -5111,8 +4765,7 @@ void wcnss_prealloc_put(void *a0)
 }
 EXPORT_SYMBOL(wcnss_prealloc_put);
 
-/* ---------------- wdev_* (2) ---------------- */
-
+/* ---- wdev_* (2) ---- */
 int wdev_chandef(void *a0, void *a1)
 {
 	return 0;
@@ -5125,16 +4778,14 @@ int wdev_to_ieee80211_vif(void *a0)
 }
 EXPORT_SYMBOL(wdev_to_ieee80211_vif);
 
-/* ---------------- wled_* (1) ---------------- */
-
+/* ---- wled_* (1) ---- */
 int wled_flash_led_prepare(void)
 {
 	return 0;
 }
 EXPORT_SYMBOL(wled_flash_led_prepare);
 
-/* ---------------- wm_* (30) ---------------- */
-
+/* ---- wm_* (29) ---- */
 int wm_adsp1_event(void *a0)
 {
 	return 0;
@@ -5255,12 +4906,6 @@ int wm_adsp_event(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(wm_adsp_event);
 
-int wm_adsp_fw_enum(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wm_adsp_fw_enum);
-
 int wm_adsp_fw_get(void *a0)
 {
 	return 0;
@@ -5273,9 +4918,9 @@ void wm_adsp_fw_put(void *a0)
 }
 EXPORT_SYMBOL(wm_adsp_fw_put);
 
-int wm_adsp_power_down(void *a0)
+void wm_adsp_power_down(void *a0)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(wm_adsp_power_down);
 
@@ -5315,8 +4960,7 @@ int wm_halo_wdt_expire(void *a0)
 }
 EXPORT_SYMBOL(wm_halo_wdt_expire);
 
-/* ---------------- wsa883x_* (3) ---------------- */
-
+/* ---- wsa883x_* (3) ---- */
 void * wsa883x_codec_get_dev_num(void *a0)
 {
 	return NULL;
@@ -5335,8 +4979,7 @@ int wsa883x_set_channel_map(void *a0, void *a1, void *a2, void *a3, void *a4, vo
 }
 EXPORT_SYMBOL(wsa883x_set_channel_map);
 
-/* ---------------- wsa884x_* (3) ---------------- */
-
+/* ---- wsa884x_* (3) ---- */
 void * wsa884x_codec_get_dev_num(void *a0)
 {
 	return NULL;
@@ -5355,8 +4998,7 @@ int wsa884x_set_channel_map(void *a0, void *a1, void *a2, void *a3, void *a4, vo
 }
 EXPORT_SYMBOL(wsa884x_set_channel_map);
 
-/* ---------------- xiaomi_* (5) ---------------- */
-
+/* ---- xiaomi_* (5) ---- */
 void * xiaomi_get_gesture_type(void *a0)
 {
 	return NULL;
@@ -5387,10 +5029,105 @@ int xiaomi_unregister_panel_notifier(void *a0, void *a1)
 }
 EXPORT_SYMBOL(xiaomi_unregister_panel_notifier);
 
-/* ---------------- zs_* (1) ---------------- */
-
+/* ---- zs_* (1) ---- */
 int zs_map_object_straddle_info(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(zs_map_object_straddle_info);
+
+
+/* ==================== 变量定义 ==================== */
+
+const unsigned char bridge_tunnel_header[8] = {0};
+EXPORT_SYMBOL(bridge_tunnel_header);
+
+int current_log_level;
+EXPORT_SYMBOL(current_log_level);
+
+struct qmi_elem_info data_ep_id_type_v01_ei[1];
+EXPORT_SYMBOL(data_ep_id_type_v01_ei);
+
+struct qmi_elem_info dhms_mem_alloc_addr_info_type_v01_ei[1];
+EXPORT_SYMBOL(dhms_mem_alloc_addr_info_type_v01_ei);
+
+struct qmi_elem_info dms_get_mac_address_req_msg_v01_ei[1];
+EXPORT_SYMBOL(dms_get_mac_address_req_msg_v01_ei);
+
+struct qmi_elem_info dms_get_mac_address_resp_msg_v01_ei[1];
+EXPORT_SYMBOL(dms_get_mac_address_resp_msg_v01_ei);
+
+void *gprbus;
+EXPORT_SYMBOL(gprbus);
+
+struct qmi_elem_info ims_private_service_mt_invite_ind_msg_v01_ei[1];
+EXPORT_SYMBOL(ims_private_service_mt_invite_ind_msg_v01_ei);
+
+struct qmi_elem_info ims_private_service_subscribe_ind_req_msg_v01_ei[1];
+EXPORT_SYMBOL(ims_private_service_subscribe_ind_req_msg_v01_ei);
+
+struct qmi_elem_info ims_private_service_subscribe_ind_rsp_msg_v01_ei[1];
+EXPORT_SYMBOL(ims_private_service_subscribe_ind_rsp_msg_v01_ei);
+
+struct qmi_elem_info ims_private_service_wfc_call_status_ind_msg_v01_ei[1];
+EXPORT_SYMBOL(ims_private_service_wfc_call_status_ind_msg_v01_ei);
+
+struct qmi_elem_info ims_private_service_wfc_call_twt_config_req_msg_v01_ei[1];
+EXPORT_SYMBOL(ims_private_service_wfc_call_twt_config_req_msg_v01_ei);
+
+struct qmi_elem_info ims_private_service_wfc_call_twt_config_rsp_msg_v01_ei[1];
+EXPORT_SYMBOL(ims_private_service_wfc_call_twt_config_rsp_msg_v01_ei);
+
+struct kobject low_lat_mem_kobject;
+EXPORT_SYMBOL(low_lat_mem_kobject);
+
+struct qmi_elem_info mem_alloc_generic_req_msg_data_v01_ei[1];
+EXPORT_SYMBOL(mem_alloc_generic_req_msg_data_v01_ei);
+
+struct qmi_elem_info mem_alloc_generic_resp_msg_data_v01_ei[1];
+EXPORT_SYMBOL(mem_alloc_generic_resp_msg_data_v01_ei);
+
+struct qmi_elem_info mem_free_generic_req_msg_data_v01_ei[1];
+EXPORT_SYMBOL(mem_free_generic_req_msg_data_v01_ei);
+
+struct qmi_elem_info mem_free_generic_resp_msg_data_v01_ei[1];
+EXPORT_SYMBOL(mem_free_generic_resp_msg_data_v01_ei);
+
+struct qmi_elem_info mem_query_size_req_msg_data_v01_ei[1];
+EXPORT_SYMBOL(mem_query_size_req_msg_data_v01_ei);
+
+struct qmi_elem_info mem_query_size_resp_msg_data_v01_ei[1];
+EXPORT_SYMBOL(mem_query_size_resp_msg_data_v01_ei);
+
+void *memcheck_kgsl_memstat;
+EXPORT_SYMBOL(memcheck_kgsl_memstat);
+
+void *memcheck_walk_process_privates;
+EXPORT_SYMBOL(memcheck_walk_process_privates);
+
+void *mi_smart_refill_pools;
+EXPORT_SYMBOL(mi_smart_refill_pools);
+
+void *micam_amu_data;
+EXPORT_SYMBOL(micam_amu_data);
+
+void *miui_power_enhance;
+EXPORT_SYMBOL(miui_power_enhance);
+
+unsigned long pwrkey_irq_notifier_list;
+EXPORT_SYMBOL(pwrkey_irq_notifier_list);
+
+void *qcom_device_shutdown_in_progress;
+EXPORT_SYMBOL(qcom_device_shutdown_in_progress);
+
+const unsigned char rfc1042_header[8] = {0};
+EXPORT_SYMBOL(rfc1042_header);
+
+struct bus_type slimbus_bus;
+EXPORT_SYMBOL(slimbus_bus);
+
+struct bus_type soundwire_type;
+EXPORT_SYMBOL(soundwire_type);
+
+void *wm_adsp_fw_enum;
+EXPORT_SYMBOL(wm_adsp_fw_enum);
