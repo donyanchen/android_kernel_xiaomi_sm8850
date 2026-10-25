@@ -1,0 +1,103 @@
+name: Prefetch
+
+# 预取构建所需的一切（ACK 源码 / clang / rust），并按版本写入缓存。
+#
+# 逻辑：
+#   1. 查出上游当前提交号
+#   2. 缓存键 = 分支 + 提交号
+#      → 上游没变 → 键相同 → 直接命中缓存 → 不下载
+#      → 上游变了 → 键不同  → 自动重新下载并覆盖缓存
+#   3. 构建时用同一个键，所以这里跑过之后，Build 不会再下载
+#
+# 手动点一下即可；也可定时跑。
+
+on:
+  workflow_dispatch:
+    inputs:
+      ack_branch:
+        description: 'ACK 分支'
+        required: true
+        default: 'android16-6.12-2026-03'
+        type: string
+  schedule:
+    - cron: '0 4 * * 1'
+
+jobs:
+  prefetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: 解析上游提交
+        id: rev
+        run: |
+          BRANCH="${{ inputs.ack_branch || 'android16-6.12-2026-03' }}"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          SHA=$(git ls-remote https://android.googlesource.com/kernel/common "refs/heads/$BRANCH" 2>/dev/null | awk '{print $1}')
+          [ -z "$SHA" ] && SHA="unknown"
+          echo "commit=$SHA" >> "$GITHUB_OUTPUT"
+          echo "分支 $BRANCH  提交 $SHA"
+
+      - name: 恢复缓存（命中则跳过下载）
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            cache/common
+            cache/clang19
+            cache/rust
+          key: srccache-${{ steps.rev.outputs.branch }}-${{ steps.rev.outputs.commit }}
+
+      - name: 下载 ACK 源码
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p cache
+          BRANCH="${{ steps.rev.outputs.branch }}"
+          echo "下载 $BRANCH ..."
+          curl -L --retry 3 --retry-delay 5 -o /tmp/ack.tar.gz \
+            "https://android.googlesource.com/kernel/common/+archive/refs/heads/${BRANCH}.tar.gz"
+          ls -lh /tmp/ack.tar.gz
+          mkdir -p cache/common
+          tar xzf /tmp/ack.tar.gz -C cache/common
+          rm -f /tmp/ack.tar.gz
+          echo "文件数: $(find cache/common -type f | wc -l)"
+          head -3 cache/common/Makefile
+
+      - name: 下载工具链
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          GC="https://android.googlesource.com/platform/prebuilts"
+          echo "下载 clang r536225 ..."
+          curl -L --retry 3 --retry-delay 5 -o /tmp/clang.tar.gz \
+            "$GC/clang/host/linux-x86/+archive/refs/heads/main/clang-r536225.tar.gz"
+          mkdir -p cache/clang19 && tar xzf /tmp/clang.tar.gz -C cache/clang19 && rm -f /tmp/clang.tar.gz
+
+          echo "下载 rust 1.82.0 ..."
+          curl -L --retry 3 --retry-delay 5 -o /tmp/rust.tar.gz \
+            "$GC/rust/+archive/refs/heads/main/linux-x86/1.82.0.tar.gz"
+          mkdir -p cache/rust && tar xzf /tmp/rust.tar.gz -C cache/rust && rm -f /tmp/rust.tar.gz
+
+          ls cache/clang19/bin/clang cache/rust/bin/rustc
+          du -sh cache/*
+
+      - name: 缓存命中检查
+        if: steps.cache.outputs.cache-hit == 'true'
+        run: |
+          echo "✓ 上游未变化，缓存已是最新，无需下载"
+          du -sh cache/*
+
+      - name: 汇总
+        run: |
+          {
+            echo "## 预取结果"
+            echo ""
+            echo "| 项 | 值 |"
+            echo "|---|---|"
+            echo "| ACK 分支 | \`${{ steps.rev.outputs.branch }}\` |"
+            echo "| 上游提交 | \`${{ steps.rev.outputs.commit }}\` |"
+            echo "| 缓存命中 | ${{ steps.cache.outputs.cache-hit == 'true' && '是（未下载）' || '否（已下载）' }} |"
+            echo ""
+            echo "缓存键：\`srccache-${{ steps.rev.outputs.branch }}-${{ steps.rev.outputs.commit }}\`"
+            echo ""
+            echo "下次 Build Kernel 会直接命中这个缓存，跳过全部下载。"
+          } >> "$GITHUB_STEP_SUMMARY"
+          cat "$GITHUB_STEP_SUMMARY"
