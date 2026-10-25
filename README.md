@@ -1,76 +1,69 @@
 # 小米 17（pudding）自编译 Android GKI 内核
 
-```
-内核版本    6.12.69-android16-6-g43b5ab7e247d-abogki561813157-4k
-vermagic    6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64
-```
+### 📱 构建信息
 
-支持机型：**小米 17（pudding / canoe，SM8850）**，系统 Android 16 / 17 均可。
+- 内核版本号：`6.12.69_gki-android16-6-4k`
+- 机型：小米 17 / pudding / SM8850
+- 源码基线：AOSP `android16-6.12-2026-03`
+- vermagic：`6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64`
 
----
+### ⚙️ 内核特性
 
-## 特性
+| 项目 | 状态 |
+|---|---|
+| 原厂模块兼容 | ✅ 404 个全部加载 |
+| Root 方案 | ✅ FinaSU / SukiSU Ultra（内建） |
+| SELinux 状态伪装 | ✅ |
+| AVC 审计伪装 | ✅ |
+| 挂载点隐藏 | ✅ |
+| 版本串伪装 | ✅ |
+| ADIOS IO 调度器 | ✅ |
+| LZ4 / LZ4KD 压缩 | ✅ |
+| BBR 拥塞控制 | ✅ |
+| CAKE / FQ / HTB / TBF / SFQ 队列 | ✅ |
+| IPSet + netfilter 扩展 | ✅ |
+| TPROXY 透明代理 | ✅ |
+| WireGuard | ✅ |
+| DAMON 自适应回收 | ✅ |
+| ZRAM ZSTD + 写回 | ✅ |
+| ZSWAP | ✅ |
+| KSM 内存去重 | ✅ |
+| F2FS 压缩（LZ4/LZ4HC） | ✅ |
+| EROFS LZMA 压缩 | ✅ |
+| NTFS3 | ✅ |
+| SUSFS | ❌ 不兼容当前 Root 方案 |
+| KPM | ❌ 需额外内核补丁 |
 
-- **原厂模块全兼容**，日常功能正常
-- **Root 内建**：FinaSU / SukiSU Ultra 可选，无需额外刷模块
-- **环境隐藏**：SELinux 状态 / AVC 审计 / 挂载点 / 版本串
-- **IO 与内存**：ADIOS 调度器、LZ4KD 压缩
-- **不含**：SUSFS、KPM
-
----
-
-## 下载
-
-到 [Releases](../../releases) 页下载：
+### 📥 下载
 
 | 文件 | 用途 |
 |---|---|
 | `boot_pudding_*.img.gz` | 配合 `flash.sh` 或 fastboot 刷入 |
 | `AnyKernel3_*.zip` | 管理器 / Recovery 直刷 |
-| `flash.sh` | 一键刷入脚本（自动检测槽位、自动备份、失败回滚） |
+| `flash.sh` | 一键刷入脚本（自动判槽位、自动备份、失败回滚） |
 
----
+### 📋 安装方法
 
-## 刷入
+1. **手机端一键刷（推荐）**：下载 `flash.sh` 和 `boot_pudding_*.img.gz` 到 `/sdcard/Download/kp/`，终端执行 `su` 后 `sh /sdcard/Download/kp/flash.sh`
+2. **管理器直刷**：下载 AnyKernel3 zip，Root 管理器 → 模块 → 从本地安装
+3. **KernelFlasher**：安装 [KernelFlasher](https://github.com/capntrips/KernelFlasher/releases)，选当前槽位 → 先备份 → 刷入解压后的 `.img`
+4. **fastboot**：`fastboot getvar current-slot` 确认槽位后 `fastboot flash boot_b xxx.img`
 
-**方式一：手机端一键刷（推荐）**
+⚠️ **不要用 `fastboot flash:raw`**，会丢掉 kernel_dtb，导致无法开机。
 
-```bash
-su
-sh /sdcard/Download/kp/flash.sh
-```
+⚠️ **刷入前务必用 KernelFlasher 等工具备份 boot 分区。**
 
-**方式二：fastboot**
-
-```bash
-fastboot getvar current-slot          # 先确认是 a 还是 b
-fastboot flash boot_b xxx.img         # 按实际槽位替换
-fastboot reboot
-```
-
-> ⚠️ 不要用 `fastboot flash:raw`，会丢掉 kernel_dtb，无法开机。
-
-**方式三：管理器直刷**
-
-下载 AnyKernel3 zip，在 Root 管理器里「从本地安装」。
-
----
-
-## 回滚
+### 🔙 回滚
 
 ```bash
-# 系统还能起来
+# 系统还能起
 dd if=你的备份.img of=/dev/block/by-name/boot_b bs=4096
 
 # 起不来：长按 音量下 + 电源 进 fastboot
 fastboot flash boot_b 备份.img
 ```
 
-**刷之前务必先备份。**
-
----
-
-## 验证
+### ✅ 验证
 
 ```bash
 uname -r
@@ -80,14 +73,12 @@ su -c "od -An -tx4 /sys/fs/selinux/status"
 # 期望 policyload（第 4 段）为 00000000
 ```
 
----
-
-## 支持范围
+### 📱 支持范围
 
 | 项 | 值 |
 |---|---|
-| 机型 | 小米 17，代号 pudding |
-| 平台 | SM8850 / canoe |
+| 机型 | 小米 17，代号 pudding / canoe |
+| 平台 | SM8850 |
 | 内核 KMI | `android16-6-4k` |
 | 分区 | A/B，boot_a = sde14，boot_b = sde57 |
 
@@ -100,9 +91,7 @@ uname -r                      # 必须是 6.12.69-android16-6-4k
 
 > `android16` 是 GKI 的 KMI 世代标识，不是系统版本。Android 17 系统配 `android16-6-4k` 内核是正常组合。
 
----
-
-## 从源码构建
+### 🔨 从源码构建
 
 ```
 Actions → Build Kernel → Run workflow
