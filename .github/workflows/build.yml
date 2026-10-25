@@ -201,7 +201,10 @@ jobs:
           git config --global credential.helper store
           printf 'https://x-access-token:%s@github.com\n' "${{ secrets.PRIVATE_REPO_TOKEN }}" > "$HOME/.git-credentials"
           rm -rf /tmp/priv
-          git clone --depth 1 "https://github.com/donyanchen/pudding-private.git" /tmp/priv
+          DEV="${{ inputs.device }}"
+          echo "目标设备: $DEV"
+          git clone --depth 1 "https://github.com/donyanchen/${DEV}-private.git" /tmp/priv
+          # myron 仓库的 defconfig 叫 configs/<dev>_full.defconfig，命名已统一
           mkdir -p configs vendor/xiaomi-stubs
           cp -f /tmp/priv/configs/* configs/
           cp -f /tmp/priv/vendor/xiaomi-stubs/* vendor/xiaomi-stubs/
@@ -244,7 +247,12 @@ jobs:
         id: ver
         run: |
           cd ws/common
-          python3 "$GITHUB_WORKSPACE/scripts/fake_version.py" . "${{ inputs.disp_version }}"
+          # 版本串：优先用工作流输入；否则从私有仓库的 uname.txt 读原厂真值
+          DISP="${{ inputs.disp_version }}"
+          if [ -z "$DISP" ] && [ -f "/tmp/priv/uname.txt" ]; then
+            DISP="@/tmp/priv/uname.txt"
+          fi
+          python3 "$GITHUB_WORKSPACE/scripts/fake_version.py" . "$DISP"
           echo "--- 改后 ---"
           sed -n '28,32p' init/version-timestamp.c
           grep -c "14043575" init/version-timestamp.c || true
@@ -401,21 +409,21 @@ jobs:
           CFG="$GITHUB_WORKSPACE/configs/${DEV}_full.defconfig"
           echo "目标设备: $DEV"
           if [ -f "$CFG" ]; then
-            echo "使用设备完整配置 pudding_full.defconfig"
-            cp "$CFG" arch/arm64/configs/pudding_defconfig
+            echo "使用设备完整配置 ${DEV}_full.defconfig"
+            cp "$CFG" arch/arm64/configs/${DEV}_defconfig
           else
             echo "设备配置缺失，回退 gki_defconfig"
-            cp arch/arm64/configs/gki_defconfig arch/arm64/configs/pudding_defconfig
+            cp arch/arm64/configs/gki_defconfig arch/arm64/configs/${DEV}_defconfig
           fi
-          ABI="$GITHUB_WORKSPACE/configs/pudding_abi.fragment"
+          ABI="$GITHUB_WORKSPACE/configs/${DEV}_abi.fragment"
           if [ -f "$ABI" ]; then
             echo "叠加 ABI 对齐片段"
-            cat "$ABI" >> arch/arm64/configs/pudding_defconfig
+            cat "$ABI" >> arch/arm64/configs/${DEV}_defconfig
           fi
-          EXTRA="$GITHUB_WORKSPACE/configs/pudding_extra.config"
+          EXTRA="$GITHUB_WORKSPACE/configs/${DEV}_extra.config"
           if [ -f "$EXTRA" ]; then
             echo "叠加高通子系统配置"
-            cat "$EXTRA" >> arch/arm64/configs/pudding_defconfig
+            cat "$EXTRA" >> arch/arm64/configs/${DEV}_defconfig
           fi
           # 跳过模块符号 CRC 校验（结构体实测与原厂一致）
           python3 "$GITHUB_WORKSPACE/scripts/patch_modversion.py" . || true
@@ -436,9 +444,9 @@ jobs:
           cp protected_module_names_list ../protected_module_names_list 2>/dev/null || true
           echo "protected_module_names_list 就位"
           if [ "$ADIOS_OK" = "1" ]; then
-            echo "CONFIG_MQ_IOSCHED_ADIOS=y" >> arch/arm64/configs/pudding_defconfig
+            echo "CONFIG_MQ_IOSCHED_ADIOS=y" >> arch/arm64/configs/${DEV}_defconfig
           fi
-          echo "defconfig 行数: $(wc -l < arch/arm64/configs/pudding_defconfig)"
+          echo "defconfig 行数: $(wc -l < arch/arm64/configs/${DEV}_defconfig)"
 
       - name: 编译
         run: |
@@ -466,7 +474,7 @@ jobs:
           export KBUILD_BUILD_USER=kleaf
           export KBUILD_BUILD_HOST=build-host
           export KBUILD_BUILD_TIMESTAMP="Tue Sep  8 15:08:49 UTC 2026"
-          make ARCH=arm64 pudding_defconfig > build.log 2>&1
+          make ARCH=arm64 ${DEV}_defconfig > build.log 2>&1
           make ARCH=arm64 -j"$(nproc)" Image >> build.log 2>&1 || true
           tail -30 build.log
           test -f arch/arm64/boot/Image
@@ -567,9 +575,9 @@ jobs:
         if: always()
         run: |
           cd ws/common
-          if [ -f .config ] && [ -f "$GITHUB_WORKSPACE/configs/pudding_full.defconfig" ]; then
+          if [ -f .config ] && [ -f "$GITHUB_WORKSPACE/configs/${DEV}_full.defconfig" ]; then
             echo "===== .config vs 设备配置 ====="
-            python3 "$GITHUB_WORKSPACE/scripts/config_diff.py" "$GITHUB_WORKSPACE/configs/pudding_full.defconfig" .config || true
+            python3 "$GITHUB_WORKSPACE/scripts/config_diff.py" "$GITHUB_WORKSPACE/configs/${DEV}_full.defconfig" .config || true
             cp .config "$GITHUB_WORKSPACE/built.config" || true
           else
             echo "缺少 .config"
