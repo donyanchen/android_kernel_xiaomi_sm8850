@@ -27,7 +27,9 @@ OFFICIAL_COMPILER = (
 
 def main():
     root = sys.argv[1] if len(sys.argv) > 1 else '.'
-    ver = sys.argv[2] if len(sys.argv) > 2 else OFFICIAL_VER
+    ver = sys.argv[2].strip() if len(sys.argv) > 2 else ''
+    if not ver:
+        ver = OFFICIAL_VER
 
     vf = os.path.join(root, 'init', 'version-timestamp.c')
     if not os.path.exists(vf):
