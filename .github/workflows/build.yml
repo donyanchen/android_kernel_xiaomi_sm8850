@@ -168,6 +168,28 @@ jobs:
           echo "$PWD/rust/bin" >> "$GITHUB_PATH"
           ls -l clang19/bin/clang clang19/bin/ld.lld || true
 
+      - name: 拉取私有配置
+        run: |
+          # ABI 符号表 / 原厂 defconfig / 厂商桩函数不随公开仓库分发。
+          # 缺失时直接失败，避免用不完整配置编出废镜像。
+          set -e
+          if [ -z "${{ secrets.PRIVATE_REPO_TOKEN }}" ]; then
+            echo "::error::缺少 secret PRIVATE_REPO_TOKEN"
+            exit 1
+          fi
+          git config --global credential.helper store
+          printf 'https://x-access-token:%s@github.com\n' "${{ secrets.PRIVATE_REPO_TOKEN }}" > "$HOME/.git-credentials"
+          rm -rf /tmp/priv
+          git clone --depth 1 "https://github.com/donyanchen/pudding-private.git" /tmp/priv
+          cp -f /tmp/priv/configs/* configs/
+          cp -f /tmp/priv/vendor/xiaomi-stubs/* vendor/xiaomi-stubs/
+          mkdir -p docs
+          cp -f /tmp/priv/docs/HANDOVER.md docs/ 2>/dev/null || true
+          rm -f "$HOME/.git-credentials"
+          echo "私有配置已拉取："
+          ls -la configs/ | tail -8
+          ls -la vendor/xiaomi-stubs/
+
       - name: 集成 SukiSU
         run: |
           cd ws/common
