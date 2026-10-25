@@ -185,6 +185,7 @@ jobs:
         run: |
           cd ws/common
           python3 "$GITHUB_WORKSPACE/patches/fix_ksu_612.py"
+          python3 "$GITHUB_WORKSPACE/patches/fix_ksu_lsm_612.py" . || true
 
       - name: 版本串（对齐原厂 /proc/version）
         id: ver
