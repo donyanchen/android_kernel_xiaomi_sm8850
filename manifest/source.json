@@ -22,7 +22,7 @@
       "mirror": "https://github.com/aosp-mirror/kernel_common"
     },
     "sukisu": {
-      "url": "https://github.com/SukiSU-Ultra/SukiSU-Ultra",
+      "url": "https://github.com/donyanchen/SukiSU-Ultra",
       "ref": "main",
       "method": "kernel/setup.sh",
       "note": "每次构建实时拉取 main，确保为当时最新"

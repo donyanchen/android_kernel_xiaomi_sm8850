@@ -13,7 +13,7 @@
   "root": {
     "sukisu": {
       "name": "SukiSU Ultra",
-      "url": "https://github.com/SukiSU-Ultra/SukiSU-Ultra",
+      "url": "https://github.com/donyanchen/SukiSU-Ultra",
       "ref": "main",
       "method": "kernel/setup.sh",
       "license": "GPL-2.0",

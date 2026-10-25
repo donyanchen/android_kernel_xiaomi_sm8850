@@ -61,7 +61,7 @@ export PATH="${WORK}/clang19/bin:${WORK}/rust/bin:${PATH}"
 cd common
 if [[ ! -d drivers/kernelsu ]]; then
   log "集成 SukiSU"
-  curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/refs/heads/main/kernel/setup.sh" | bash -s main
+  curl -LSs "https://raw.githubusercontent.com/donyanchen/SukiSU-Ultra/refs/heads/pudding/kernel/setup.sh" | bash -s pudding
 
   log "拷贝 uapi 头文件"
   UAPI_SRC=$(find . -maxdepth 3 -type d -name uapi | grep -i kernelsu | head -1 || true)

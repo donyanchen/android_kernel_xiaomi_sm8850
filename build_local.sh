@@ -113,7 +113,7 @@ prepare_toolchain() {
 integrate_sukisu() {
   log "集成 SukiSU（builtin 分支，自带 SUSFS 集成）"
   cd "$WORK/common"
-  curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/refs/heads/builtin/kernel/setup.sh" | bash -s builtin
+  curl -LSs "https://raw.githubusercontent.com/donyanchen/SukiSU-Ultra/refs/heads/pudding/kernel/setup.sh" | bash -s pudding
 
   local uapi
   uapi=$(find . -maxdepth 3 -type d -name uapi | grep -i kernelsu | head -1)
