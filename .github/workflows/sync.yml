@@ -1,0 +1,100 @@
+name: Upstream Sync
+
+# 跟踪上游更新：
+#   - Google ACK 是否有新的 android16-6.12 季度分支
+#   - 当前分支的 SUBLEVEL 是否变化（影响 vermagic）
+#   - SukiSU 是否有新 release
+#
+# 注意：vermagic 必须与设备 vendor 模块一致（6.12.69-android16-6-4k）。
+# 因此上游升到 6.12.7x 时不会自动切换——那会让 404 个厂商模块拒载。
+# 本工作流只负责「发现变化 + 报告」，是否升级由人工确认。
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 检查 ACK 分支与版本
+        id: ack
+        run: |
+          echo "=== 远端 android16-6.12 分支"
+          git ls-remote --heads https://android.googlesource.com/kernel/common 2>/dev/null \
+            | awk '{print $2}' | sed 's#refs/heads/##' \
+            | grep -E '^android16-6\.12-[0-9]{4}-[0-9]{2}$' \
+            | sort -r > /tmp/branches.txt
+          head -5 /tmp/branches.txt
+          LATEST=$(head -1 /tmp/branches.txt)
+          echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
+
+          CURRENT=$(python3 -c "import json;print(json.load(open('manifest/source.json'))['sources']['ack']['branch'])" 2>/dev/null || echo "")
+          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
+          echo "当前配置分支: $CURRENT"
+
+          echo "=== 两个分支的 SUBLEVEL"
+          for b in "$LATEST" "$CURRENT"; do
+            [ -z "$b" ] && continue
+            V=$(curl -sL -m 30 "https://android.googlesource.com/kernel/common/+/refs/heads/$b/Makefile?format=TEXT" 2>/dev/null | base64 -d 2>/dev/null | grep -E "^SUBLEVEL =" | tr -d ' ')
+            echo "  $b -> $V"
+            [ "$b" = "$LATEST" ] && echo "latest_sub=$V" >> "$GITHUB_OUTPUT"
+          done
+
+      - name: 检查 SukiSU 最新提交
+        id: suki
+        run: |
+          SHA=$(curl -sL -m 30 "https://api.github.com/repos/SukiSU-Ultra/SukiSU-Ultra/commits/main" 2>/dev/null | grep -m1 '"sha"' | cut -d'"' -f4 | cut -c1-12)
+          echo "sukisu_main=$SHA" >> "$GITHUB_OUTPUT"
+          echo "SukiSU main: $SHA"
+
+      - name: 汇总报告
+        run: |
+          {
+            echo "## 上游同步检查"
+            echo ""
+            echo "| 项 | 值 |"
+            echo "|---|---|"
+            echo "| 当前 ACK 分支 | \`${{ steps.ack.outputs.current }}\` |"
+            echo "| 上游最新分支 | \`${{ steps.ack.outputs.latest }}\` |"
+            echo "| 最新分支 SUBLEVEL | \`${{ steps.ack.outputs.latest_sub }}\` |"
+            echo "| SukiSU main | \`${{ steps.suki.outputs.sukisu_main }}\` |"
+            echo ""
+            echo "**vermagic 要求**: \`6.12.69-android16-6-4k\`"
+            echo ""
+            if [ "${{ steps.ack.outputs.current }}" != "${{ steps.ack.outputs.latest }}" ]; then
+              echo "⚠️ 上游有新分支。**不要盲目升级**——如果 SUBLEVEL 不是 69，"
+              echo "厂商模块会因 vermagic 不匹配而拒载（卡第一屏）。"
+              echo "升级前必须重跑 ABI 校验（kobject_uevent_env = \`0x8bb6d45c\`）。"
+            else
+              echo "✅ 已是最新分支。"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 分支变化时开 Issue
+        if: steps.ack.outputs.current != steps.ack.outputs.latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TITLE="上游 ACK 有新分支: ${{ steps.ack.outputs.latest }}"
+          if gh issue list --repo "$GITHUB_REPOSITORY" --search "$TITLE in:title" --json number --jq '.[0].number' | grep -q .; then
+            echo "Issue 已存在，跳过"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" \
+              --title "$TITLE" \
+              --body "上游出现新分支 \`${{ steps.ack.outputs.latest }}\`（SUBLEVEL \`${{ steps.ack.outputs.latest_sub }}\`）。
+
+当前使用 \`${{ steps.ack.outputs.current }}\`。
+
+**升级前提**：
+1. SUBLEVEL 必须与设备 vendor 模块的 vermagic 一致（\`6.12.69\`）
+2. 升级后必须跑 ABI 校验：\`kobject_uevent_env\` CRC 需为 \`0x8bb6d45c\`，\`struct module\` 为 1600 字节 / 75 成员
+3. 校验不过不要发布"
+            echo "已创建 Issue"
+          fi
