@@ -15,7 +15,8 @@
 """
 import sys, os, re
 
-# 小米17 (pudding) 原厂 OS4.0.5.0.XPCCNXM 的真实值
+# 默认值：小米17 (pudding) 原厂 OS4.0.5.0.XPCCNXM
+# 其他机型由 CI 从私有仓库的 uname.txt 读出后作为第二个参数传入
 OFFICIAL_VER = '6.12.69-android16-6-g43b5ab7e247d-abogki561813157-4k'
 OFFICIAL_COMPILER = (
     'Android (14043575, +pgo, +bolt, +lto, +mlgo, based on r536225) '
@@ -28,6 +29,12 @@ OFFICIAL_COMPILER = (
 def main():
     root = sys.argv[1] if len(sys.argv) > 1 else '.'
     ver = sys.argv[2].strip() if len(sys.argv) > 2 else ''
+    if ver.startswith('@'):
+        # 从 uname.txt / /proc/version 里提取真实版本串
+        raw = open(ver[1:], encoding='utf-8', errors='replace').read()
+        m = re.search(r'Linux version (\S+)', raw)
+        ver = m.group(1) if m else ''
+        print(f'从 {sys.argv[2][1:]} 读取版本串: {ver}')
     if not ver:
         ver = OFFICIAL_VER
 
