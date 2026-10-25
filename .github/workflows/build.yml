@@ -171,7 +171,9 @@ jobs:
       - name: 集成 SukiSU
         run: |
           cd ws/common
-          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/refs/heads/main/kernel/setup.sh" | bash -s main
+          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/refs/heads/builtin/kernel/setup.sh" | bash -s builtin
+          echo "--- Kconfig 是否含 KSU_SUSFS（builtin 分支应自带）---"
+          grep -c "config KSU_SUSFS" drivers/kernelsu/Kconfig 2>/dev/null || echo 0
           UAPI_SRC=$(find . -maxdepth 3 -type d -name uapi | grep -i kernelsu | head -1)
           [ -z "$UAPI_SRC" ] && UAPI_SRC=$(find . -maxdepth 3 -type d -name uapi | head -1)
           echo "uapi 来源: $UAPI_SRC"
