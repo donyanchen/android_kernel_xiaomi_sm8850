@@ -57,11 +57,11 @@ fi
 
 export PATH="${WORK}/clang19/bin:${WORK}/rust/bin:${PATH}"
 
-# ---------------------------------------------------------------- SukiSU
+# ---------------------------------------------------------------- FinaSU
 cd common
 if [[ ! -d drivers/kernelsu ]]; then
-  log "集成 SukiSU"
-  curl -LSs "https://raw.githubusercontent.com/donyanchen/SukiSU-Ultra/refs/heads/pudding/kernel/setup.sh" | bash -s pudding
+  log "集成 FinaSU"
+  curl -LSs "https://raw.githubusercontent.com/donyanchen/FinaSU/refs/heads/pudding/kernel/setup.sh" | bash -s pudding
 
   log "拷贝 uapi 头文件"
   UAPI_SRC=$(find . -maxdepth 3 -type d -name uapi | grep -i kernelsu | head -1 || true)
@@ -73,7 +73,7 @@ if [[ ! -d drivers/kernelsu ]]; then
   log "应用兼容性补丁"
   python3 "${ROOT}/patches/fix_ksu_612.py"
 else
-  log "SukiSU 已集成，跳过"
+  log "FinaSU 已集成，跳过"
 fi
 
 # ---------------------------------------------------------------- 配置

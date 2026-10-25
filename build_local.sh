@@ -109,11 +109,11 @@ prepare_toolchain() {
   command -v bindgen && bindgen --version || echo "⚠ 无 bindgen"
 }
 
-# ---------------------------------------------------------------- SukiSU
+# ---------------------------------------------------------------- FinaSU
 integrate_sukisu() {
-  log "集成 SukiSU（builtin 分支，自带 SUSFS 集成）"
+  log "集成 FinaSU（pudding 分支，含 selinux_hide 修复）"
   cd "$WORK/common"
-  curl -LSs "https://raw.githubusercontent.com/donyanchen/SukiSU-Ultra/refs/heads/pudding/kernel/setup.sh" | bash -s pudding
+  curl -LSs "https://raw.githubusercontent.com/donyanchen/FinaSU/refs/heads/pudding/kernel/setup.sh" | bash -s pudding
 
   local uapi
   uapi=$(find . -maxdepth 3 -type d -name uapi | grep -i kernelsu | head -1)

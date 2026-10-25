@@ -22,13 +22,13 @@
       "mirror": "https://github.com/aosp-mirror/kernel_common"
     },
     "sukisu": {
-      "url": "https://github.com/donyanchen/SukiSU-Ultra",
+      "url": "https://github.com/donyanchen/FinaSU",
       "ref": "main",
       "method": "kernel/setup.sh",
       "note": "每次构建实时拉取 main，确保为当时最新"
     },
     "susfs": {
-      "note": "由 SukiSU 的 setup.sh 集成"
+      "note": "由 FinaSU 的 setup.sh 集成"
     }
   },
   "toolchain": {
