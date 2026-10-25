@@ -171,9 +171,7 @@ jobs:
       - name: 集成 SukiSU
         run: |
           cd ws/common
-          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/refs/heads/builtin/kernel/setup.sh" | bash -s builtin
-          echo "--- Kconfig 是否含 KSU_SUSFS（builtin 分支应自带）---"
-          grep -c "config KSU_SUSFS" drivers/kernelsu/Kconfig 2>/dev/null || echo 0
+          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/refs/heads/main/kernel/setup.sh" | bash -s main
           UAPI_SRC=$(find . -maxdepth 3 -type d -name uapi | grep -i kernelsu | head -1)
           [ -z "$UAPI_SRC" ] && UAPI_SRC=$(find . -maxdepth 3 -type d -name uapi | head -1)
           echo "uapi 来源: $UAPI_SRC"
@@ -301,30 +299,6 @@ jobs:
             cd "$GITHUB_WORKSPACE"
           fi
 
-      - name: 应用 SUSFS 补丁（失败不阻塞）
-        continue-on-error: true
-        run: |
-          cd ws
-          if git clone --depth=1 -b oki-android16-6.12-dev https://github.com/cctv18/susfs4oki.git susfs4ksu 2>&1 | tail -2; then
-            cp susfs4ksu/kernel_patches/fs/* common/fs/ 2>/dev/null || true
-            cp susfs4ksu/kernel_patches/include/linux/* common/include/linux/ 2>/dev/null || true
-            P="$PWD/susfs4ksu/kernel_patches/50_add_susfs_in_gki-android16-6.12.patch"
-            if [ -f "$P" ]; then
-              cd common
-              if patch -p1 --dry-run -F3 < "$P" > /tmp/susfs.log 2>&1; then
-                patch -p1 -F3 < "$P"
-                echo "--- 补 Kconfig 定义（50_ 补丁不含，需 10_ 的内容）---"
-                python3 "$GITHUB_WORKSPACE/scripts/patch_susfs_kconfig.py" "$PWD" || true
-                echo "SUSFS_OK=1" >> "$GITHUB_ENV"
-                echo "SUSFS 补丁成功"
-              else
-                echo "SUSFS 补丁不适用，跳过"; tail -12 /tmp/susfs.log
-              fi
-            fi
-          else
-            echo "克隆失败，跳过 SUSFS"
-          fi
-
       - name: 安装 bindgen（CONFIG_RUST / ASHMEM 必需）
         run: |
           export PATH="$PWD/ws/rust/bin:$PATH"
@@ -402,25 +376,6 @@ jobs:
           fi
           cp protected_module_names_list ../protected_module_names_list 2>/dev/null || true
           echo "protected_module_names_list 就位"
-          # SUSFS 配置（补丁成功才加）
-          if [ "$SUSFS_OK" = "1" ]; then
-            echo 'CONFIG_KSU_SUSFS=y' >> arch/arm64/configs/pudding_defconfig
-            echo 'CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y' >> arch/arm64/configs/pudding_defconfig
-            echo 'CONFIG_KSU_SUSFS_SUS_PATH=y' >> arch/arm64/configs/pudding_defconfig
-            echo 'CONFIG_KSU_SUSFS_SUS_MOUNT=y' >> arch/arm64/configs/pudding_defconfig
-            echo 'CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y' >> arch/arm64/configs/pudding_defconfig
-            echo 'CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y' >> arch/arm64/configs/pudding_defconfig
-            echo 'CONFIG_KSU_SUSFS_SUS_KSTAT=y' >> arch/arm64/configs/pudding_defconfig
-            echo 'CONFIG_KSU_SUSFS_TRY_UMOUNT=y' >> arch/arm64/configs/pudding_defconfig
-            echo 'CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y' >> arch/arm64/configs/pudding_defconfig
-            echo 'CONFIG_KSU_SUSFS_SPOOF_UNAME=y' >> arch/arm64/configs/pudding_defconfig
-            echo 'CONFIG_KSU_SUSFS_ENABLE_LOG=y' >> arch/arm64/configs/pudding_defconfig
-            echo 'CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y' >> arch/arm64/configs/pudding_defconfig
-            echo 'CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y' >> arch/arm64/configs/pudding_defconfig
-            echo 'CONFIG_KSU_SUSFS_OPEN_REDIRECT=y' >> arch/arm64/configs/pudding_defconfig
-            echo 'CONFIG_KSU_SUSFS_SUS_MAP=y' >> arch/arm64/configs/pudding_defconfig
-            echo "SUSFS 配置已追加"
-          fi
           if [ "$ADIOS_OK" = "1" ]; then
             echo "CONFIG_MQ_IOSCHED_ADIOS=y" >> arch/arm64/configs/pudding_defconfig
           fi
@@ -579,26 +534,6 @@ jobs:
             echo "bindgen: $(command -v bindgen || echo 缺)"
             bash scripts/rust_is_available.sh 2>&1 | tail -12 || true
             exit 1
-          fi
-
-      - name: SUSFS 校验
-        if: always()
-        run: |
-          cd ws/common
-          echo "===== SUSFS 校验 ====="
-          SUSFS_OK="${SUSFS_OK:-0}"
-          echo "  补丁状态: SUSFS_OK=$SUSFS_OK"
-          if [ -f .config ]; then
-            N=$(grep -c '^CONFIG_KSU_SUSFS' .config 2>/dev/null || echo 0)
-            echo "  .config 中 KSU_SUSFS 项: $N"
-            grep '^CONFIG_KSU_SUSFS' .config 2>/dev/null | head -6 || true
-            if [ "$SUSFS_OK" = "1" ] && [ "$N" -eq 0 ]; then
-              echo "  ❌ 补丁成功但 Kconfig 未生效 —— 检查 patch_susfs_kconfig.py"
-              exit 1
-            fi
-            echo "  ✅ SUSFS 配置已生效"
-          else
-            echo "  ⚠ 无 .config，跳过"
           fi
 
       - name: 上传编译日志
