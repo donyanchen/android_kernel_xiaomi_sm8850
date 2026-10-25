@@ -181,21 +181,14 @@ jobs:
           cd ws/common
           python3 "$GITHUB_WORKSPACE/patches/fix_ksu_612.py"
 
-      - name: 版本串（每次构建动态生成）
+      - name: 版本串（对齐原厂 /proc/version）
         id: ver
         run: |
           cd ws/common
-          # 显示版本串对齐原厂，避免特征检测
-          # 原厂：6.12.69-android16-6-g43b5ab7e247d-abogki561813157-4k
-          DISP="${{ inputs.disp_version || '6.12.69-android16-6-g43b5ab7e247d-abogki561813157-4k' }}"
-          echo "显示版本: $DISP"
-          echo "DISP=$DISP" >> "$GITHUB_ENV"
-          VF=init/version-timestamp.c
-          sed -i "s|\"Linux version \" UTS_RELEASE|\"Linux version \" \"$DISP\"|" "$VF"
-          sed -i "s|release\t= UTS_RELEASE,|release\t= \"$DISP\",|" "$VF"
-          echo "version-timestamp.c 命中: $(grep -c "$DISP" "$VF" || echo 0)"
-          grep -n "linux_banner\|release" "$VF" | head -4
-
+          python3 "$GITHUB_WORKSPACE/scripts/fake_version.py" . "${{ inputs.disp_version }}"
+          echo "--- 改后 ---"
+          sed -n '28,32p' init/version-timestamp.c
+          grep -c "14043575" init/version-timestamp.c || true
       - name: 应用 ADIOS IO 调度器补丁
         id: adios
         run: |
