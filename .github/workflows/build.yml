@@ -341,9 +341,26 @@ jobs:
           fi
           echo "/tmp/bg/bin" >> "$GITHUB_PATH"
 
+      - name: 确保 bindgen 就位（不依赖缓存）
+        run: |
+          mkdir -p ws/rust/bin
+          if [ ! -x ws/rust/bin/bindgen ]; then
+            curl -L --retry 3 --retry-delay 5 -o /tmp/bg.tgz \
+              "https://github.com/${GITHUB_REPOSITORY}/releases/download/deps/bindgen-0.69.5.tar.gz"
+            tar xzf /tmp/bg.tgz -C ws/rust/bin
+            chmod +x ws/rust/bin/bindgen
+          fi
+          chmod +x ws/rust/bin/rustc 2>/dev/null || true
+          echo "$PWD/ws/rust/bin" >> "$GITHUB_PATH"
+          echo "bindgen: $(ws/rust/bin/bindgen --version)"
+          echo "rustc:   $(ws/rust/bin/rustc -V)"
+
       - name: 配置内核
         run: |
           cd ws/common
+          export PATH="$PWD/../rust/bin:$PATH"
+          export LIBCLANG_PATH="$PWD/../clang19/lib"
+          export BINDGEN=bindgen RUSTC=rustc
           CFG="$GITHUB_WORKSPACE/configs/pudding_full.defconfig"
           if [ -f "$CFG" ]; then
             echo "使用设备完整配置 pudding_full.defconfig"
