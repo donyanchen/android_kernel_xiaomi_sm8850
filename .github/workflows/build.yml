@@ -3,6 +3,11 @@ name: Build Kernel
 on:
   workflow_dispatch:
     inputs:
+      device:
+        description: '目标设备代号（pudding=小米17 / myron=红米K90ProMax）'
+        required: true
+        default: 'pudding'
+        type: string
       ack_branch:
         description: 'ACK 源码分支'
         required: true
@@ -377,7 +382,10 @@ jobs:
           export PATH="$PWD/../rust/bin:$PATH"
           export LIBCLANG_PATH="$PWD/../clang19/lib"
           export BINDGEN=bindgen RUSTC=rustc
-          CFG="$GITHUB_WORKSPACE/configs/pudding_full.defconfig"
+          DEV="${{ inputs.device }}"
+          [ -z "$DEV" ] && DEV=pudding
+          CFG="$GITHUB_WORKSPACE/configs/${DEV}_full.defconfig"
+          echo "目标设备: $DEV"
           if [ -f "$CFG" ]; then
             echo "使用设备完整配置 pudding_full.defconfig"
             cp "$CFG" arch/arm64/configs/pudding_defconfig
