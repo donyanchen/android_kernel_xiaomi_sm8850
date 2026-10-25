@@ -353,7 +353,7 @@ jobs:
           echo "pahole after: $(pahole --version 2>/dev/null || echo 仍未安装)"
           export KBUILD_BUILD_USER=kleaf
           export KBUILD_BUILD_HOST=build-host
-          export KBUILD_BUILD_TIMESTAMP="2026-09-08 15:08:49 UTC"
+          export KBUILD_BUILD_TIMESTAMP="Tue Sep  8 15:08:49 UTC 2026"
           make ARCH=arm64 pudding_defconfig > build.log 2>&1
           make ARCH=arm64 -j"$(nproc)" Image >> build.log 2>&1 || true
           tail -30 build.log
