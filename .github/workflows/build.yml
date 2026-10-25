@@ -298,6 +298,28 @@ jobs:
             cd "$GITHUB_WORKSPACE"
           fi
 
+      - name: 应用 SUSFS 补丁（失败不阻塞）
+        continue-on-error: true
+        run: |
+          cd ws
+          if git clone --depth=1 -b oki-android16-6.12 https://github.com/cctv18/susfs4oki.git susfs4ksu 2>&1 | tail -2; then
+            cp susfs4ksu/kernel_patches/fs/* common/fs/ 2>/dev/null || true
+            cp susfs4ksu/kernel_patches/include/linux/* common/include/linux/ 2>/dev/null || true
+            P="$PWD/susfs4ksu/kernel_patches/50_add_susfs_in_gki-android16-6.12.patch"
+            if [ -f "$P" ]; then
+              cd common
+              if patch -p1 --dry-run -F3 < "$P" > /tmp/susfs.log 2>&1; then
+                patch -p1 -F3 < "$P"
+                echo "SUSFS_OK=1" >> "$GITHUB_ENV"
+                echo "SUSFS 补丁成功"
+              else
+                echo "SUSFS 补丁不适用，跳过"; tail -12 /tmp/susfs.log
+              fi
+            fi
+          else
+            echo "克隆失败，跳过 SUSFS"
+          fi
+
       - name: 安装 bindgen（CONFIG_RUST / ASHMEM 必需）
         run: |
           export PATH="$PWD/ws/rust/bin:$PATH"
