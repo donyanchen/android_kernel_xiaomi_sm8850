@@ -24,6 +24,37 @@ cd "$SEW_DIR" || exit 2
 
 [ -f module.conf ] && source module.conf
 
+# ---------------------------------------------------------------- 预处理
+# 移植包按 Linux 5.15 编写，会向 mm.h / vmscan.h 注入 vendor hook 声明。
+# 但 ACK android16-6.12 已经把其中 4 个上游合入了（小米自己提交的），
+# 重复注入会导致 redefinition 编译错误。这里在应用前把对应的 sed 语句注释掉。
+SEW_SH="$SEW_DIR/scripts/sew_opt.sh"
+if [ -f "$SEW_SH" ]; then
+  python3 - "$SEW_SH" <<'PYEOF2'
+import sys
+p = sys.argv[1]
+existing = [
+    "android_vh_get_page_wmark",
+    "android_vh_alloc_pages_slowpath_start",
+    "android_vh_direct_reclaim_end",
+    "android_vh_throttle_direct_reclaim_bypass",
+]
+lines = open(p).read().split("\n")
+out = []
+skipped = 0
+for ln in lines:
+    is_inject = ("sed -i" in ln) and ("DECLARE_HOOK" in ln)
+    hits = [h for h in existing if h in ln]
+    if is_inject and hits:
+        out.append("# [pudding] ACK 已含 " + hits[0] + "，跳过注入: " + ln.strip()[:60])
+        skipped += 1
+    else:
+        out.append(ln)
+open(p, "w").write("\n".join(out))
+print(f"  跳过 {skipped} 条重复 vendor hook 注入")
+PYEOF2
+fi
+
 source scripts/libabk.sh
 source scripts/sew_opt.sh
 source scripts/other_opt.sh
