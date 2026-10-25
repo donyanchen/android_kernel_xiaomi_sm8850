@@ -71,6 +71,8 @@ jobs:
             ccache-${{ inputs.ack_branch }}-
 
       - name: 依赖下载辅助
+        env:
+          PRIVATE_REPO_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
         run: |
           # 依赖已迁到私有仓库，私有 Release 资产必须走 API 端点
           mkdir -p /usr/local/bin
@@ -82,7 +84,8 @@ jobs:
             '' \
             'NAME="$1"' \
             'OUT="${2:-$1}"' \
-            'TOKEN="${PRIVATE_REPO_TOKEN:?缺少 secret PRIVATE_REPO_TOKEN}"' \
+            'TOKEN="${PRIVATE_REPO_TOKEN:-}"' \
+            '[ -n "$TOKEN" ] || { echo "getdep: PRIVATE_REPO_TOKEN 未注入" >&2; exit 1; }' \
             'API="https://api.github.com/repos/donyanchen/pudding-private/releases"' \
             '' \
             'ID=$(curl -sf -H "Authorization: token $TOKEN" "$API/tags/deps" \\' \
@@ -100,6 +103,8 @@ jobs:
           echo "getdep 已安装"
 
       - name: 准备 ACK 源码
+        env:
+          PRIVATE_REPO_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
         run: |
           mkdir -p ws cache
           # ① 仓库内分块源码（离线、最高优先级）
@@ -133,7 +138,7 @@ jobs:
           echo "分支: $BRANCH"
           UPSTREAM="https://android.googlesource.com/kernel/common/+archive/refs/heads/${BRANCH}.tar.gz"
           echo "--- 尝试私有仓库 Release"
-          if getdep ack-common.tar.gz ack.tar.gz 2>/dev/null; then
+          if getdep ack-common.tar.gz ack.tar.gz; then
             echo "✓ 来自私有仓库 Release"
           else
             echo "--- 回退到上游"
@@ -149,6 +154,8 @@ jobs:
           rsync -a common/ "$GITHUB_WORKSPACE/cache/common/"
 
       - name: 准备工具链
+        env:
+          PRIVATE_REPO_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
         run: |
           mkdir -p ws cache
           if [ -x cache/clang19/bin/clang ] && [ -x cache/rust/bin/rustc ]; then
@@ -161,7 +168,7 @@ jobs:
           cd ws
           GC=https://android.googlesource.com/platform/prebuilts
           echo "--- clang r536225"
-          if getdep clang-r536225.tar.gz clang.tar.gz 2>/dev/null; then
+          if getdep clang-r536225.tar.gz clang.tar.gz; then
             echo "✓ clang 来自私有仓库 Release"
           else
             curl -L --retry 3 --retry-delay 5 -o clang.tar.gz \
@@ -370,6 +377,8 @@ jobs:
           echo "/tmp/bg/bin" >> "$GITHUB_PATH"
 
       - name: 确保 bindgen 就位（不依赖缓存）
+        env:
+          PRIVATE_REPO_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
         run: |
           mkdir -p ws/rust/bin
           if [ ! -x ws/rust/bin/bindgen ]; then
