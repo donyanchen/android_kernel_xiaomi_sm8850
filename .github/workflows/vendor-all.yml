@@ -49,21 +49,24 @@ jobs:
 
       - name: 入库 ACK 源码
         if: inputs.what == 'all' || inputs.what == 'ack'
-        run: bash "$GITHUB_WORKSPACE/scripts/vendor_one.sh" \
-               ack "${{ inputs.ack_branch }}" "${{ inputs.chunk_mb }}" \
-               "https://android.googlesource.com/kernel/common/+archive/refs/heads/${{ inputs.ack_branch }}.tar.gz"
+        run: |
+          bash "$GITHUB_WORKSPACE/scripts/vendor_one.sh" \
+            ack "${{ inputs.ack_branch }}" "${{ inputs.chunk_mb }}" \
+            "https://android.googlesource.com/kernel/common/+archive/refs/heads/${{ inputs.ack_branch }}.tar.gz"
 
       - name: 入库 clang 工具链
         if: inputs.what == 'all' || inputs.what == 'clang'
-        run: bash "$GITHUB_WORKSPACE/scripts/vendor_one.sh" \
-               clang "r536225" "${{ inputs.chunk_mb }}" \
-               "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r536225.tar.gz"
+        run: |
+          bash "$GITHUB_WORKSPACE/scripts/vendor_one.sh" \
+            clang "r536225" "${{ inputs.chunk_mb }}" \
+            "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r536225.tar.gz"
 
       - name: 入库 rust 工具链
         if: inputs.what == 'all' || inputs.what == 'rust'
-        run: bash "$GITHUB_WORKSPACE/scripts/vendor_one.sh" \
-               rust "1.82.0" "${{ inputs.chunk_mb }}" \
-               "https://android.googlesource.com/platform/prebuilts/rust/+archive/refs/heads/main/linux-x86/1.82.0.tar.gz"
+        run: |
+          bash "$GITHUB_WORKSPACE/scripts/vendor_one.sh" \
+            rust "1.82.0" "${{ inputs.chunk_mb }}" \
+            "https://android.googlesource.com/platform/prebuilts/rust/+archive/refs/heads/main/linux-x86/1.82.0.tar.gz"
 
       - name: 入库 SukiSU 与移植包
         if: inputs.what == 'all' || inputs.what == 'small'
