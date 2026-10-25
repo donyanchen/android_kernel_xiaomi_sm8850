@@ -39,6 +39,16 @@ jobs:
             aria2 ccache rsync cpio libncurses-dev kmod
           ccache -M 2G || true
 
+      - name: 恢复源码与工具链缓存
+        id: srccache
+        uses: actions/cache@v4
+        with:
+          path: |
+            cache/common
+            cache/clang19
+            cache/rust
+          key: srccache-${{ inputs.ack_branch }}-${{ hashFiles('manifest/source.json') }}
+
       - name: ccache 缓存
         uses: actions/cache@v4
         with:
@@ -47,9 +57,17 @@ jobs:
           restore-keys: |
             ccache-${{ inputs.ack_branch }}-
 
-      - name: 下载 ACK 源码（Google 官方）
+      - name: 准备 ACK 源码
         run: |
-          mkdir -p ws && cd ws
+          mkdir -p ws cache
+          if [ -f cache/common/Makefile ]; then
+            echo "✓ 缓存命中，跳过下载（rsync 到 ws/common）"
+            mkdir -p ws/common
+            rsync -a --delete cache/common/ ws/common/
+            head -3 ws/common/Makefile
+            exit 0
+          fi
+          cd ws
           BRANCH="${{ inputs.ack_branch }}"
           echo "分支: $BRANCH"
           curl -L --retry 3 --retry-delay 5 -o ack.tar.gz \
@@ -59,9 +77,20 @@ jobs:
           tar xzf ack.tar.gz -C common
           head -3 common/Makefile
           echo "文件数: $(find common -type f | wc -l)"
+          echo "--- 写入缓存目录"
+          mkdir -p "$GITHUB_WORKSPACE/cache"
+          rsync -a common/ "$GITHUB_WORKSPACE/cache/common/"
 
-      - name: 下载工具链（Google 官方 prebuilts）
+      - name: 准备工具链
         run: |
+          mkdir -p ws cache
+          if [ -x cache/clang19/bin/clang ] && [ -x cache/rust/bin/rustc ]; then
+            echo "✓ 工具链缓存命中"
+            rsync -a cache/clang19/ ws/clang19/
+            rsync -a cache/rust/ ws/rust/
+            ls ws/clang19/bin/clang ws/rust/bin/rustc
+            exit 0
+          fi
           cd ws
           GC=https://android.googlesource.com/platform/prebuilts
           echo "--- clang r536225"
@@ -74,6 +103,10 @@ jobs:
           mkdir -p rust && tar xzf rust.tar.gz -C rust
           ls clang19/bin/clang clang19/bin/ld.lld rust/bin/rustc 2>&1
           du -sh clang19 rust
+          echo "--- 写入工具链缓存"
+          mkdir -p "$GITHUB_WORKSPACE/cache"
+          rsync -a clang19/ "$GITHUB_WORKSPACE/cache/clang19/"
+          rsync -a rust/ "$GITHUB_WORKSPACE/cache/rust/"
 
       - name: 配置工具链
         run: |
