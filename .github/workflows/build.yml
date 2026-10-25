@@ -474,6 +474,10 @@ jobs:
           export KBUILD_BUILD_USER=kleaf
           export KBUILD_BUILD_HOST=build-host
           export KBUILD_BUILD_TIMESTAMP="Tue Sep  8 15:08:49 UTC 2026"
+          DEV="${{ inputs.device }}"
+          [ -z "$DEV" ] && DEV=pudding
+          echo "编译目标设备: $DEV"
+          ls -l arch/arm64/configs/${DEV}_defconfig || { echo "::error::缺少 ${DEV}_defconfig"; exit 1; }
           make ARCH=arm64 ${DEV}_defconfig > build.log 2>&1
           make ARCH=arm64 -j"$(nproc)" Image >> build.log 2>&1 || true
           tail -30 build.log
