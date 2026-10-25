@@ -213,6 +213,7 @@ jobs:
           printf 'https://x-access-token:%s@github.com\n' "${{ secrets.PRIVATE_REPO_TOKEN }}" > "$HOME/.git-credentials"
           rm -rf /tmp/priv
           git clone --depth 1 "https://github.com/donyanchen/pudding-private.git" /tmp/priv
+          mkdir -p configs vendor/xiaomi-stubs
           cp -f /tmp/priv/configs/* configs/
           cp -f /tmp/priv/vendor/xiaomi-stubs/* vendor/xiaomi-stubs/
           mkdir -p docs
