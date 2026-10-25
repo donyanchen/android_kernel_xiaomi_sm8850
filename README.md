@@ -12,17 +12,46 @@ vermagic    6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64
 
 ---
 
+## 仓库内容说明
+
+**本仓库只包含构建流程与开源代码，不含设备私有数据。**
+
+| 内容 | 位置 | 是否公开 |
+|---|---|---|
+| CI 定义、构建脚本、上游补丁、自写工具 | 本仓库 | ✅ 公开 |
+| 设备 ABI 符号表、原厂 defconfig、厂商桩函数、Kconfig | `donyanchen/pudding-private` | ❌ 私有 |
+| Linux 内核源码 | `android.googlesource.com`（构建时拉取） | ✅ 公开 |
+| Root 方案源码 | `donyanchen/FinaSU` / `donyanchen/SukiSU-Ultra` | ✅ 公开 |
+
+**为什么要这样分**：内核与 Root 方案都是 GPL-2.0，必须开源；而 ABI 符号表、原厂配置、厂商符号签名是**从设备固件逆向得到的数据**，不是内核代码，不受 GPL 约束，因此单独存放在私有仓库。
+
+### 构建前必须配置
+
+在仓库 Settings → Secrets and variables → Actions 添加：
+
+| Name | 值 |
+|---|---|
+| `PRIVATE_REPO_TOKEN` | 只勾 `Contents: Read-only`、限定 `pudding-private` 的 fine-grained token |
+
+CI 的「拉取私有配置」步骤会用它 clone 私有仓库；**secret 缺失时构建会直接失败**，不会用空配置编出废镜像。
+
+---
+
 ## 功能
 
 | 功能 | 状态 | 说明 |
 |---|---|---|
 | 厂商模块兼容 | 已实现 | 404 个模块全部加载，相机 / WiFi / 音频 / 充电 / 触控正常 |
-| KernelSU | 已实现 | SukiSU Ultra，uapi 6，与现有 ksud 版本匹配 |
-| KPM | 已实现 | 内核内建，可运行时加载内核模块 |
+| KernelSU | 已实现 | FinaSU / SukiSU Ultra 可选，内核内建 |
+| `selinux_hide` 修复 | 已实现 | 修复 `sequence` 硬编码、备份误释放、失败仍报 ENABLED |
+| `avc_spoof` | 已实现 | AVC 审计日志伪装 |
+| `mount_hide` / `mount_view_filter` | 已实现 | 挂载点隐藏 |
+| `uts_spoof` / `uts_view` | 已实现 | `/proc/version` 版本串伪装 |
 | ADIOS IO 调度器 | 已实现 | 附加 mq 调度器，可按设备切换 |
 | LZ4KD 压缩 | 已实现 | zram 额外压缩算法 |
 | 版本串对齐 | 已实现 | `/proc/version` 与原厂逐字一致 |
-| SUSFS | 待验证 | 补丁已接入 CI，本次构建未确认生效 |
+| SUSFS | ❌ 未集成 | 补丁与 SukiSU hook 模型不兼容，详见 `docs/SUSFS.md` |
+| KPM | ⚠️ 不可用 | 需 KernelPatch，本内核打不上 |
 | 小米优化移植包 | 未启用 | 16 个模块已适配（`scripts/apply_sew.sh`），默认关闭 |
 
 ## 1. 适用范围
@@ -31,12 +60,15 @@ vermagic    6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64
 |---|---|
 | 机型 | 小米 17，代号 pudding |
 | 平台 | SM8850 / canoe |
-| 系统 | HyperOS OS4.0.5.0.XPCCNXM（Android 16） |
-| 分区 | A/B，本文所有操作针对 `_b` |
-| boot 分区 | `/dev/block/sde57`，header v4，`ramdisk_size=0`，内核偏移 4096 |
+| 系统 | HyperOS OS4.0.5.0.XPCCNXM（Android 17 / SDK 37） |
+| 内核 KMI | `android16-6-4k`（与系统版本无关，见下） |
+| 分区 | A/B，`boot_b = /dev/block/sde57`，`boot_a = /dev/block/sde14` |
+| boot 格式 | header v4，`ramdisk_size=0`，内核偏移 4096 |
 | 源码基线 | ACK `android16-6.12-2026-03`（SUBLEVEL 69） |
 
-**不适用于**：其他机型、非 A/B 设备、内核 sublevel 不同的固件。换机型时 ABI 依据全部作废，需重新采集。
+**关于 `android16`**：这是 GKI 的 KMI 世代标识，**不是系统版本**。Android 17 系统配 `android16-6-4k` 内核是正常组合——厂商升级系统层时继续沿用旧 KMI 内核。
+
+**不适用于**：其他机型、非 A/B 设备、KMI 或 sublevel 不同的固件。换机型时 ABI 依据全部作废，需重新采集。
 
 本仓库只产出**内核镜像**，不含用户态。KSU 的内核侧驱动编进内核，用户态由 `init_boot` 提供。
 
@@ -49,71 +81,78 @@ vermagic    6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64
 仓库使用 GitHub Actions，手动触发：
 
 ```
-workflow: build.yml
-参数:
-  ack_branch = android16-6.12-2026-03
-  kpm        = true
-  features   = true
-  sew_opt    = false
+Actions → Build Kernel → Run workflow
+  ack_branch   android16-6.12-2026-03
+  kpm          任意（当前无实际作用，见下方说明）
+  features     true
+  sew_opt      false
 ```
 
-产物 `Image-6.12.69`：`Image` + `vmlinux.symvers` + `.config`。
+构建约 20 分钟，产物为 `Image-6.12.69`（含 `arch/arm64/boot/Image`、`vmlinux.symvers`、`.config`）。
 
-配置组装顺序：
-
-```
-configs/pudding_full.defconfig   设备 /proc/config.gz 全量（6508 条，其中 2370 项启用，唯一基准）
-  + configs/pudding_abi.fragment 仅 4 项有效覆盖（KSU/KPM/LOCALVERSION/AUTO=n）
-  + configs/abi_symbollist.raw   TRIM_UNUSED_KSYMS 白名单（14734 项）
-```
+> **`kpm` 输入当前无实际作用**：`build.yml` 里定义了这个输入但没有任何步骤读取它。KPM 需要 KernelPatch 提供后端，本内核打不上。
 
 ### 2.2 打包 boot.img
 
 ```bash
-python3 pack_boot.py <原厂boot前4KB> <Image> <输出>
-# 例：python3 pack_boot.py bootb_hdr.bin Image boot_pudding.img
+# 从设备备份的 boot 镜像出发
+dd if=/dev/block/by-name/boot_b of=bootb.img
+
+# 解包 → 替换内核 → 重打包
+magiskboot unpack bootb.img
+gzip -9 -n -c Image > kernel
+magiskboot repack bootb.img new_boot.img
 ```
 
-`pack_boot.py` 只改两个字段，其余原样保留：
+也可用仓库内的 `scripts/pack_boot.py`：
 
-```python
-struct.pack_into('<I', hdr, 8,  len(Image))   # kernel_size
-struct.pack_into('<I', hdr, 12, 0)            # ramdisk_size
-out = hdr(4096) + Image + 补齐到 4096 对齐
+```bash
+python3 pack_boot.py bootb_hdr.bin Image boot_pudding.img
 ```
-
-打包工具做过往返验证：用原厂内核重新打包，输出与原厂 `boot_b` 前段 md5 完全一致。
 
 ### 2.3 刷写
 
+**方式一：一键脚本（推荐）**
+
 ```bash
-# 备份（务必先做）
-su -c 'dd if=/dev/block/sde57 of=/sdcard/Download/kp/boot_original.img bs=4M'
-
-# 刷入
-su -c 'dd if=/sdcard/Download/kp/boot_pudding_60.img of=/dev/block/sde57 bs=4M conv=fsync'
-su -c 'sync'
-
-# 回读校验
-su -c 'dd if=/dev/block/sde57 bs=4096 count=<镜像页数> | md5sum'
+su
+sh flash.sh
 ```
+
+脚本会自动检测当前槽位、备份目标分区、校验 md5、写入后回读验证，失败自动回滚。
+
+**方式二：fastboot**
+
+```bash
+adb reboot bootloader
+fastboot getvar current-slot          # 确认是 a 还是 b
+fastboot flash boot_b new_boot.img    # 按实际槽位
+fastboot reboot
+```
+
+> ⚠️ **不要用 `fastboot flash:raw`**：会丢掉 20MB 的 `kernel_dtb`，导致无法开机。
 
 ### 2.4 回滚
 
 ```bash
 # 系统还能起来
-su -c 'dd if=/sdcard/Download/kp/boot_original.img of=/dev/block/sde57 bs=4M'
+su -c "dd if=你的备份.img of=/dev/block/by-name/boot_b bs=4096"
 
-# 起不来：音量下 + 电源 进 fastboot
-fastboot flash boot_b boot_original.img
+# 起不来：长按 音量下 + 电源 进 fastboot
+fastboot flash boot_b 备份.img
 ```
 
 ### 2.5 首次开机
 
-换内核后首次启动要重建 dex2oat 与模块初始化，**90～300 秒属正常**。判断依据不是屏幕，而是：
-
 ```bash
-adb shell getprop sys.boot_completed    # 变成 1 即已启动完成
+# 验证内核版本
+uname -r
+# 期望 6.12.69-android16-6-4k
+
+# 验证 SELinux 状态页（本版关键修复）
+su -c "od -An -tx4 /sys/fs/selinux/status"
+# 期望 00000001 <sequence> 00000001 00000000
+#      policyload 末位必须是 0，不是 1
 ```
 
 ---
@@ -122,90 +161,23 @@ adb shell getprop sys.boot_completed    # 变成 1 即已启动完成
 
 ### 3.1 ABI 策略：设备配置是唯一基准
 
-厂商模块在加载时比对两件事：`vermagic` 字符串，以及每个符号的 CRC。
+自编译内核要与原厂 404 个厂商模块兼容，`vermagic` 与导出符号 CRC 都必须对上。
 
-因此配置必须与设备**完全一致**，不能"补全"。
-
-本项目早期版本为了方便，在设备设为 `n` 的情况下额外打开了 `CFG80211`、`MAC80211`、`MHI_BUS`、`SLIMBUS`、`SOUNDWIRE`、`CORESIGHT` 等选项。结果是：
-
-```
-与设备 4593 个真实 CRC 对比  一致率 31.8%
-module_layout               0xbc47a22e ≠ 0x797f2b3e
-```
-
-`CONFIG_CFG80211` 会给 `struct net_device` 增加 `ieee80211_ptr`、`wiphy` 等字段，所有涉及 `net_device` 的函数 CRC 全部改变。清空这些额外项后差异项从 134 项降到 13 项。
-
-**结论：多开任何一项 CONFIG，都可能改变结构体布局。**
+配置只能从设备 `/proc/config.gz` 全量导出（2,301 项）。曾尝试按 ACK 默认值多开 `CFG80211` / `MAC80211` / `MHI_BUS`，结果 CRC 一致率仅 31.8%。
 
 ### 3.2 为什么 CRC 无法精确对齐
 
-设备开启了这两个选项：
+`EXTENDED_MODVERSIONS` + `GENDWARFKSYMS` 使符号 CRC 由 DWARF 信息计算，**绑定编译器版本与优化选项**，无法用不同工具链复现。
 
-```
-CONFIG_EXTENDED_MODVERSIONS=y
-CONFIG_GENDWARFKSYMS=y
-```
-
-在此模式下，符号 CRC 不是由 `genksyms` 从源码声明计算，而是由 `gendwarfksyms` 从**编译产物的 DWARF 调试信息**计算。也就是说 CRC 直接绑定编译器输出。
-
-实测证据：
-
-```
-memset / strlen / snprintf / sscanf / strncmp   基本类型函数 → CRC 一致
-__alloc_skb / __amba_driver_register / ...      涉及结构体   → CRC 不符
-struct module                                   1600 字节 / 75 成员，与设备逐个成员一致
-全量结构体                                       11109 / 11124 一致，仅 15 个 f2fs 相关不同
-```
-
-结构体一致而 CRC 不同，说明差异来自编译器指纹而非真实 ABI 不兼容。
+依据：BTF 实测 11,109 / 11,124 个结构体与原厂一致，`struct module` 1600 字节 / 75 成员逐成员相同 —— 差异来自编译器 DWARF 指纹，不是真实 ABI 不兼容。
 
 ### 3.3 跳过 CRC 校验
 
-`kernel/module/version.c` 中 `check_version()` 在 CRC 不符时返回 0 拒绝加载。本项目将其整体替换为直接返回 1：
-
-```c
-int check_version(const struct load_info *info, const char *symname,
-                  struct module *mod, const u32 *crc)
-{
-	/* PUDDING: skip crc check */
-	(void)info; (void)symname; (void)mod; (void)crc;
-	return 1;
-}
-```
-
-`check_modstruct_version()` 内部同样调用它，一并生效。
-
-**依据**：11109/11124 个结构体经 BTF 实测一致，CRC 差异属编译器指纹。这是有风险的取舍，不是"已验证安全"——见第 5 节。
+`kernel/module/version.c` 的 `check_version()` 直接返回 1，跳过符号 CRC 校验。
 
 ### 3.4 版本串伪装
 
-`/proc/version` 与原厂需要一致：
-
-```
-Linux version 6.12.69-android16-6-g43b5ab7e247d-abogki561813157-4k
-(kleaf@build-host)
-(Android (14043575, +pgo, +bolt, +lto, +mlgo, based on r536225) clang version 19.0.1 (...), LLD 19.0.1)
-#1 SMP PREEMPT Tue Sep  8 15:08:49 UTC 2026
-```
-
-实现方式：`scripts/fake_version.py` 修改 `init/version-timestamp.c`
-
-```
-release = "<原厂串>"           替换 release= UTS_RELEASE
-LINUX_COMPILER                 替换为原厂编译器字面量
-```
-
-配合 CI 环境变量：
-
-```
-KBUILD_BUILD_USER=kleaf
-KBUILD_BUILD_HOST=build-host
-KBUILD_BUILD_TIMESTAMP="Tue Sep  8 15:08:49 UTC 2026"   ← 必须是 date 默认格式
-```
-
-时间戳写成 ISO 格式会导致 `uname -v` 与原厂不同。
-
-另有离线方案 `scripts/patch_image.py`：版本串 52 字节、编译器构建号 8 位数字，均可对已编译 Image 做**等长二进制替换**，无需重编。
+`init/version-timestamp.c` 中替换 `release=` 与 `LINUX_COMPILER` 为原厂字面量，使 `/proc/version` 逐字一致。
 
 ---
 
@@ -213,107 +185,54 @@ KBUILD_BUILD_TIMESTAMP="Tue Sep  8 15:08:49 UTC 2026"   ← 必须是 date 默�
 
 ### 4.1 最贵的一次：卡开机动画，根因是 ASHMEM
 
-现象：内核成功启动（能出开机动画），但系统起不来；无内核 panic，`pstore` 为空。
-
-完整根因链：
-
 ```
 缺 CONFIG_ASHMEM
-  → zygote: RuntimeException: Failed to create ashmem
-  → FATAL EXCEPTION IN SYSTEM PROCESS
-  → 卡在开机动画（内核不崩，所以查不到 panic）
-  → 重启次数累积 → BootFailReport 计数超限
-  → 系统自动禁用所有 KSU 模块
+ → zygote: Failed to create ashmem
+ → FATAL EXCEPTION IN SYSTEM PROCESS
+ → 卡开机动画（内核不崩、pstore 空）
+ → BootFailReport 计数超限 → 自动禁用所有 KSU 模块
 ```
 
-而 ASHMEM 在 ACK 6.12 中依赖 Rust：
-
-```
-CONFIG_RUST  →  ashmem.rs  →  CONFIG_ASHMEM
-RUST_IS_AVAILABLE 需要 rustc + bindgen
-```
-
-CI 里工具链缓存命中，`scripts/rust_is_available.sh` 检测到 `bindgen` 不存在，`RUST_IS_AVAILABLE=n`，kconfig 静默丢弃 `CONFIG_RUST`，`CONFIG_ASHMEM` 连带丢失。
-
-**教训**：
-
-1. 缓存命中的步骤不等于依赖装好了 —— bindgen 必须放在独立步骤、不参与缓存
-2. kconfig 丢弃依赖不满足的选项时**不报错**，只看 `defconfig` 里的 `=y` 是无效的
-3. 卡开机动画且无 panic 时，先怀疑 zygote / system_server，而不是内核
-
-修复后的硬门槛（缺一即构建失败）：
-
-```
-CONFIG_RUST=y
-CONFIG_ASHMEM=y
-CONFIG_ANDROID_BINDER_IPC_RUST=m
-```
+ACK 6.12 中 ASHMEM 依赖 RUST，RUST 需 bindgen。CI 工具链缓存命中导致 bindgen 从未安装，`RUST_IS_AVAILABLE=n`，kconfig **静默丢弃** RUST 与 ASHMEM（不报错）。
 
 ### 4.2 `/proc/kallsyms` 里带方括号的是模块导出
 
-```
-ffffffe2 b5293000 r __ksymtab_cfg80211_any_usable_channels  [cfg80211]
-                                                            ↑ 模块名
-```
+不是内核导出。统计口径：
+- 内核本体导出 9,933
+- 模块导出 4,801
+- 404 个厂商模块真正需要内核提供 2,716
 
-早期把这类条目也算成"内核导出"，导致需要的符号数从 2716 被高估到 6150，进而生成了一大批本不该存在的桩函数，连锁出现 `duplicate symbol`、`conflicting types`、`void 函数 return 值` 等一堆编译错误。
+### 4.3 不要设 `persist.adb.tcp.port=5555`
 
-正确统计：
-
-```
-内核本体导出 9933   模块导出 4801
-404 个模块真正需要内核提供 2716   由其它模块提供 3434
-```
-
-同理，`EXPORT_SYMBOL` 扫描必须覆盖全部变体，否则会误判：
-
-```
-EXPORT_SYMBOL_NS_GPL(...)        ← 漏掉这个，dma_buf_* 全被当成缺失
-EXPORT_TRACEPOINT_SYMBOL_GPL(..) ← 漏掉这个，上百个 __traceiter_* 被当成缺失
-```
-
-### 4.3 不要设 `persist.adb.tcp.port`
-
-为调试方便设了 `persist.adb.tcp.port=5555`，结果 adbd 进入纯网络模式，系统把 adb 功能从 USB 组合中剔除：
-
-```
-sys.usb.config        adb,mtp        （属性看起来正常）
-实际组合              仅 MTP          （adb 被剔除）
-```
-
-表现为插电脑、插 OTG 手机都只能充电或识别为 MTP，**无 USB 调试弹窗，且重启不恢复**（属性是持久的）。
-
-清掉之后还需要重新触发一次组合计算：
-
-```bash
-settings put global adb_enabled 0
-settings put global adb_enabled 1
-```
+会让系统把 adb 从 USB 组合里剔除，插电脑只剩 MTP，重启不恢复。清掉后还要 `settings put global adb_enabled 0→1` 触发重新组合。
 
 ### 4.4 手机直连手机做 USB 调试
 
-OTG 必须插在**主机那一侧**。两边都当 device 时只有充电：
-
-```
-dwc3 state        not attached
-TypeC data_role   device
-TypeC power_role  sink
-```
+必须 OTG 在主机侧，两边都是 device 时只有充电。
 
 ### 4.5 GitHub Actions 的 YAML heredoc
 
-`run: |` 块标量里所有行必须缩进。写入内联 heredoc 内容顶格会导致**整个 workflow 失效**，表现为 push 事件 `jobs=0`、运行名显示为文件路径。
-
-改用仓库文件 + `cat` 引用，不要在 YAML 里写 heredoc。
+`run: |` 里 heredoc 顶格写会让整个 workflow 失效（jobs=0，运行名显示文件路径）。
 
 ### 4.6 `CONFIG_MODULE_SIG_PROTECT` 需要额外文件
 
+内核树根必须有 `protected_module_names_list` 文件，否则：
+
 ```
-make[2]: *** No rule to make target 'protected_module_names_list',
-              needed by 'Module.symvers'
+make[2]: *** No rule to make target 'protected_module_names_list', needed by 'Module.symvers'
 ```
 
-`CONFIG_MODULE_SIG_PROTECT=y` 时内核树根必须有 `CONFIG_MODULE_SIG_PROTECT_LIST` 指定的文件（设备值为 `protected_module_names_list`）。
+### 4.7 `setup.sh` 分支不存在时静默回退
+
+SukiSU 的 `setup.sh` 里：
+
+```sh
+git checkout "$1" && echo "[-] Checked out $1." || echo "[-] Checkout default branch"
+```
+
+从上游 clone 时 `git checkout pudding` 会失败，`||` 分支吞掉错误，**编出一个不含任何修复的内核，CI 却显示绿色**。
+
+已修正：clone 指向 fork，checkout 失败直接 `exit 1`。
 
 ---
 
@@ -321,52 +240,24 @@ make[2]: *** No rule to make target 'protected_module_names_list',
 
 ### 已知限制
 
-| 项目 | 说明 |
+| 项 | 说明 |
 |---|---|
-| CRC 校验被跳过 | 不是"通过"，是关掉。若有未发现的结构体差异，模块可能运行异常而非加载失败 |
-| 编译器构建号未对齐 | `CONFIG_CC_VERSION_TEXT` 仍为 `Android (12833971, ...)`，原厂是 `14043575`。会出现在 `/proc/version` 里 |
-| 无 Rust 符号 | 设备导出 3655 个 Rust 符号，本内核没有。实测厂商模块不依赖它们 |
-| 版本升级受限 | 改 sublevel 会改变 vermagic，且需再打 vermagic 补丁 |
-| 未做长时间稳定性验证 | 仅确认能开机、模块加载、Root 可用 |
+| `CONFIG_CC_VERSION_TEXT` | 仍为 `Android (12833971)`，原厂是 `14043575`，会出现在 `/proc/version` 里 |
+| SUSFS | 补丁与 SukiSU hook 模型不兼容，见 `docs/SUSFS.md` |
+| KPM | 需 KernelPatch，本内核打不上，接口为 stub |
 
 ### 待办
 
-```
-[ ] SUSFS 确认生效（补丁已加，需验证 /sys/kernel/mm/susfs 存在）
-[ ] BORE 调度器评估
-[ ] 小米优化移植包（sew_opt）在 6.12 上的可行性
-[ ] 相机 / 音频 / WiFi / 充电 / 指纹 逐项功能实测
-[ ] 补齐 bindgen，恢复 CONFIG_RUST
-```
+- [x] 设备私有数据迁至 `pudding-private`
+- [x] CI 从私有仓库拉取配置
+- [ ] 清理后验证构建（公开仓库已无敏感文件）
 
 ---
 
-## 6. 工具
+## 6. 相关仓库
 
-| 脚本 | 用途 |
+| 仓库 | 内容 |
 |---|---|
-| `scripts/pack_boot.py` | 打 boot.img（header v4，ramdisk_size=0） |
-| `scripts/fake_version.py` | 编译期版本串伪装 |
-| `scripts/patch_image.py` | 离线镜像版本串补丁（等长替换，免重编） |
-| `scripts/patch_modversion.py` | 跳过 `check_version` CRC 校验 |
-| `scripts/patch_kconfig.py` | 解除 `MODULE_SCMVERSION` 对 `LOCALVERSION_AUTO` 的依赖 |
-| `scripts/config_diff.py` | 构建出的 `.config` 与设备配置全量 diff |
-| `tools/extract_crc.py` | 从 `.ko` 提取真实符号 CRC |
-| `tools/infer_params.py` | 反汇编推断外部符号参数个数 |
-| `tools/gen_stubs.py` | 生成 ABI 桩函数 |
-| `tools/cmp_structs.py` | BTF / 头文件结构体比对 |
-| `tools/btf_sigs.py` | 从 BTF 提取函数签名 |
-
----
-
-## 7. 免责声明
-
-刷写自编译内核会使设备**无法开机**，需要 fastboot 或 `dd` 回滚。
-
-- 操作前必须备份 `boot` 分区，且确认备份与当前分区内容一致
-- 必须确认能用 fastboot（`音量下 + 电源`）恢复
-- 跳过 CRC 校验意味着放弃了内核的一道安全检查，异常可能表现为运行时崩溃而非加载失败
-- 本项目仅在一台设备、一个固件版本上验证，不保证其他环境可用
-- 因使用本项目造成的任何设备损坏、数据丢失，作者不承担责任
-
-内核源码来自 Android Common Kernel（GPL-2.0）；本仓库的脚本与补丁同属 GPL-2.0。
+| `donyanchen/FinaSU` | Root 方案（当前使用），`pudding` 分支含 `selinux_hide` 修复 |
+| `donyanchen/SukiSU-Ultra` | Root 方案（备选），`pudding` 分支含同样修复 |
+| `donyanchen/pudding-private` | 设备 ABI 数据、原厂配置、厂商桩函数（私有） |
