@@ -281,6 +281,22 @@ jobs:
             echo "✓ 小米桩函数 $(grep -c EXPORT_SYMBOL ws/common/vendor/xiaomi-stubs/xiaomi_stubs.c) 个"
           fi
 
+          # --- 把桩函数挂进内核构建系统 ---
+          if [ -d ws/common/vendor/xiaomi-stubs ]; then
+            cd ws/common
+            # 1) drivers/Makefile 追加
+            if ! grep -q 'xiaomi-stubs' drivers/Makefile 2>/dev/null; then
+              echo 'obj-y += ../vendor/xiaomi-stubs/' >> drivers/Makefile
+              echo "  ✓ drivers/Makefile 已挂载"
+            fi
+            # 2) drivers/Kconfig 追加 source
+            if ! grep -q 'xiaomi-stubs' drivers/Kconfig 2>/dev/null; then
+              echo 'source "vendor/xiaomi-stubs/Kconfig"' >> drivers/Kconfig
+              echo "  ✓ drivers/Kconfig 已挂载"
+            fi
+            cd "$GITHUB_WORKSPACE"
+          fi
+
       - name: 配置内核
         run: |
           cd ws/common
