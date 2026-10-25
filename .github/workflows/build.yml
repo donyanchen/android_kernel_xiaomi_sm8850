@@ -158,6 +158,9 @@ jobs:
           export DEFCONFIG="$GITHUB_WORKSPACE/ws/common/arch/arm64/configs/gki_defconfig"
           echo "DEFCONFIG 存在: $([ -f "$DEFCONFIG" ] && echo yes || echo no)"
           bash "$GITHUB_WORKSPACE/scripts/apply_sew.sh" "$SEW_DIR" 2>&1 | tail -50 || true
+          echo "--- 移除重复的 vendor hook 声明 ---"
+          cd "$KERNEL_ROOT/common"
+          python3 "$GITHUB_WORKSPACE/scripts/fix_vendor_hooks.py" . || true
           echo "--- 落地文件检查 ---"
           ls "$KERNEL_ROOT/common/mm" 2>/dev/null | grep -E "^sew_|mi_rmap|slabd" | head
           ls "$KERNEL_ROOT/common/drivers/xiaomi" 2>/dev/null | head -3
