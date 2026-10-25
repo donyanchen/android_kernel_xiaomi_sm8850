@@ -39,6 +39,8 @@ existing = [
     "android_vh_direct_reclaim_end",
     "android_vh_throttle_direct_reclaim_bypass",
     "android_rvh_before_do_sched_yield",
+    # 该 hook 注入会与 ACK 的 trace 结构冲突（duplicate member android_vendor_data1）
+    "android_vh_handle_failed_page_trylock_mglru",
 ]
 lines = open(p).read().split("\n")
 out = []
