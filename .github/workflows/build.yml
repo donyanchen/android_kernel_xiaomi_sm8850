@@ -141,15 +141,18 @@ jobs:
               "$GC/clang/host/linux-x86/+archive/refs/heads/main/clang-r536225.tar.gz"
           fi
           mkdir -p clang19 && tar xzf clang.tar.gz -C clang19
-          echo "--- rust 1.82.0 (含 bindgen)"
-          if [ -x cache/rust/bin/bindgen ]; then
-            echo "✓ rust/bindgen 缓存命中"
+          echo "--- rust 1.82.0"
+          if [ -x cache/rust/bin/rustc ] && [ -x cache/rust/bin/bindgen ]; then
+            echo "rust/bindgen 缓存命中"
           else
-            curl -L --retry 3 --retry-delay 5 -o rust.zip "https://github.com/cctv18/oneplus_sm8650_toolchain/releases/download/LLVM-Clang19-r536225/rust.zip"
-            unzip -q rust.zip -d rust
-            rm -f rust.zip
+            curl -L --retry 3 --retry-delay 5 -o rust.tar.gz \
+              "https://github.com/${GITHUB_REPOSITORY}/releases/download/deps/rust-1.82.0.tar.gz"
+            mkdir -p rust && tar xzf rust.tar.gz -C rust && rm -f rust.tar.gz
+            curl -L --retry 3 --retry-delay 5 -o bindgen.tgz \
+              "https://github.com/${GITHUB_REPOSITORY}/releases/download/deps/bindgen-0.69.5.tar.gz"
+            tar xzf bindgen.tgz -C rust/bin && rm -f bindgen.tgz
           fi
-          ls rust/bin/rustc rust/bin/bindgen rust/bin/cargo 2>&1
+          ls rust/bin/rustc rust/bin/bindgen 2>&1
           ls clang19/bin/clang clang19/bin/ld.lld rust/bin/rustc 2>&1
           du -sh clang19 rust
           echo "--- 写入工具链缓存"
