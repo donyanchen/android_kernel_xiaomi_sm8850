@@ -141,15 +141,15 @@ jobs:
               "$GC/clang/host/linux-x86/+archive/refs/heads/main/clang-r536225.tar.gz"
           fi
           mkdir -p clang19 && tar xzf clang.tar.gz -C clang19
-          echo "--- rust 1.82.0"
-          if curl -fL --retry 2 -o rust.tar.gz \
-               "https://github.com/${GITHUB_REPOSITORY}/releases/download/deps/rust-1.82.0.tar.gz" 2>/dev/null; then
-            echo "✓ rust 来自本仓库 Release"
+          echo "--- rust 1.82.0 (含 bindgen)"
+          if [ -x cache/rust/bin/bindgen ]; then
+            echo "✓ rust/bindgen 缓存命中"
           else
-            curl -L --retry 3 --retry-delay 5 -o rust.tar.gz \
-              "$GC/rust/+archive/refs/heads/main/linux-x86/1.82.0.tar.gz"
+            curl -L --retry 3 --retry-delay 5 -o rust.zip "https://github.com/cctv18/oneplus_sm8650_toolchain/releases/download/LLVM-Clang19-r536225/rust.zip"
+            unzip -q rust.zip -d rust
+            rm -f rust.zip
           fi
-          mkdir -p rust && tar xzf rust.tar.gz -C rust
+          ls rust/bin/rustc rust/bin/bindgen rust/bin/cargo 2>&1
           ls clang19/bin/clang clang19/bin/ld.lld rust/bin/rustc 2>&1
           du -sh clang19 rust
           echo "--- 写入工具链缓存"
@@ -369,6 +369,12 @@ jobs:
           export CCACHE_DIR="$HOME/.ccache"
           export CCACHE_COMPILERCHECK=none
           export LLVM=1
+          export RUSTC=rustc
+          export BINDGEN=bindgen
+          export LIBCLANG_PATH="$PWD/../clang19/lib"
+          echo "bindgen: $(bindgen --version 2>&1 | head -1)"
+          echo "rustc:   $(rustc -V 2>&1 | head -1)"
+          echo "libclang: $(ls $LIBCLANG_PATH/libclang.so* 2>/dev/null | head -1)"
           echo "pahole: $(pahole --version 2>/dev/null || echo 未安装)"
           # 安装 pahole（BTF 生成必需）；apt 版本太旧则源码编译
           if ! pahole --version 2>/dev/null | grep -qE '1\.[2-9][0-9]'; then
@@ -486,6 +492,26 @@ jobs:
             cp .config "$GITHUB_WORKSPACE/built.config" || true
           else
             echo "缺少 .config"
+          fi
+
+      - name: ABI 硬门槛（RUST / ASHMEM 必须启用）
+        run: |
+          cd ws/common
+          fail=0
+          for k in RUST ASHMEM ANDROID_BINDER_IPC_RUST; do
+            v=$(grep -E "^(CONFIG_${k}=|# CONFIG_${k} is not set)" .config 2>/dev/null | head -1)
+            case "$v" in
+              CONFIG_${k}=y*|CONFIG_${k}=m*) echo "  OK   $k";;
+              *) echo "  FAIL $k -> ${v:-未定义}"; fail=1;;
+            esac
+          done
+          if [ "$fail" = "1" ]; then
+            echo "缺少 RUST/ASHMEM —— 刷入会导致 zygote 崩死"
+            echo "--- 排查信息 ---"
+            echo "rustc:   $(command -v rustc || echo 缺)"
+            echo "bindgen: $(command -v bindgen || echo 缺)"
+            bash scripts/rust_is_available.sh 2>&1 | tail -12 || true
+            exit 1
           fi
 
       - name: 上传编译日志
