@@ -430,7 +430,7 @@ jobs:
         run: |
           cd ws/common
           export PATH="$PWD/../clang19/bin:$PWD/../build-tools/bin:$PWD/../rust/bin:$PATH"
-          export KCFLAGS="-Wno-error=visibility -Wno-error=logical-op-parentheses -Wno-error=implicit-function-declaration -Wno-error=unused-result"
+          export KCFLAGS="-Wno-error=visibility -Wno-error=logical-op-parentheses -Wno-error=implicit-function-declaration -Wno-error=unused-result -Wno-error=c23-extensions"
           export ARCH=arm64
           export CC="ccache clang"
           export CCACHE_DIR="$HOME/.ccache"
