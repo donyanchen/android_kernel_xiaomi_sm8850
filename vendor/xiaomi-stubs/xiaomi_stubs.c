@@ -1,18 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Pudding Kernel — 闭源符号桩（自动生成）
+ * 自动生成：ABI 兼容桩函数
  *
- * 目的：为小米/高通闭源代码导出的符号提供定义，使 404 个厂商模块可加载。
- *
- * 数据来源（全部从真机提取）：
- *   · /proc/kallsyms 的 __ksymtab_*                       14,734 项
- *   · 404 个厂商 .ko 的 __versions 依赖表
- *   · 404 个 .ko 的 aarch64 反汇编                         30,288 个调用点
- *   · 404 个 .ko 的 .symtab 符号类型（FUNC / OBJECT）
- *
- * 符号总数：2081（函数 2055，变量 26）
+ * 策略：
+ *   1. 头文件已声明 → 复用原型（避免 conflicting types）
+ *   2. 其余 → 反汇编推断参数个数
+ *   3. 变量 → 给出真实定义而非函数桩
  */
-
 #include <linux/module.h>
 #include <linux/types.h>
 #include <linux/kernel.h>
@@ -21,9 +15,170 @@
 #include <linux/kobject.h>
 #include <linux/soc/qcom/qmi.h>
 
-/* ==================== 函数桩 ==================== */
+/* ===== 内核已有定义，此处仅补充导出 ===== */
 
-/* ---- adc_* (4) ---- */
+extern int cs_dsp_adsp1_init(struct cs_dsp *dsp);
+EXPORT_SYMBOL(cs_dsp_adsp1_init);
+
+extern void cs_dsp_adsp1_power_down(struct cs_dsp *dsp);
+EXPORT_SYMBOL(cs_dsp_adsp1_power_down);
+
+extern void cs_dsp_adsp2_bus_error(struct cs_dsp *dsp);
+EXPORT_SYMBOL(cs_dsp_adsp2_bus_error);
+
+extern int cs_dsp_adsp2_init(struct cs_dsp *dsp);
+EXPORT_SYMBOL(cs_dsp_adsp2_init);
+
+extern int cs_dsp_chunk_flush(struct cs_dsp_chunk *ch);
+EXPORT_SYMBOL(cs_dsp_chunk_flush);
+
+extern int cs_dsp_chunk_read(struct cs_dsp_chunk *ch, int nbits);
+EXPORT_SYMBOL(cs_dsp_chunk_read);
+
+extern int cs_dsp_chunk_write(struct cs_dsp_chunk *ch, int nbits, u32 val);
+EXPORT_SYMBOL(cs_dsp_chunk_write);
+
+extern void cs_dsp_cleanup_debugfs(struct cs_dsp *dsp);
+EXPORT_SYMBOL(cs_dsp_cleanup_debugfs);
+
+extern int cs_dsp_coeff_write_acked_control(struct cs_dsp_coeff_ctl *ctl, unsigned int event_id);
+EXPORT_SYMBOL(cs_dsp_coeff_write_acked_control);
+
+extern void cs_dsp_halo_bus_error(struct cs_dsp *dsp);
+EXPORT_SYMBOL(cs_dsp_halo_bus_error);
+
+extern int cs_dsp_halo_init(struct cs_dsp *dsp);
+EXPORT_SYMBOL(cs_dsp_halo_init);
+
+extern void cs_dsp_halo_wdt_expire(struct cs_dsp *dsp);
+EXPORT_SYMBOL(cs_dsp_halo_wdt_expire);
+
+extern void cs_dsp_init_debugfs(struct cs_dsp *dsp, struct dentry *debugfs_root);
+EXPORT_SYMBOL(cs_dsp_init_debugfs);
+
+extern const char * cs_dsp_mem_region_name(unsigned int type);
+EXPORT_SYMBOL(cs_dsp_mem_region_name);
+
+extern void cs_dsp_power_down(struct cs_dsp *dsp);
+EXPORT_SYMBOL(cs_dsp_power_down);
+
+extern int cs_dsp_read_data_word(struct cs_dsp *dsp, int mem_type, unsigned int mem_addr, u32 *data);
+EXPORT_SYMBOL(cs_dsp_read_data_word);
+
+extern void cs_dsp_remove(struct cs_dsp *dsp);
+EXPORT_SYMBOL(cs_dsp_remove);
+
+extern void cs_dsp_remove_padding(u32 *buf, int nwords);
+EXPORT_SYMBOL(cs_dsp_remove_padding);
+
+extern int cs_dsp_run(struct cs_dsp *dsp);
+EXPORT_SYMBOL(cs_dsp_run);
+
+extern int cs_dsp_set_dspclk(struct cs_dsp *dsp, unsigned int freq);
+EXPORT_SYMBOL(cs_dsp_set_dspclk);
+
+extern void cs_dsp_stop(struct cs_dsp *dsp);
+EXPORT_SYMBOL(cs_dsp_stop);
+
+extern int cs_dsp_write_data_word(struct cs_dsp *dsp, int mem_type, unsigned int mem_addr, u32 data);
+EXPORT_SYMBOL(cs_dsp_write_data_word);
+
+extern void dma_buf_detach(struct dma_buf *dmabuf, struct dma_buf_attachment *attach);
+EXPORT_SYMBOL(dma_buf_detach);
+
+extern struct dma_buf * dma_buf_export(const struct dma_buf_export_info *exp_info);
+EXPORT_SYMBOL(dma_buf_export);
+
+extern int dma_buf_fd(struct dma_buf *dmabuf, int flags);
+EXPORT_SYMBOL(dma_buf_fd);
+
+extern struct dma_buf * dma_buf_get(int fd);
+EXPORT_SYMBOL(dma_buf_get);
+
+extern void dma_buf_put(struct dma_buf *dmabuf);
+EXPORT_SYMBOL(dma_buf_put);
+
+extern int dma_buf_vmap_unlocked(struct dma_buf *dmabuf, struct iosys_map *map);
+EXPORT_SYMBOL(dma_buf_vmap_unlocked);
+
+extern void dma_buf_vunmap_unlocked(struct dma_buf *dmabuf, struct iosys_map *map);
+EXPORT_SYMBOL(dma_buf_vunmap_unlocked);
+
+extern ifdef CONFIG_DMA_SHARED_BUFFER int is_dma_buf_file(struct file *file);
+EXPORT_SYMBOL(is_dma_buf_file);
+
+extern extern const struct cred * override_creds(const struct cred *);
+EXPORT_SYMBOL(override_creds);
+
+extern extern void revert_creds(const struct cred *);
+EXPORT_SYMBOL(revert_creds);
+
+int __devm_regmap_init_swr(void *a0, void *a1, void *a2, void *a3)
+{
+	return 0;
+}
+EXPORT_SYMBOL(__devm_regmap_init_swr);
+
+int __gpr_driver_register(void *a0, void *a1)
+{
+	return 0;
+}
+EXPORT_SYMBOL(__gpr_driver_register);
+
+int __mca_log_debug(const char *fmt, const char *func, int line, ...)
+{
+	return 0;
+}
+EXPORT_SYMBOL(__mca_log_debug);
+
+int __mca_log_err(const char *fmt, const char *func, int line, ...)
+{
+	return 0;
+}
+EXPORT_SYMBOL(__mca_log_err);
+
+int __mca_log_info(const char *fmt, const char *func, int line, ...)
+{
+	return 0;
+}
+EXPORT_SYMBOL(__mca_log_info);
+
+int __regmap_init_swr(void *a0)
+{
+	return 0;
+}
+EXPORT_SYMBOL(__regmap_init_swr);
+
+__cold void _dev_crit(const struct device *dev, const char *fmt, ...)
+{
+	/* no-op */
+}
+EXPORT_SYMBOL(_dev_crit);
+
+__cold void _dev_err(const struct device *dev, const char *fmt, ...)
+{
+	/* no-op */
+}
+EXPORT_SYMBOL(_dev_err);
+
+__cold void _dev_info(const struct device *dev, const char *fmt, ...)
+{
+	/* no-op */
+}
+EXPORT_SYMBOL(_dev_info);
+
+__cold void _dev_notice(const struct device *dev, const char *fmt, ...)
+{
+	/* no-op */
+}
+EXPORT_SYMBOL(_dev_notice);
+
+__cold void _dev_warn(const struct device *dev, const char *fmt, ...)
+{
+	/* no-op */
+}
+EXPORT_SYMBOL(_dev_warn);
+
 int adc_tm_absolute_rthr_gen3(void *a0)
 {
 	return 0;
@@ -48,7 +203,6 @@ int adc_tm_scale_therm_voltage_100k_gen3(void *a0, void *a1)
 }
 EXPORT_SYMBOL(adc_tm_scale_therm_voltage_100k_gen3);
 
-/* ---- add_* (4) ---- */
 int add_common_data_to_buf(void *a0, void *a1, void *a2, void *a3, void *a4)
 {
 	return 0;
@@ -73,14 +227,12 @@ int add_input_event_timeline_before_event_time(void *a0, void *a1, void *a2, voi
 }
 EXPORT_SYMBOL(add_input_event_timeline_before_event_time);
 
-/* ---- adsp_* (1) ---- */
 int adsp_sleepmon_log_master_stats(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(adsp_sleepmon_log_master_stats);
 
-/* ---- altmode_* (5) ---- */
 int altmode_deregister_client(void *a0)
 {
 	return 0;
@@ -111,14 +263,12 @@ int altmode_send_data(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(altmode_send_data);
 
-/* ---- attach_* (1) ---- */
 int attach_mpam_msc(void *a0, void *a1, void *a2)
 {
 	return 0;
 }
 EXPORT_SYMBOL(attach_mpam_msc);
 
-/* ---- audio_* (12) ---- */
 int audio_notifier_deregister(void *a0)
 {
 	return 0;
@@ -191,108 +341,102 @@ int audio_ssr_register(void *a0, void *a1)
 }
 EXPORT_SYMBOL(audio_ssr_register);
 
-/* ---- bm_* (1) ---- */
 int bm_send_nl(void *a0, void *a1)
 {
 	return 0;
 }
 EXPORT_SYMBOL(bm_send_nl);
 
-/* ---- bootprof_* (1) ---- */
 int bootprof_lock(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(bootprof_lock);
 
-/* ---- boottime_* (1) ---- */
 int boottime_ok(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(boottime_ok);
 
-/* ---- bpf_* (12) ---- */
-int bpf_trace_run1(void)
+void bpf_trace_run1(struct bpf_raw_tp_link *link, u64 arg1)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(bpf_trace_run1);
 
-int bpf_trace_run10(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5, void *a6, void *a7)
+void bpf_trace_run10(struct bpf_raw_tp_link *link, u64 arg1, u64 arg2, u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7, u64 arg8, u64 arg9, u64 arg10)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(bpf_trace_run10);
 
-int bpf_trace_run11(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5, void *a6, void *a7)
+void bpf_trace_run11(struct bpf_raw_tp_link *link, u64 arg1, u64 arg2, u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7, u64 arg8, u64 arg9, u64 arg10, u64 arg11)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(bpf_trace_run11);
 
-int bpf_trace_run12(void *a0, void *a1, void *a2)
+void bpf_trace_run12(struct bpf_raw_tp_link *link, u64 arg1, u64 arg2, u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7, u64 arg8, u64 arg9, u64 arg10, u64 arg11, u64 arg12)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(bpf_trace_run12);
 
-int bpf_trace_run2(void)
+void bpf_trace_run2(struct bpf_raw_tp_link *link, u64 arg1, u64 arg2)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(bpf_trace_run2);
 
-int bpf_trace_run3(void)
+void bpf_trace_run3(struct bpf_raw_tp_link *link, u64 arg1, u64 arg2, u64 arg3)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(bpf_trace_run3);
 
-int bpf_trace_run4(void *a0, void *a1, void *a2, void *a3, void *a4)
+void bpf_trace_run4(struct bpf_raw_tp_link *link, u64 arg1, u64 arg2, u64 arg3, u64 arg4)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(bpf_trace_run4);
 
-int bpf_trace_run5(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5)
+void bpf_trace_run5(struct bpf_raw_tp_link *link, u64 arg1, u64 arg2, u64 arg3, u64 arg4, u64 arg5)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(bpf_trace_run5);
 
-int bpf_trace_run6(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5, void *a6)
+void bpf_trace_run6(struct bpf_raw_tp_link *link, u64 arg1, u64 arg2, u64 arg3, u64 arg4, u64 arg5, u64 arg6)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(bpf_trace_run6);
 
-int bpf_trace_run7(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5, void *a6, void *a7)
+void bpf_trace_run7(struct bpf_raw_tp_link *link, u64 arg1, u64 arg2, u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(bpf_trace_run7);
 
-int bpf_trace_run8(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5, void *a6, void *a7)
+void bpf_trace_run8(struct bpf_raw_tp_link *link, u64 arg1, u64 arg2, u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7, u64 arg8)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(bpf_trace_run8);
 
-int bpf_trace_run9(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5, void *a6, void *a7)
+void bpf_trace_run9(struct bpf_raw_tp_link *link, u64 arg1, u64 arg2, u64 arg3, u64 arg4, u64 arg5, u64 arg6, u64 arg7, u64 arg8, u64 arg9)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(bpf_trace_run9);
 
-/* ---- btfm_* (1) ---- */
-void * btfm_get_btfmcodec(void)
+int btfm_get_btfmcodec(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(btfm_get_btfmcodec);
 
-/* ---- btfmcodec_* (2) ---- */
 int btfmcodec_register_hw_ep(void *a0)
 {
 	return 0;
@@ -305,10 +449,9 @@ int btfmcodec_unregister_hw_ep(void *a0)
 }
 EXPORT_SYMBOL(btfmcodec_unregister_hw_ep);
 
-/* ---- btpower_* (2) ---- */
-void * btpower_get_chipset_version(void)
+int btpower_get_chipset_version(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(btpower_get_chipset_version);
 
@@ -318,14 +461,12 @@ int btpower_register_slimdev(void *a0)
 }
 EXPORT_SYMBOL(btpower_register_slimdev);
 
-/* ---- build_* (1) ---- */
 int build_fingerprint(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(build_fingerprint);
 
-/* ---- cam_* (105) ---- */
 int cam_cci_dump_registers(void *a0, void *a1, void *a2)
 {
 	return 0;
@@ -350,9 +491,9 @@ int cam_cdm_flush_hw(void *a0)
 }
 EXPORT_SYMBOL(cam_cdm_flush_hw);
 
-void * cam_cdm_get_iommu_handle(void *a0, void *a1)
+int cam_cdm_get_iommu_handle(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cam_cdm_get_iommu_handle);
 
@@ -482,15 +623,15 @@ int cam_cpas_enable_tpg_mux_sel(void *a0)
 }
 EXPORT_SYMBOL(cam_cpas_enable_tpg_mux_sel);
 
-void * cam_cpas_get_hw_info(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5, void *a6)
+int cam_cpas_get_hw_info(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5, void *a6)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cam_cpas_get_hw_info);
 
-void * cam_cpas_get_scid(void *a0)
+int cam_cpas_get_scid(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cam_cpas_get_scid);
 
@@ -644,15 +785,15 @@ int cam_ife_csid_hw_ver2_init(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(cam_ife_csid_hw_ver2_init);
 
-void * cam_mem_get_cpu_buf(void *a0, void *a1, void *a2)
+int cam_mem_get_cpu_buf(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cam_mem_get_cpu_buf);
 
-void * cam_mem_get_io_buf(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5)
+int cam_mem_get_io_buf(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cam_mem_get_io_buf);
 
@@ -728,9 +869,9 @@ int cam_register_subdev(void *a0)
 }
 EXPORT_SYMBOL(cam_register_subdev);
 
-void * cam_req_mgr_get_id_subscribed(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5, void *a6, void *a7)
+int cam_req_mgr_get_id_subscribed(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5, void *a6, void *a7)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cam_req_mgr_get_id_subscribed);
 
@@ -764,9 +905,9 @@ int cam_res_mgr_gpio_free_arry(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(cam_res_mgr_gpio_free_arry);
 
-void * cam_res_mgr_gpio_get_value(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5, void *a6, void *a7)
+int cam_res_mgr_gpio_get_value(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5, void *a6, void *a7)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cam_res_mgr_gpio_get_value);
 
@@ -806,15 +947,15 @@ bool cam_res_mgr_util_check_if_gpio_is_shared(void *a0, void *a1, void *a2, void
 }
 EXPORT_SYMBOL(cam_res_mgr_util_check_if_gpio_is_shared);
 
-void * cam_res_mgr_util_get_idx_from_shared_gpio(void *a0)
+int cam_res_mgr_util_get_idx_from_shared_gpio(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cam_res_mgr_util_get_idx_from_shared_gpio);
 
-void * cam_res_mgr_util_get_idx_from_shared_pctrl_gpio(void *a0)
+int cam_res_mgr_util_get_idx_from_shared_pctrl_gpio(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cam_res_mgr_util_get_idx_from_shared_pctrl_gpio);
 
@@ -848,27 +989,27 @@ int cam_smmu_destroy_handle(void *a0)
 }
 EXPORT_SYMBOL(cam_smmu_destroy_handle);
 
-void * cam_smmu_get_handle(void *a0, void *a1)
+int cam_smmu_get_handle(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cam_smmu_get_handle);
 
-void * cam_smmu_get_iova(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5, void *a6)
+int cam_smmu_get_iova(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5, void *a6)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cam_smmu_get_iova);
 
-void * cam_smmu_get_region_info(void *a0, void *a1, void *a2)
+int cam_smmu_get_region_info(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cam_smmu_get_region_info);
 
-void * cam_smmu_get_stage2_iova(void)
+int cam_smmu_get_stage2_iova(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cam_smmu_get_stage2_iova);
 
@@ -956,14 +1097,12 @@ int cam_unregister_subdev(void *a0)
 }
 EXPORT_SYMBOL(cam_unregister_subdev);
 
-/* ---- camlog_* (1) ---- */
 int camlog_send_message(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(camlog_send_message);
 
-/* ---- cdev_* (5) ---- */
 int cdev_tevent_add_int(void *a0, void *a1, void *a2)
 {
 	return 0;
@@ -994,7 +1133,6 @@ int cdev_tevent_write(void *a0)
 }
 EXPORT_SYMBOL(cdev_tevent_write);
 
-/* ---- cdsprm_* (10) ---- */
 int cdsprm_compute_core_set_priority(void *a0)
 {
 	return 0;
@@ -1055,7 +1193,6 @@ int cdsprm_unregister_cdspl3gov(void *a0)
 }
 EXPORT_SYMBOL(cdsprm_unregister_cdspl3gov);
 
-/* ---- charger_* (30) ---- */
 void * charger_partition_alloc(void *a0, void *a1, void *a2)
 {
 	return NULL;
@@ -1068,15 +1205,15 @@ int charger_partition_dealloc(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(charger_partition_dealloc);
 
-void * charger_partition_get_eu_model(void *a0)
+int charger_partition_get_eu_model(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(charger_partition_get_eu_model);
 
-void * charger_partition_get_mishow(void *a0)
+int charger_partition_get_mishow(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(charger_partition_get_mishow);
 
@@ -1236,14 +1373,12 @@ int charger_partition_write_soc_limit(void *a0)
 }
 EXPORT_SYMBOL(charger_partition_write_soc_limit);
 
-/* ---- cld80211_* (1) ---- */
-void * cld80211_get_genl_family(void)
+int cld80211_get_genl_family(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cld80211_get_genl_family);
 
-/* ---- clk_* (3) ---- */
 int clk_debug_measure_register(void *a0)
 {
 	return 0;
@@ -1262,14 +1397,12 @@ int clk_dummy_ops(void *a0)
 }
 EXPORT_SYMBOL(clk_dummy_ops);
 
-/* ---- cma_* (1) ---- */
 int cma_pool_init_shrinker(void)
 {
 	return 0;
 }
 EXPORT_SYMBOL(cma_pool_init_shrinker);
 
-/* ---- cnss_* (114) ---- */
 int cnss_athdiag_read(void *a0, void *a1, void *a2, void *a3, void *a4)
 {
 	return 0;
@@ -1336,117 +1469,117 @@ int cnss_force_fw_assert(void *a0, void *a1, void *a2, void *a3)
 }
 EXPORT_SYMBOL(cnss_force_fw_assert);
 
-void * cnss_get_audio_shared_iommu_group_cap(void *a0)
+int cnss_get_audio_shared_iommu_group_cap(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_get_audio_shared_iommu_group_cap);
 
-void * cnss_get_boot_timeout(void *a0)
+int cnss_get_boot_timeout(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_get_boot_timeout);
 
-void * cnss_get_cpumask_for_wlan_rx_interrupts(void *a0)
+int cnss_get_cpumask_for_wlan_rx_interrupts(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_get_cpumask_for_wlan_rx_interrupts);
 
-void * cnss_get_cpumask_for_wlan_tx_comp_interrupts(void *a0)
+int cnss_get_cpumask_for_wlan_tx_comp_interrupts(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_get_cpumask_for_wlan_tx_comp_interrupts);
 
-void * cnss_get_curr_therm_cdev_state(void *a0, void *a1, void *a2, void *a3)
+int cnss_get_curr_therm_cdev_state(void *a0, void *a1, void *a2, void *a3)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_get_curr_therm_cdev_state);
 
-void * cnss_get_direct_link_sid(void *a0, void *a1)
+int cnss_get_direct_link_sid(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_get_direct_link_sid);
 
-void * cnss_get_fw_cap(void *a0, void *a1)
+int cnss_get_fw_cap(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_get_fw_cap);
 
-void * cnss_get_fw_files_for_target(void *a0, void *a1, void *a2, void *a3)
+int cnss_get_fw_files_for_target(void *a0, void *a1, void *a2, void *a3)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_get_fw_files_for_target);
 
-void * cnss_get_fw_lpass_shared_mem(void *a0, void *a1, void *a2)
+int cnss_get_fw_lpass_shared_mem(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_get_fw_lpass_shared_mem);
 
-void * cnss_get_mem_seg_count(void *a0)
+int cnss_get_mem_seg_count(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_get_mem_seg_count);
 
-void * cnss_get_mem_segment_info(void *a0)
+int cnss_get_mem_segment_info(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_get_mem_segment_info);
 
-void * cnss_get_msi_address(void *a0, void *a1, void *a2, void *a3)
+int cnss_get_msi_address(void *a0, void *a1, void *a2, void *a3)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_get_msi_address);
 
-void * cnss_get_msi_irq(void *a0, void *a1, void *a2, void *a3)
+int cnss_get_msi_irq(void *a0, void *a1, void *a2, void *a3)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_get_msi_irq);
 
-void * cnss_get_pci_slot(void *a0)
+int cnss_get_pci_slot(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_get_pci_slot);
 
-void * cnss_get_platform_cap(void *a0, void *a1)
+int cnss_get_platform_cap(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_get_platform_cap);
 
-void * cnss_get_soc_info(void *a0, void *a1)
+int cnss_get_soc_info(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_get_soc_info);
 
-void * cnss_get_user_msi_assignment(void *a0, void *a1, void *a2, void *a3, void *a4)
+int cnss_get_user_msi_assignment(void *a0, void *a1, void *a2, void *a3, void *a4)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_get_user_msi_assignment);
 
-void * cnss_get_virt_ramdump_mem(void *a0, void *a1)
+int cnss_get_virt_ramdump_mem(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_get_virt_ramdump_mem);
 
-void * cnss_get_wifi_kobj(void *a0, void *a1, void *a2)
+int cnss_get_wifi_kobj(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_get_wifi_kobj);
 
@@ -1456,9 +1589,9 @@ int cnss_idle_restart(void)
 }
 EXPORT_SYMBOL(cnss_idle_restart);
 
-void cnss_idle_shutdown(void)
+int cnss_idle_shutdown(void)
 {
-	/* no-op */
+	return 0;
 }
 EXPORT_SYMBOL(cnss_idle_shutdown);
 
@@ -1504,9 +1637,9 @@ int cnss_pci_force_wake_request_sync(void *a0, void *a1)
 }
 EXPORT_SYMBOL(cnss_pci_force_wake_request_sync);
 
-void * cnss_pci_get_iova_info(void *a0, void *a1, void *a2)
+int cnss_pci_get_iova_info(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_pci_get_iova_info);
 
@@ -1648,9 +1781,9 @@ void cnss_plat_ipc_unregister(void *a0, void *a1)
 }
 EXPORT_SYMBOL(cnss_plat_ipc_unregister);
 
-void cnss_power_down(void *a0)
+int cnss_power_down(void *a0)
 {
-	/* no-op */
+	return 0;
 }
 EXPORT_SYMBOL(cnss_power_down);
 
@@ -1774,9 +1907,9 @@ int cnss_set_wfc_mode(void *a0, void *a1)
 }
 EXPORT_SYMBOL(cnss_set_wfc_mode);
 
-void * cnss_smmu_get_domain(void *a0, void *a1, void *a2, void *a3)
+int cnss_smmu_get_domain(void *a0, void *a1, void *a2, void *a3)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_smmu_get_domain);
 
@@ -1828,33 +1961,33 @@ int cnss_utils_fmd_status(void *a0)
 }
 EXPORT_SYMBOL(cnss_utils_fmd_status);
 
-void * cnss_utils_get_cc_source(void *a0)
+int cnss_utils_get_cc_source(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_utils_get_cc_source);
 
-void * cnss_utils_get_driver_load_cnt(void *a0)
+int cnss_utils_get_driver_load_cnt(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_utils_get_driver_load_cnt);
 
-void * cnss_utils_get_wlan_derived_mac_address(void *a0, void *a1)
+int cnss_utils_get_wlan_derived_mac_address(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_utils_get_wlan_derived_mac_address);
 
-void * cnss_utils_get_wlan_mac_address(void *a0, void *a1)
+int cnss_utils_get_wlan_mac_address(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_utils_get_wlan_mac_address);
 
-void * cnss_utils_get_wlan_unsafe_channel(void *a0, void *a1, void *a2, void *a3)
+int cnss_utils_get_wlan_unsafe_channel(void *a0, void *a1, void *a2, void *a3)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_utils_get_wlan_unsafe_channel);
 
@@ -1906,9 +2039,9 @@ int cnss_utils_update_device_type(void *a0, void *a1)
 }
 EXPORT_SYMBOL(cnss_utils_update_device_type);
 
-void * cnss_utils_wlan_get_dfs_nol(void *a0, void *a1, void *a2)
+int cnss_utils_wlan_get_dfs_nol(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(cnss_utils_wlan_get_dfs_nol);
 
@@ -1954,14 +2087,12 @@ int cnss_wlan_unregister_driver(void *a0)
 }
 EXPORT_SYMBOL(cnss_wlan_unregister_driver);
 
-/* ---- connector_* (1) ---- */
 bool connector_antiburn_is_triggered(void *a0, void *a1)
 {
 	return false;
 }
 EXPORT_SYMBOL(connector_antiburn_is_triggered);
 
-/* ---- core_* (2) ---- */
 int core_ctl_notifier_register(void *a0)
 {
 	return 0;
@@ -1974,14 +2105,12 @@ void core_ctl_notifier_unregister(void)
 }
 EXPORT_SYMBOL(core_ctl_notifier_unregister);
 
-/* ---- coredump_* (1) ---- */
 int coredump_cleanup(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(coredump_cleanup);
 
-/* ---- coresight_* (13) ---- */
 int coresight_csr_get(void *a0)
 {
 	return 0;
@@ -2006,23 +2135,17 @@ int coresight_csr_set_etr_atid(void *a0, void *a1, void *a2, void *a3)
 }
 EXPORT_SYMBOL(coresight_csr_set_etr_atid);
 
-void * coresight_get_device_name(void *a0)
+int coresight_get_device_name(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(coresight_get_device_name);
 
-void * coresight_get_path(void)
+int coresight_get_path(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(coresight_get_path);
-
-void * coresight_get_sink(void *a0)
-{
-	return NULL;
-}
-EXPORT_SYMBOL(coresight_get_sink);
 
 int coresight_qmi_assign_atid(void *a0, void *a1)
 {
@@ -2060,29 +2183,21 @@ int coresight_trace_id_reserve_id(void *a0)
 }
 EXPORT_SYMBOL(coresight_trace_id_reserve_id);
 
-/* ---- cpu_* (2) ---- */
 int cpu_logical_to_phys(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(cpu_logical_to_phys);
 
-int cpu_scale(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cpu_scale);
-
-/* ---- crm_* (5) ---- */
 int crm_dump_regs(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(crm_dump_regs);
 
-void * crm_get_device(void *a0)
+int crm_get_device(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(crm_get_device);
 
@@ -2104,188 +2219,6 @@ int crm_write_pwr_states(void *a0, void *a1)
 }
 EXPORT_SYMBOL(crm_write_pwr_states);
 
-/* ---- cs_* (30) ---- */
-int cs_dsp_adsp1_init(void)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_adsp1_init);
-
-void cs_dsp_adsp1_power_down(void *a0)
-{
-	/* no-op */
-}
-EXPORT_SYMBOL(cs_dsp_adsp1_power_down);
-
-int cs_dsp_adsp1_power_up(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_adsp1_power_up);
-
-int cs_dsp_adsp2_bus_error(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_adsp2_bus_error);
-
-int cs_dsp_adsp2_init(void)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_adsp2_init);
-
-int cs_dsp_chunk_flush(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_chunk_flush);
-
-int cs_dsp_chunk_read(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_chunk_read);
-
-int cs_dsp_chunk_write(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_chunk_write);
-
-int cs_dsp_cleanup_debugfs(void)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_cleanup_debugfs);
-
-int cs_dsp_coeff_read_ctrl(void *a0, void *a1, void *a2, void *a3)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_coeff_read_ctrl);
-
-int cs_dsp_coeff_write_acked_control(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_coeff_write_acked_control);
-
-int cs_dsp_coeff_write_ctrl(void *a0, void *a1, void *a2, void *a3)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_coeff_write_ctrl);
-
-int cs_dsp_find_alg_region(void *a0, void *a1, void *a2)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_find_alg_region);
-
-void * cs_dsp_get_ctl(void *a0, void *a1, void *a2, void *a3)
-{
-	return NULL;
-}
-EXPORT_SYMBOL(cs_dsp_get_ctl);
-
-int cs_dsp_halo_bus_error(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_halo_bus_error);
-
-int cs_dsp_halo_init(void)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_halo_init);
-
-int cs_dsp_halo_wdt_expire(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_halo_wdt_expire);
-
-int cs_dsp_init_debugfs(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_init_debugfs);
-
-int cs_dsp_load_coeff(void *a0, void *a1, void *a2)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_load_coeff);
-
-int cs_dsp_mem_region_name(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_mem_region_name);
-
-void cs_dsp_power_down(void)
-{
-	/* no-op */
-}
-EXPORT_SYMBOL(cs_dsp_power_down);
-
-int cs_dsp_power_up(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_power_up);
-
-int cs_dsp_read_data_word(void *a0, void *a1, void *a2, void *a3)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_read_data_word);
-
-int cs_dsp_read_raw_data_block(void *a0, void *a1, void *a2, void *a3, void *a4)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_read_raw_data_block);
-
-void cs_dsp_remove(void *a0)
-{
-	/* no-op */
-}
-EXPORT_SYMBOL(cs_dsp_remove);
-
-int cs_dsp_remove_padding(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_remove_padding);
-
-int cs_dsp_run(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_run);
-
-int cs_dsp_set_dspclk(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_set_dspclk);
-
-void cs_dsp_stop(void *a0)
-{
-	/* no-op */
-}
-EXPORT_SYMBOL(cs_dsp_stop);
-
-int cs_dsp_write_data_word(void *a0, void *a1, void *a2, void *a3)
-{
-	return 0;
-}
-EXPORT_SYMBOL(cs_dsp_write_data_word);
-
-/* ---- cs35l43_* (2) ---- */
 int cs35l43_resume_runtime(void *a0)
 {
 	return 0;
@@ -2298,45 +2231,93 @@ int cs35l43_suspend_runtime(void *a0)
 }
 EXPORT_SYMBOL(cs35l43_suspend_runtime);
 
-/* ---- cx_* (1) ---- */
-void * cx_stats_get_ss_vote_info(void *a0, void *a1)
+int cs_dsp_adsp1_power_up(struct cs_dsp *dsp, const struct firmware *wmfw_firmware, const char *wmfw_filename, const struct firmware *coeff_firmware, const char *coeff_filename, const char *fw_name)
+{
+	return 0;
+}
+EXPORT_SYMBOL(cs_dsp_adsp1_power_up);
+
+int cs_dsp_coeff_read_ctrl(struct cs_dsp_coeff_ctl *ctl, unsigned int off, void *buf, size_t len)
+{
+	return 0;
+}
+EXPORT_SYMBOL(cs_dsp_coeff_read_ctrl);
+
+int cs_dsp_coeff_write_ctrl(struct cs_dsp_coeff_ctl *ctl, unsigned int off, const void *buf, size_t len)
+{
+	return 0;
+}
+EXPORT_SYMBOL(cs_dsp_coeff_write_ctrl);
+
+struct cs_dsp_alg_region * cs_dsp_find_alg_region(struct cs_dsp *dsp, int type, unsigned int id)
 {
 	return NULL;
+}
+EXPORT_SYMBOL(cs_dsp_find_alg_region);
+
+struct cs_dsp_coeff_ctl * cs_dsp_get_ctl(struct cs_dsp *dsp, const char *name, int type, unsigned int alg)
+{
+	return NULL;
+}
+EXPORT_SYMBOL(cs_dsp_get_ctl);
+
+int cs_dsp_load_coeff(void *a0, void *a1, void *a2)
+{
+	return 0;
+}
+EXPORT_SYMBOL(cs_dsp_load_coeff);
+
+int cs_dsp_power_up(struct cs_dsp *dsp, const struct firmware *wmfw_firmware, const char *wmfw_filename, const struct firmware *coeff_firmware, const char *coeff_filename, const char *fw_name)
+{
+	return 0;
+}
+EXPORT_SYMBOL(cs_dsp_power_up);
+
+int cs_dsp_read_raw_data_block(struct cs_dsp *dsp, int mem_type, unsigned int mem_addr, unsigned int num_words, __be32 *data)
+{
+	return 0;
+}
+EXPORT_SYMBOL(cs_dsp_read_raw_data_block);
+
+int current_log_level;
+EXPORT_SYMBOL(current_log_level);
+
+int cx_stats_get_ss_vote_info(void *a0, void *a1)
+{
+	return 0;
 }
 EXPORT_SYMBOL(cx_stats_get_ss_vote_info);
 
-/* ---- ddr_* (5) ---- */
-void * ddr_stats_get_change_his(void *a0)
+int ddr_stats_get_change_his(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(ddr_stats_get_change_his);
 
-void * ddr_stats_get_freq_count(void *a0)
+int ddr_stats_get_freq_count(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(ddr_stats_get_freq_count);
 
-void * ddr_stats_get_residency(void *a0)
+int ddr_stats_get_residency(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(ddr_stats_get_residency);
 
-void * ddr_stats_get_ss_count(void *a0)
+int ddr_stats_get_ss_count(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(ddr_stats_get_ss_count);
 
-void * ddr_stats_get_ss_vote_info(void *a0, void *a1)
+int ddr_stats_get_ss_vote_info(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(ddr_stats_get_ss_vote_info);
 
-/* ---- debug_* (2) ---- */
 int debug_symbol_available(void)
 {
 	return 0;
@@ -2349,57 +2330,17 @@ int debug_symbol_lookup_name(void *a0)
 }
 EXPORT_SYMBOL(debug_symbol_lookup_name);
 
-/* ---- deregister_* (1) ---- */
 int deregister_cld_cmd_cb(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(deregister_cld_cmd_cb);
 
-/* ---- detach_* (1) ---- */
 int detach_mpam_msc(void *a0, void *a1, void *a2)
 {
 	return 0;
 }
 EXPORT_SYMBOL(detach_mpam_msc);
-
-/* ---- dev_* (5) ---- */
-int _dev_crit(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(_dev_crit);
-
-int _dev_err(void *a0, void *a1, void *a2)
-{
-	return 0;
-}
-EXPORT_SYMBOL(_dev_err);
-
-int _dev_info(void *a0, void *a1, void *a2)
-{
-	return 0;
-}
-EXPORT_SYMBOL(_dev_info);
-
-int _dev_notice(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5)
-{
-	return 0;
-}
-EXPORT_SYMBOL(_dev_notice);
-
-int _dev_warn(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(_dev_warn);
-
-/* ---- devm_* (10) ---- */
-int __devm_regmap_init_swr(void *a0, void *a1, void *a2, void *a3)
-{
-	return 0;
-}
-EXPORT_SYMBOL(__devm_regmap_init_swr);
 
 int devm_clk_register_debug_mux(void *a0, void *a1)
 {
@@ -2437,25 +2378,27 @@ int devm_regulator_proxy_consumer_register(void *a0, void *a1)
 }
 EXPORT_SYMBOL(devm_regulator_proxy_consumer_register);
 
-void * devm_usb_get_optional_repeater_by_phandle(void *a0, void *a1, void *a2)
+int devm_usb_get_optional_repeater_by_phandle(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(devm_usb_get_optional_repeater_by_phandle);
 
-void * devm_usb_get_repeater_by_node(void *a0, void *a1)
+int devm_usb_get_repeater_by_node(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(devm_usb_get_repeater_by_node);
 
-void * devm_usb_get_repeater_by_phandle(void *a0)
+int devm_usb_get_repeater_by_phandle(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(devm_usb_get_repeater_by_phandle);
 
-/* ---- digital_* (3) ---- */
+struct qmi_elem_info dhms_mem_alloc_addr_info_type_v01_ei[1];
+EXPORT_SYMBOL(dhms_mem_alloc_addr_info_type_v01_ei);
+
 void digital_cdc_rsc_mgr_hw_vote_disable(void *a0, void *a1)
 {
 	/* no-op */
@@ -2474,7 +2417,6 @@ void digital_cdc_rsc_mgr_hw_vote_reset(void *a0)
 }
 EXPORT_SYMBOL(digital_cdc_rsc_mgr_hw_vote_reset);
 
-/* ---- disp_* (3) ---- */
 int disp_kernel_timer_log_printk(void *a0, void *a1)
 {
 	return 0;
@@ -2493,83 +2435,45 @@ int disp_log_printk_utc(void *a0)
 }
 EXPORT_SYMBOL(disp_log_printk_utc);
 
-/* ---- dma_* (12) ---- */
-int dma_buf_attach(void *a0, void *a1)
+struct dma_buf_attachment * dma_buf_attach(struct dma_buf *dmabuf, struct device *dev)
 {
-	return 0;
+	return NULL;
 }
 EXPORT_SYMBOL(dma_buf_attach);
 
-int dma_buf_begin_cpu_access(void *a0, void *a1)
+int dma_buf_begin_cpu_access(struct dma_buf *dma_buf, enum dma_data_direction dir)
 {
 	return 0;
 }
 EXPORT_SYMBOL(dma_buf_begin_cpu_access);
 
-int dma_buf_detach(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(dma_buf_detach);
-
-int dma_buf_end_cpu_access(void *a0, void *a1)
+int dma_buf_end_cpu_access(struct dma_buf *dma_buf, enum dma_data_direction dir)
 {
 	return 0;
 }
 EXPORT_SYMBOL(dma_buf_end_cpu_access);
 
-int dma_buf_export(void *a0)
+struct sg_table * dma_buf_map_attachment_unlocked(struct dma_buf_attachment *attach, enum dma_data_direction direction)
 {
-	return 0;
-}
-EXPORT_SYMBOL(dma_buf_export);
-
-int dma_buf_fd(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(dma_buf_fd);
-
-int dma_buf_get(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(dma_buf_get);
-
-int dma_buf_map_attachment_unlocked(void *a0, void *a1)
-{
-	return 0;
+	return NULL;
 }
 EXPORT_SYMBOL(dma_buf_map_attachment_unlocked);
 
-void dma_buf_put(void *a0)
+void dma_buf_unmap_attachment_unlocked(struct dma_buf_attachment *attach, struct sg_table *sg_table, enum dma_data_direction direction)
 {
 	/* no-op */
 }
-EXPORT_SYMBOL(dma_buf_put);
-
-int dma_buf_unmap_attachment_unlocked(void *a0, void *a1, void *a2)
-{
-	return 0;
-}
 EXPORT_SYMBOL(dma_buf_unmap_attachment_unlocked);
 
-int dma_buf_vmap_unlocked(void *a0, void *a1)
+struct qmi_elem_info dms_get_mac_address_req_msg_v01_ei[1];
+EXPORT_SYMBOL(dms_get_mac_address_req_msg_v01_ei);
+
+struct qmi_elem_info dms_get_mac_address_resp_msg_v01_ei[1];
+EXPORT_SYMBOL(dms_get_mac_address_resp_msg_v01_ei);
+
+int driver_get_touch_mode(void *a0, void *a1)
 {
 	return 0;
-}
-EXPORT_SYMBOL(dma_buf_vmap_unlocked);
-
-int dma_buf_vunmap_unlocked(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(dma_buf_vunmap_unlocked);
-
-/* ---- driver_* (2) ---- */
-void * driver_get_touch_mode(void *a0, void *a1)
-{
-	return NULL;
 }
 EXPORT_SYMBOL(driver_get_touch_mode);
 
@@ -2579,7 +2483,6 @@ int driver_update_touch_mode(void *a0)
 }
 EXPORT_SYMBOL(driver_update_touch_mode);
 
-/* ---- dsi_* (2) ---- */
 int dsi_panel_gesture_enable(void *a0)
 {
 	return 0;
@@ -2592,7 +2495,6 @@ int dsi_panel_send_asic_hdr_light_plus_cmd(void)
 }
 EXPORT_SYMBOL(dsi_panel_send_asic_hdr_light_plus_cmd);
 
-/* ---- dss_* (3) ---- */
 void dss_reg_dump(void *a0)
 {
 	/* no-op */
@@ -2611,7 +2513,6 @@ int dss_reg_w(void *a0, void *a1, void *a2, void *a3)
 }
 EXPORT_SYMBOL(dss_reg_w);
 
-/* ---- dump_* (3) ---- */
 int dump_enabled(void)
 {
 	return 0;
@@ -2630,7 +2531,6 @@ int dump_user_backtrace(void *a0)
 }
 EXPORT_SYMBOL(dump_user_backtrace);
 
-/* ---- dwc3_* (2) ---- */
 int dwc3_msm_release_ss_lane(void *a0)
 {
 	return 0;
@@ -2643,14 +2543,12 @@ int dwc3_msm_set_dp_mode(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(dwc3_msm_set_dp_mode);
 
-/* ---- etm_* (1) ---- */
-void * etm_event_get_path(void *a0)
+int etm_event_get_path(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(etm_event_get_path);
 
-/* ---- fsa4480_* (3) ---- */
 int fsa4480_reg_notifier(void *a0, void *a1)
 {
 	return 0;
@@ -2669,14 +2567,12 @@ int fsa4480_unreg_notifier(void *a0, void *a1)
 }
 EXPORT_SYMBOL(fsa4480_unreg_notifier);
 
-/* ---- geni_* (1) ---- */
 int geni_gsi_common_request_channel(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(geni_gsi_common_request_channel);
 
-/* ---- get_* (26) ---- */
 void * get_adc_tm_gen3(void *a0)
 {
 	return NULL;
@@ -2688,12 +2584,6 @@ void * get_bootprof_pointer(void)
 	return NULL;
 }
 EXPORT_SYMBOL(get_bootprof_pointer);
-
-void * get_dmabuf_debugfs_data(void *a0, void *a1)
-{
-	return NULL;
-}
-EXPORT_SYMBOL(get_dmabuf_debugfs_data);
 
 void * get_hw_build_adc(void)
 {
@@ -2773,24 +2663,6 @@ void * get_qts_data_helper(void *a0)
 }
 EXPORT_SYMBOL(get_qts_data_helper);
 
-void * get_random_u16(void)
-{
-	return NULL;
-}
-EXPORT_SYMBOL(get_random_u16);
-
-void * get_random_u32(void)
-{
-	return NULL;
-}
-EXPORT_SYMBOL(get_random_u32);
-
-void * get_random_u8(void)
-{
-	return NULL;
-}
-EXPORT_SYMBOL(get_random_u8);
-
 void * get_raw_data_base(void *a0)
 {
 	return NULL;
@@ -2802,12 +2674,6 @@ void * get_si_object(void *a0)
 	return NULL;
 }
 EXPORT_SYMBOL(get_si_object);
-
-void * get_slabinfo(void *a0, void *a1)
-{
-	return NULL;
-}
-EXPORT_SYMBOL(get_slabinfo);
 
 void * get_spss_image_size(void *a0)
 {
@@ -2833,7 +2699,6 @@ void * get_xiaomi_touch_class(void *a0)
 }
 EXPORT_SYMBOL(get_xiaomi_touch_class);
 
-/* ---- gh_* (47) ---- */
 int gh_dbl_read_and_clean(void *a0, void *a1, void *a2)
 {
 	return 0;
@@ -2870,9 +2735,9 @@ void gh_dbl_tx_unregister(void *a0)
 }
 EXPORT_SYMBOL(gh_dbl_tx_unregister);
 
-void * gh_get_virt_time_offset(void *a0, void *a1)
+int gh_get_virt_time_offset(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(gh_get_virt_time_offset);
 
@@ -3020,9 +2885,9 @@ int gh_rm_console_write(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(gh_rm_console_write);
 
-void * gh_rm_get_vm_name(void *a0, void *a1)
+int gh_rm_get_vm_name(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(gh_rm_get_vm_name);
 
@@ -3068,9 +2933,9 @@ int gh_rm_virq_to_irq(void *a0, void *a1)
 }
 EXPORT_SYMBOL(gh_rm_virq_to_irq);
 
-void * gh_rm_vm_get_hyp_res(void *a0, void *a1)
+int gh_rm_vm_get_hyp_res(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(gh_rm_vm_get_hyp_res);
 
@@ -3116,10 +2981,9 @@ int gh_rm_vm_irq_release_notify(void *a0, void *a1)
 }
 EXPORT_SYMBOL(gh_rm_vm_irq_release_notify);
 
-/* ---- ghd_* (4) ---- */
-void * ghd_rm_get_vmid(void *a0, void *a1)
+int ghd_rm_get_vmid(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(ghd_rm_get_vmid);
 
@@ -3141,14 +3005,12 @@ int ghd_rm_mem_share(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5,
 }
 EXPORT_SYMBOL(ghd_rm_mem_share);
 
-/* ---- glink_* (1) ---- */
 int glink_native_pm_ops(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(glink_native_pm_ops);
 
-/* ---- gpi_* (2) ---- */
 int gpi_dump_for_geni(void *a0)
 {
 	return 0;
@@ -3161,28 +3023,21 @@ int gpi_update_multi_desc_flag(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(gpi_update_multi_desc_flag);
 
-/* ---- gpr_* (6) ---- */
-int __gpr_driver_register(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(__gpr_driver_register);
-
 void gpr_driver_unregister(void *a0)
 {
 	/* no-op */
 }
 EXPORT_SYMBOL(gpr_driver_unregister);
 
-void * gpr_get_modem_state(void *a0)
+int gpr_get_modem_state(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(gpr_get_modem_state);
 
-void * gpr_get_q6_state(void)
+int gpr_get_q6_state(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(gpr_get_q6_state);
 
@@ -3198,7 +3053,9 @@ int gpr_set_q6_state(void *a0)
 }
 EXPORT_SYMBOL(gpr_set_q6_state);
 
-/* ---- gsi_* (6) ---- */
+void *gprbus;
+EXPORT_SYMBOL(gprbus);
+
 int gsi_common_fill_tre_buf(void *a0, void *a1)
 {
 	return 0;
@@ -3235,7 +3092,6 @@ int gsi_status_enabled(void)
 }
 EXPORT_SYMBOL(gsi_status_enabled);
 
-/* ---- has_* (2) ---- */
 bool has_subsystem_slept(void)
 {
 	return false;
@@ -3248,7 +3104,6 @@ bool has_system_slept(void *a0)
 }
 EXPORT_SYMBOL(has_system_slept);
 
-/* ---- hfi_* (13) ---- */
 int hfi_core_allocate_shared_mem(void *a0, void *a1, void *a2, void *a3)
 {
 	return 0;
@@ -3327,7 +3182,6 @@ int hfi_core_unmap_iova(void *a0, void *a1)
 }
 EXPORT_SYMBOL(hfi_core_unmap_iova);
 
-/* ---- hw_* (2) ---- */
 int hw_monitor_notifier_register(void *a0)
 {
 	return 0;
@@ -3340,21 +3194,18 @@ void hw_monitor_notifier_unregister(void *a0)
 }
 EXPORT_SYMBOL(hw_monitor_notifier_unregister);
 
-/* ---- hwmon_* (1) ---- */
-int hwmon_device_register_for_thermal(void *a0)
+struct device * hwmon_device_register_for_thermal(struct device *dev, const char *name, void *drvdata)
 {
-	return 0;
+	return NULL;
 }
 EXPORT_SYMBOL(hwmon_device_register_for_thermal);
 
-/* ---- hyp_* (1) ---- */
 int hyp_assign_table(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5)
 {
 	return 0;
 }
 EXPORT_SYMBOL(hyp_assign_table);
 
-/* ---- hypsys_* (5) ---- */
 int hypsys_event_add_int(void *a0, void *a1, void *a2)
 {
 	return 0;
@@ -3385,14 +3236,30 @@ int hypsys_event_report(void *a0, void *a1, void *a2, void *a3)
 }
 EXPORT_SYMBOL(hypsys_event_report);
 
-/* ---- ieee802_* (1) ---- */
 int ieee802_11_parse_elems_full(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(ieee802_11_parse_elems_full);
 
-/* ---- init_* (3) ---- */
+struct qmi_elem_info ims_private_service_mt_invite_ind_msg_v01_ei[1];
+EXPORT_SYMBOL(ims_private_service_mt_invite_ind_msg_v01_ei);
+
+struct qmi_elem_info ims_private_service_subscribe_ind_req_msg_v01_ei[1];
+EXPORT_SYMBOL(ims_private_service_subscribe_ind_req_msg_v01_ei);
+
+struct qmi_elem_info ims_private_service_subscribe_ind_rsp_msg_v01_ei[1];
+EXPORT_SYMBOL(ims_private_service_subscribe_ind_rsp_msg_v01_ei);
+
+struct qmi_elem_info ims_private_service_wfc_call_status_ind_msg_v01_ei[1];
+EXPORT_SYMBOL(ims_private_service_wfc_call_status_ind_msg_v01_ei);
+
+struct qmi_elem_info ims_private_service_wfc_call_twt_config_req_msg_v01_ei[1];
+EXPORT_SYMBOL(ims_private_service_wfc_call_twt_config_req_msg_v01_ei);
+
+struct qmi_elem_info ims_private_service_wfc_call_twt_config_rsp_msg_v01_ei[1];
+EXPORT_SYMBOL(ims_private_service_wfc_call_twt_config_rsp_msg_v01_ei);
+
 int init_si_mem_object_sg(void *a0, void *a1, void *a2, void *a3, void *a4)
 {
 	return 0;
@@ -3411,7 +3278,6 @@ int init_si_object_user(void *a0, void *a1, void *a2, void *a3, void *a4, void *
 }
 EXPORT_SYMBOL(init_si_object_user);
 
-/* ---- ipa_* (6) ---- */
 int ipa_exit_callback(void *a0)
 {
 	return 0;
@@ -3448,7 +3314,6 @@ int ipa_xr_wdi_opt_dpath_rsrv_filter_req(void)
 }
 EXPORT_SYMBOL(ipa_xr_wdi_opt_dpath_rsrv_filter_req);
 
-/* ---- ipc_* (4) ---- */
 void * ipc_log_context_create(void *a0, void *a1, void *a2)
 {
 	return NULL;
@@ -3472,13 +3337,6 @@ void ipc_log_string(void *ctxt, const char *fmt, ...)
 	/* no-op */
 }
 EXPORT_SYMBOL(ipc_log_string);
-
-/* ---- is_* (6) ---- */
-bool is_dma_buf_file(void *a0)
-{
-	return false;
-}
-EXPORT_SYMBOL(is_dma_buf_file);
 
 bool is_mem_buf_dma_buf(void *a0)
 {
@@ -3510,21 +3368,12 @@ bool is_qos_task(void *a0)
 }
 EXPORT_SYMBOL(is_qos_task);
 
-/* ---- kern_* (1) ---- */
 int kern_qi_set_qos(void *a0, void *a1)
 {
 	return 0;
 }
 EXPORT_SYMBOL(kern_qi_set_qos);
 
-/* ---- kernel_* (1) ---- */
-int kernel_cpustat(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(kernel_cpustat);
-
-/* ---- kgsl_* (5) ---- */
 int kgsl_add_rcu_notifier(void *a0)
 {
 	return 0;
@@ -3555,63 +3404,48 @@ int kgsl_gpu_stat(void *a0)
 }
 EXPORT_SYMBOL(kgsl_gpu_stat);
 
-/* ---- ksoftirq_* (1) ---- */
-int ksoftirqd(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(ksoftirqd);
-
-/* ---- kstrtoint_* (1) ---- */
-int kstrtoint_from_user(void *a0, void *a1, void *a2, void *a3)
+int __must_check kstrtoint_from_user(const char __user *s, size_t count, unsigned int base, int *res)
 {
 	return 0;
 }
 EXPORT_SYMBOL(kstrtoint_from_user);
 
-/* ---- kstrtos8_* (1) ---- */
-int kstrtos8_from_user(void *a0, void *a1, void *a2, void *a3)
+int __must_check kstrtos8_from_user(const char __user *s, size_t count, unsigned int base, s8 *res)
 {
 	return 0;
 }
 EXPORT_SYMBOL(kstrtos8_from_user);
 
-/* ---- kstrtou16_* (1) ---- */
-int kstrtou16_from_user(void *a0, void *a1, void *a2, void *a3)
+int __must_check kstrtou16_from_user(const char __user *s, size_t count, unsigned int base, u16 *res)
 {
 	return 0;
 }
 EXPORT_SYMBOL(kstrtou16_from_user);
 
-/* ---- kstrtou8_* (1) ---- */
-int kstrtou8_from_user(void *a0, void *a1, void *a2, void *a3)
+int __must_check kstrtou8_from_user(const char __user *s, size_t count, unsigned int base, u8 *res)
 {
 	return 0;
 }
 EXPORT_SYMBOL(kstrtou8_from_user);
 
-/* ---- kstrtouint_* (1) ---- */
-int kstrtouint_from_user(void *a0, void *a1, void *a2, void *a3)
+int __must_check kstrtouint_from_user(const char __user *s, size_t count, unsigned int base, unsigned int *res)
 {
 	return 0;
 }
 EXPORT_SYMBOL(kstrtouint_from_user);
 
-/* ---- kstrtoul_* (1) ---- */
-int kstrtoul_from_user(void *a0, void *a1, void *a2, void *a3)
+int __must_check kstrtoul_from_user(const char __user *s, size_t count, unsigned int base, unsigned long *res)
 {
 	return 0;
 }
 EXPORT_SYMBOL(kstrtoul_from_user);
 
-/* ---- llc_* (1) ---- */
-void * llc_stats_get_active_scids(void *a0)
+int llc_stats_get_active_scids(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(llc_stats_get_active_scids);
 
-/* ---- llcc_* (2) ---- */
 int llcc_configure_staling_mode(void *a0, void *a1)
 {
 	return 0;
@@ -3624,7 +3458,9 @@ int llcc_notif_staling_inc_counter(void *a0)
 }
 EXPORT_SYMBOL(llcc_notif_staling_inc_counter);
 
-/* ---- lpass_* (27) ---- */
+struct kobject low_lat_mem_kobject;
+EXPORT_SYMBOL(low_lat_mem_kobject);
+
 bool lpass_cdc_check_core_votes(void *a0)
 {
 	return false;
@@ -3661,21 +3497,21 @@ int lpass_cdc_dmic_clk_enable(void *a0, void *a1, void *a2, void *a3)
 }
 EXPORT_SYMBOL(lpass_cdc_dmic_clk_enable);
 
-void * lpass_cdc_get_device_ptr(void *a0, void *a1)
+int lpass_cdc_get_device_ptr(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(lpass_cdc_get_device_ptr);
 
-void * lpass_cdc_get_rsc_clk_device_ptr(void *a0)
+int lpass_cdc_get_rsc_clk_device_ptr(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(lpass_cdc_get_rsc_clk_device_ptr);
 
-void * lpass_cdc_get_version(void *a0)
+int lpass_cdc_get_version(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(lpass_cdc_get_version);
 
@@ -3787,21 +3623,18 @@ int lpass_cdc_wsa_pa_on(void *a0, void *a1)
 }
 EXPORT_SYMBOL(lpass_cdc_wsa_pa_on);
 
-/* ---- lpd_* (1) ---- */
 bool lpd_is_charging_limit(void)
 {
 	return false;
 }
 EXPORT_SYMBOL(lpd_is_charging_limit);
 
-/* ---- map_* (1) ---- */
 int map_debug_bases(void *a0, void *a1, void *a2)
 {
 	return 0;
 }
 EXPORT_SYMBOL(map_debug_bases);
 
-/* ---- matt_* (3) ---- */
 int matt_register_ulp(void *a0)
 {
 	return 0;
@@ -3819,25 +3652,6 @@ int matt_unregister_ulp(void *a0)
 	return 0;
 }
 EXPORT_SYMBOL(matt_unregister_ulp);
-
-/* ---- mca_* (94) ---- */
-int __mca_log_debug(const char *fmt, const char *func, int line, ...)
-{
-	return 0;
-}
-EXPORT_SYMBOL(__mca_log_debug);
-
-int __mca_log_err(const char *fmt, const char *func, int line, ...)
-{
-	return 0;
-}
-EXPORT_SYMBOL(__mca_log_err);
-
-int __mca_log_info(const char *fmt, const char *func, int line, ...)
-{
-	return 0;
-}
-EXPORT_SYMBOL(__mca_log_info);
 
 int mca_adsp_glink_read_prop(void *a0, void *a1, void *a2)
 {
@@ -3869,15 +3683,15 @@ bool mca_bmd_is_batt_missing(void)
 }
 EXPORT_SYMBOL(mca_bmd_is_batt_missing);
 
-void mca_cancel_delayed_work(void *dwork)
+int mca_cancel_delayed_work(void *a0)
 {
-	/* no-op */
+	return 0;
 }
 EXPORT_SYMBOL(mca_cancel_delayed_work);
 
-void mca_cancel_work(void *work)
+int mca_cancel_work(void *a0)
 {
-	/* no-op */
+	return 0;
 }
 EXPORT_SYMBOL(mca_cancel_work);
 
@@ -3899,7 +3713,7 @@ int mca_charge_mievent_set_state(void *a0, void *a1)
 }
 EXPORT_SYMBOL(mca_charge_mievent_set_state);
 
-int mca_create_votable(void *dev, const char *name, int type, int *out, void *cb)
+int mca_create_votable(void *a0, void *a1, void *a2, void *a3, void *a4)
 {
 	return 0;
 }
@@ -3947,51 +3761,51 @@ int mca_event_report_uevent(void *a0)
 }
 EXPORT_SYMBOL(mca_event_report_uevent);
 
-void * mca_find_votable(const char *name)
+int mca_find_votable(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mca_find_votable);
 
-void * mca_get_client_vote(void *a0, void *a1)
+int mca_get_client_vote(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mca_get_client_vote);
 
-void * mca_get_client_vote_locked(void *a0, void *a1)
+int mca_get_client_vote_locked(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mca_get_client_vote_locked);
 
-void * mca_get_effective_client(void *a0)
+int mca_get_effective_client(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mca_get_effective_client);
 
-void * mca_get_effective_client_locked(void *votable)
+int mca_get_effective_client_locked(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mca_get_effective_client_locked);
 
-void * mca_get_effective_result(void *a0)
+int mca_get_effective_result(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mca_get_effective_result);
 
-int mca_get_effective_result_locked(void *votable)
+int mca_get_effective_result_locked(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(mca_get_effective_result_locked);
 
-void * mca_get_hwid_info(void)
+int mca_get_hwid_info(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mca_get_hwid_info);
 
@@ -4007,27 +3821,27 @@ bool mca_is_client_vote_enabled(void *a0, void *a1)
 }
 EXPORT_SYMBOL(mca_is_client_vote_enabled);
 
-bool mca_is_client_vote_enabled_locked(void *votable, void *client)
+bool mca_is_client_vote_enabled_locked(void *a0)
 {
 	return false;
 }
 EXPORT_SYMBOL(mca_is_client_vote_enabled_locked);
 
-bool mca_is_override_vote_enabled(void *votable)
+bool mca_is_override_vote_enabled(void *a0)
 {
 	return false;
 }
 EXPORT_SYMBOL(mca_is_override_vote_enabled);
 
-bool mca_is_override_vote_enabled_locked(void *votable)
+bool mca_is_override_vote_enabled_locked(void *a0)
 {
 	return false;
 }
 EXPORT_SYMBOL(mca_is_override_vote_enabled_locked);
 
-void mca_lock_votable(void *votable)
+int mca_lock_votable(void *a0)
 {
-	/* no-op */
+	return 0;
 }
 EXPORT_SYMBOL(mca_lock_votable);
 
@@ -4037,15 +3851,15 @@ int mca_log_charge_log_register(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(mca_log_charge_log_register);
 
-void * mca_log_get_charge_boot_mode(void)
+int mca_log_get_charge_boot_mode(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mca_log_get_charge_boot_mode);
 
-void * mca_log_get_rtc_time(void)
+int mca_log_get_rtc_time(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mca_log_get_rtc_time);
 
@@ -4055,13 +3869,13 @@ int mca_mod_delayed_work(void *a0, void *a1)
 }
 EXPORT_SYMBOL(mca_mod_delayed_work);
 
-bool mca_panel_get_hbm_state(void)
+int mca_panel_get_hbm_state(void *a0)
 {
-	return false;
+	return 0;
 }
 EXPORT_SYMBOL(mca_panel_get_hbm_state);
 
-int mca_panel_get_screen_state(void)
+int mca_panel_get_screen_state(void *a0)
 {
 	return 0;
 }
@@ -4097,19 +3911,19 @@ int mca_parse_dts_string_index(void *a0, void *a1, void *a2, void *a3)
 }
 EXPORT_SYMBOL(mca_parse_dts_string_index);
 
-int mca_parse_dts_u32(void *np, const char *name, int *out)
+int mca_parse_dts_u32(void *a0, void *a1, void *a2, void *a3)
 {
 	return 0;
 }
 EXPORT_SYMBOL(mca_parse_dts_u32);
 
-int mca_parse_dts_u32_array(void *np, const char *name, int *out, int n)
+int mca_parse_dts_u32_array(void *a0, void *a1, void *a2, void *a3)
 {
 	return 0;
 }
 EXPORT_SYMBOL(mca_parse_dts_u32_array);
 
-int mca_parse_dts_u32_count(void *np, const char *name, int *out)
+int mca_parse_dts_u32_count(void *a0, void *a1, void *a2, void *a3)
 {
 	return 0;
 }
@@ -4139,7 +3953,7 @@ int mca_parse_dts_u8_count(void *a0, void *a1, void *a2, void *a3)
 }
 EXPORT_SYMBOL(mca_parse_dts_u8_count);
 
-int mca_path_control_enable_gate(void *ctrl, bool en)
+int mca_path_control_enable_gate(void *a0)
 {
 	return 0;
 }
@@ -4157,13 +3971,13 @@ int mca_queue_delayed_work(void *a0, void *a1)
 }
 EXPORT_SYMBOL(mca_queue_delayed_work);
 
-int mca_queue_work(void *wq, void *work)
+int mca_queue_work(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(mca_queue_work);
 
-int mca_rerun_election(int id)
+int mca_rerun_election(void *a0)
 {
 	return 0;
 }
@@ -4175,19 +3989,19 @@ void mca_set_wls_charger_thermal_remove(void *a0)
 }
 EXPORT_SYMBOL(mca_set_wls_charger_thermal_remove);
 
-int mca_smartchg_get_board_temp(void)
+int mca_smartchg_get_board_temp(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(mca_smartchg_get_board_temp);
 
-void * mca_smartchg_get_limit_soc(void)
+int mca_smartchg_get_limit_soc(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mca_smartchg_get_limit_soc);
 
-int mca_smartchg_get_scene(void)
+int mca_smartchg_get_scene(void *a0)
 {
 	return 0;
 }
@@ -4223,9 +4037,9 @@ int mca_smartchg_set_scene(void *a0)
 }
 EXPORT_SYMBOL(mca_smartchg_set_scene);
 
-void * mca_strategy_func_get_status(void *a0, void *a1, void *a2)
+int mca_strategy_func_get_status(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mca_strategy_func_get_status);
 
@@ -4253,9 +4067,9 @@ int mca_strategy_ops_register(void *a0, void *a1, void *a2, void *a3, void *a4)
 }
 EXPORT_SYMBOL(mca_strategy_ops_register);
 
-void * mca_subpmic_proxy_get_otg_wls_mutex(void)
+int mca_subpmic_proxy_get_otg_wls_mutex(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mca_subpmic_proxy_get_otg_wls_mutex);
 
@@ -4301,13 +4115,13 @@ int mca_sysfs_remove_link_group(void *a0, void *a1, void *a2, void *a3)
 }
 EXPORT_SYMBOL(mca_sysfs_remove_link_group);
 
-void mca_unlock_votable(void *votable)
+int mca_unlock_votable(void *a0)
 {
-	/* no-op */
+	return 0;
 }
 EXPORT_SYMBOL(mca_unlock_votable);
 
-int mca_vote(void *votable, void *client, int val, int *out)
+int mca_vote(void *a0, void *a1, void *a2, void *a3)
 {
 	return 0;
 }
@@ -4325,33 +4139,33 @@ int mca_wireless_rev_enable_reverse_charge(void *a0)
 }
 EXPORT_SYMBOL(mca_wireless_rev_enable_reverse_charge);
 
-int mca_wireless_rev_get_firmware_state(void)
+int mca_wireless_rev_get_firmware_state(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(mca_wireless_rev_get_firmware_state);
 
-void * mca_wireless_rev_get_rev_boost_default(void *a0)
+int mca_wireless_rev_get_rev_boost_default(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mca_wireless_rev_get_rev_boost_default);
 
-void * mca_wireless_rev_get_reverse_chg(void *a0)
+int mca_wireless_rev_get_reverse_chg(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mca_wireless_rev_get_reverse_chg);
 
-void * mca_wireless_rev_get_reverse_chg_state(void *a0)
+int mca_wireless_rev_get_reverse_chg_state(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mca_wireless_rev_get_reverse_chg_state);
 
-bool mca_wireless_rev_get_user_reverse_chg(void)
+int mca_wireless_rev_get_user_reverse_chg(void *a0)
 {
-	return false;
+	return 0;
 }
 EXPORT_SYMBOL(mca_wireless_rev_get_user_reverse_chg);
 
@@ -4361,7 +4175,7 @@ int mca_wireless_rev_set_firmware_state(void *a0)
 }
 EXPORT_SYMBOL(mca_wireless_rev_set_firmware_state);
 
-int mca_wireless_rev_set_reverse_chg(bool en)
+int mca_wireless_rev_set_reverse_chg(void *a0)
 {
 	return 0;
 }
@@ -4385,7 +4199,12 @@ int mca_wireless_rev_update_fw_version(void *a0)
 }
 EXPORT_SYMBOL(mca_wireless_rev_update_fw_version);
 
-/* ---- mem_* (8) ---- */
+struct qmi_elem_info mem_alloc_generic_req_msg_data_v01_ei[1];
+EXPORT_SYMBOL(mem_alloc_generic_req_msg_data_v01_ei);
+
+struct qmi_elem_info mem_alloc_generic_resp_msg_data_v01_ei[1];
+EXPORT_SYMBOL(mem_alloc_generic_resp_msg_data_v01_ei);
+
 int mem_buf_current_vmid(void)
 {
 	return 0;
@@ -4404,15 +4223,15 @@ int mem_buf_dma_buf_exclusive_owner(void *a0)
 }
 EXPORT_SYMBOL(mem_buf_dma_buf_exclusive_owner);
 
-void * mem_buf_dma_buf_get_memparcel_hdl(void *a0, void *a1)
+int mem_buf_dma_buf_get_memparcel_hdl(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mem_buf_dma_buf_get_memparcel_hdl);
 
-void * mem_buf_dma_buf_get_vmperm(void *a0, void *a1, void *a2, void *a3)
+int mem_buf_dma_buf_get_vmperm(void *a0, void *a1, void *a2, void *a3)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mem_buf_dma_buf_get_vmperm);
 
@@ -4428,13 +4247,24 @@ int mem_buf_lend(void *a0, void *a1)
 }
 EXPORT_SYMBOL(mem_buf_lend);
 
+struct qmi_elem_info mem_free_generic_req_msg_data_v01_ei[1];
+EXPORT_SYMBOL(mem_free_generic_req_msg_data_v01_ei);
+
+struct qmi_elem_info mem_free_generic_resp_msg_data_v01_ei[1];
+EXPORT_SYMBOL(mem_free_generic_resp_msg_data_v01_ei);
+
 int mem_object_to_dma_buf(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(mem_object_to_dma_buf);
 
-/* ---- memcheck_* (5) ---- */
+struct qmi_elem_info mem_query_size_req_msg_data_v01_ei[1];
+EXPORT_SYMBOL(mem_query_size_req_msg_data_v01_ei);
+
+struct qmi_elem_info mem_query_size_resp_msg_data_v01_ei[1];
+EXPORT_SYMBOL(mem_query_size_resp_msg_data_v01_ei);
+
 int memcheck_ashmem_info_show(void *a0)
 {
 	return 0;
@@ -4453,6 +4283,9 @@ int memcheck_dmabuf_info_show(void)
 }
 EXPORT_SYMBOL(memcheck_dmabuf_info_show);
 
+void *memcheck_kgsl_memstat;
+EXPORT_SYMBOL(memcheck_kgsl_memstat);
+
 int memcheck_slab_info_show(void *a0)
 {
 	return 0;
@@ -4465,14 +4298,15 @@ int memcheck_vmalloc_info_show(void *a0)
 }
 EXPORT_SYMBOL(memcheck_vmalloc_info_show);
 
-/* ---- memdup_* (1) ---- */
+void *memcheck_walk_process_privates;
+EXPORT_SYMBOL(memcheck_walk_process_privates);
+
 int memdup_user_trace(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5, void *a6, void *a7)
 {
 	return 0;
 }
 EXPORT_SYMBOL(memdup_user_trace);
 
-/* ---- memory_* (2) ---- */
 int memory_cgrp_subsys_enabled_key(void *a0)
 {
 	return 0;
@@ -4485,28 +4319,27 @@ int memory_cgrp_subsys_on_dfl_key(void *a0)
 }
 EXPORT_SYMBOL(memory_cgrp_subsys_on_dfl_key);
 
-/* ---- mhi_* (30) ---- */
 int mhi_bdf_to_controller(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(mhi_bdf_to_controller);
 
-void * mhi_controller_get_base(void *a0, void *a1)
+int mhi_controller_get_base(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mhi_controller_get_base);
 
-void * mhi_controller_get_numeric_id(void *a0)
+int mhi_controller_get_numeric_id(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mhi_controller_get_numeric_id);
 
-void * mhi_controller_get_privdata(void *a0)
+int mhi_controller_get_privdata(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mhi_controller_get_privdata);
 
@@ -4558,9 +4391,9 @@ int mhi_device_configure(void *a0, void *a1, void *a2, void *a3)
 }
 EXPORT_SYMBOL(mhi_device_configure);
 
-void * mhi_device_get_sync_atomic(void *a0, void *a1, void *a2)
+int mhi_device_get_sync_atomic(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mhi_device_get_sync_atomic);
 
@@ -4582,39 +4415,39 @@ void mhi_force_reset(void *a0)
 }
 EXPORT_SYMBOL(mhi_force_reset);
 
-void * mhi_get_channel_db_base(void *a0)
+int mhi_get_channel_db_base(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mhi_get_channel_db_base);
 
-void * mhi_get_device_for_channel(void *a0)
+int mhi_get_device_for_channel(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mhi_get_device_for_channel);
 
-void * mhi_get_event_ring_db_base(void *a0)
+int mhi_get_event_ring_db_base(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mhi_get_event_ring_db_base);
 
-void * mhi_get_remote_time(void *a0, void *a1, void *a2)
+int mhi_get_remote_time(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mhi_get_remote_time);
 
-void * mhi_get_remote_time_sync(void *a0, void *a1, void *a2)
+int mhi_get_remote_time_sync(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mhi_get_remote_time_sync);
 
-void * mhi_get_soc_info(void *a0)
+int mhi_get_soc_info(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mhi_get_soc_info);
 
@@ -4666,7 +4499,6 @@ int mhi_stop_transfer(void *a0)
 }
 EXPORT_SYMBOL(mhi_stop_transfer);
 
-/* ---- mi_* (24) ---- */
 int mi_dflt_bwmon_update_cur_freq_hook(void *a0, void *a1)
 {
 	return 0;
@@ -4685,33 +4517,33 @@ int mi_dflt_calculate_mon_sampling_freq_hook(void *a0, void *a1)
 }
 EXPORT_SYMBOL(mi_dflt_calculate_mon_sampling_freq_hook);
 
-void * mi_dflt_get_bwmon_enable(void)
+int mi_dflt_get_bwmon_enable(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mi_dflt_get_bwmon_enable);
 
-void * mi_dflt_get_bwmon_sample_start(void *a0)
+int mi_dflt_get_bwmon_sample_start(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mi_dflt_get_bwmon_sample_start);
 
-void * mi_dflt_get_latency_enable(void)
+int mi_dflt_get_latency_enable(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mi_dflt_get_latency_enable);
 
-void * mi_dflt_get_latency_enable_from_user(void)
+int mi_dflt_get_latency_enable_from_user(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mi_dflt_get_latency_enable_from_user);
 
-void * mi_dflt_get_latency_vote_start(void)
+int mi_dflt_get_latency_vote_start(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mi_dflt_get_latency_vote_start);
 
@@ -4799,6 +4631,9 @@ int mi_smart_refill_init(void *a0)
 }
 EXPORT_SYMBOL(mi_smart_refill_init);
 
+void *mi_smart_refill_pools;
+EXPORT_SYMBOL(mi_smart_refill_pools);
+
 int mi_smart_refill_pools_init(void *a0, void *a1)
 {
 	return 0;
@@ -4811,14 +4646,15 @@ int mi_smart_refill_update(void)
 }
 EXPORT_SYMBOL(mi_smart_refill_update);
 
-/* ---- mist_* (1) ---- */
+void *micam_amu_data;
+EXPORT_SYMBOL(micam_amu_data);
+
 int mist_ddr_vote_enable(void)
 {
 	return 0;
 }
 EXPORT_SYMBOL(mist_ddr_vote_enable);
 
-/* ---- mitee_* (3) ---- */
 int mitee_smc_notify_connect(void *a0, void *a1)
 {
 	return 0;
@@ -4837,14 +4673,15 @@ int mitee_smc_notify_signal(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(mitee_smc_notify_signal);
 
-/* ---- miui_* (1) ---- */
 int miui_cluster_packing_callback(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(miui_cluster_packing_callback);
 
-/* ---- mmrm_* (7) ---- */
+void *miui_power_enhance;
+EXPORT_SYMBOL(miui_power_enhance);
+
 bool mmrm_client_check_scaling_supported(void *a0, void *a1)
 {
 	return false;
@@ -4857,15 +4694,15 @@ int mmrm_client_deregister(void *a0)
 }
 EXPORT_SYMBOL(mmrm_client_deregister);
 
-void * mmrm_client_get_clk_count(void *a0)
+int mmrm_client_get_clk_count(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mmrm_client_get_clk_count);
 
-void * mmrm_client_get_value(void *a0)
+int mmrm_client_get_value(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(mmrm_client_get_value);
 
@@ -4887,22 +4724,21 @@ int mmrm_client_set_value_in_range(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(mmrm_client_set_value_in_range);
 
-/* ---- msc_* (12) ---- */
-void * msc_system_get_device_capability(void *a0, void *a1, void *a2)
+int msc_system_get_device_capability(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(msc_system_get_device_capability);
 
-void * msc_system_get_mpam_version(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5, void *a6)
+int msc_system_get_mpam_version(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5, void *a6)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(msc_system_get_mpam_version);
 
-void * msc_system_get_partition(void *a0, void *a1, void *a2)
+int msc_system_get_partition(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(msc_system_get_partition);
 
@@ -4960,7 +4796,6 @@ int msc_system_set_partition(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(msc_system_set_partition);
 
-/* ---- msm_* (130) ---- */
 int msm_adreno_tz_reinit(void *a0)
 {
 	return 0;
@@ -5003,15 +4838,15 @@ int msm_aud_evt_unregister_client(void *a0)
 }
 EXPORT_SYMBOL(msm_aud_evt_unregister_client);
 
-void * msm_audio_get_handle_from_phy_addr(void *a0, void *a1, void *a2)
+int msm_audio_get_handle_from_phy_addr(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(msm_audio_get_handle_from_phy_addr);
 
-void * msm_audio_get_phy_addr(void *a0, void *a1, void *a2)
+int msm_audio_get_phy_addr(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(msm_audio_get_phy_addr);
 
@@ -5057,15 +4892,15 @@ int msm_cdc_enable_wcd_supply(void *a0)
 }
 EXPORT_SYMBOL(msm_cdc_enable_wcd_supply);
 
-void * msm_cdc_get_gpio_state(void *a0)
+int msm_cdc_get_gpio_state(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(msm_cdc_get_gpio_state);
 
-void * msm_cdc_get_power_supplies(void *a0, void *a1, void *a2)
+int msm_cdc_get_power_supplies(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(msm_cdc_get_power_supplies);
 
@@ -5099,9 +4934,9 @@ int msm_cdc_pinctrl_enable_vreg_for_dmic(void *a0)
 }
 EXPORT_SYMBOL(msm_cdc_pinctrl_enable_vreg_for_dmic);
 
-void * msm_cdc_pinctrl_get_state(void *a0)
+int msm_cdc_pinctrl_get_state(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(msm_cdc_pinctrl_get_state);
 
@@ -5255,39 +5090,39 @@ int msm_dss_enable_vreg(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(msm_dss_enable_vreg);
 
-void * msm_dss_get_clk(void *a0, void *a1, void *a2)
+int msm_dss_get_clk(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(msm_dss_get_clk);
 
-void * msm_dss_get_gpio_io_mem(void *a0, void *a1)
+int msm_dss_get_gpio_io_mem(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(msm_dss_get_gpio_io_mem);
 
-void * msm_dss_get_io_irq(void *a0, void *a1, void *a2)
+int msm_dss_get_io_irq(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(msm_dss_get_io_irq);
 
-void * msm_dss_get_io_mem(void *a0, void *a1)
+int msm_dss_get_io_mem(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(msm_dss_get_io_mem);
 
-void * msm_dss_get_pmic_io_mem(void *a0, void *a1)
+int msm_dss_get_pmic_io_mem(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(msm_dss_get_pmic_io_mem);
 
-void * msm_dss_get_vreg(void *a0, void *a1, void *a2, void *a3)
+int msm_dss_get_vreg(void *a0, void *a1, void *a2, void *a3)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(msm_dss_get_vreg);
 
@@ -5393,9 +5228,9 @@ int msm_ext_disp_select_audio_codec(void *a0, void *a1)
 }
 EXPORT_SYMBOL(msm_ext_disp_select_audio_codec);
 
-void * msm_gpio_get_pin_address(void *a0, void *a1)
+int msm_gpio_get_pin_address(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(msm_gpio_get_pin_address);
 
@@ -5741,7 +5576,6 @@ void msm_vidc_syscache_disable(void *a0)
 }
 EXPORT_SYMBOL(msm_vidc_syscache_disable);
 
-/* ---- ncm_* (6) ---- */
 int ncm_ipa_cleanup(void *a0)
 {
 	return 0;
@@ -5778,51 +5612,45 @@ int ncm_ipa_pipe_disconnect_notify(void *a0, void *a1, void *a2, void *a3, void 
 }
 EXPORT_SYMBOL(ncm_ipa_pipe_disconnect_notify);
 
-/* ---- netdev_* (2) ---- */
-int netdev_err(void *a0, void *a1, void *a2)
+__cold void netdev_err(const struct net_device *dev, const char *format, ...)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(netdev_err);
 
-int netdev_info(void *a0, void *a1)
+__cold void netdev_info(const struct net_device *dev, const char *format, ...)
 {
-	return 0;
+	/* no-op */
 }
 EXPORT_SYMBOL(netdev_info);
 
-/* ---- nfc_* (1) ---- */
 int nfc_to_touch_event(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(nfc_to_touch_event);
 
-/* ---- notify_* (1) ---- */
 int notify_raw_data_update(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(notify_raw_data_update);
 
-/* ---- nvt_* (1) ---- */
-void * nvt_get_lcm_id_notify(void *a0)
+int nvt_get_lcm_id_notify(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(nvt_get_lcm_id_notify);
 
-/* ---- oem_* (1) ---- */
 int oem_corectl_cpu_busy(void *a0, void *a1)
 {
 	return 0;
 }
 EXPORT_SYMBOL(oem_corectl_cpu_busy);
 
-/* ---- of_* (2) ---- */
-void * of_get_coresight_csr_name(void *a0, void *a1)
+int of_get_coresight_csr_name(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(of_get_coresight_csr_name);
 
@@ -5832,14 +5660,6 @@ int of_register_swr_devices(void *a0)
 }
 EXPORT_SYMBOL(of_register_swr_devices);
 
-/* ---- override_* (1) ---- */
-int override_creds(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(override_creds);
-
-/* ---- panel_* (3) ---- */
 int panel_event_notification_trigger(void *a0, void *a1)
 {
 	return 0;
@@ -5858,75 +5678,42 @@ void panel_event_notifier_unregister(void *a0)
 }
 EXPORT_SYMBOL(panel_event_notifier_unregister);
 
-/* ---- param_* (10) ---- */
-void * param_get_int(void *a0)
+extern int param_get_int(char *buffer, const struct kernel_param *kp)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(param_get_int);
 
-void * param_get_uint(void *a0)
+extern int param_get_uint(char *buffer, const struct kernel_param *kp)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(param_get_uint);
 
-void * param_get_ullong(void *a0)
+extern int param_get_ullong(char *buffer, const struct kernel_param *kp)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(param_get_ullong);
 
-int param_ops_int(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(param_ops_int);
-
-int param_ops_long(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(param_ops_long);
-
-int param_ops_uint(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(param_ops_uint);
-
-int param_ops_ullong(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(param_ops_ullong);
-
-int param_ops_ulong(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(param_ops_ulong);
-
-int param_set_int(void)
+extern int param_set_int(const char *val, const struct kernel_param *kp)
 {
 	return 0;
 }
 EXPORT_SYMBOL(param_set_int);
 
-int param_set_uint(void *a0, void *a1)
+extern int param_set_uint(const char *val, const struct kernel_param *kp)
 {
 	return 0;
 }
 EXPORT_SYMBOL(param_set_uint);
 
-/* ---- pcie_* (1) ---- */
 int pcie_pdc_cfg_irq(void *a0, void *a1, void *a2)
 {
 	return 0;
 }
 EXPORT_SYMBOL(pcie_pdc_cfg_irq);
 
-/* ---- pen_* (2) ---- */
 int pen_charge_state_notifier_register_client(void *a0)
 {
 	return 0;
@@ -5939,32 +5726,12 @@ int pen_charge_state_notifier_unregister_client(void *a0)
 }
 EXPORT_SYMBOL(pen_charge_state_notifier_unregister_client);
 
-/* ---- phy_* (4) ---- */
-void phy_core_exit(void)
+int phy_get_num_lanes(void *a0)
 {
-	/* no-op */
-}
-EXPORT_SYMBOL(phy_core_exit);
-
-void * phy_get_num_lanes(void *a0)
-{
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(phy_get_num_lanes);
 
-int phy_read(void *a0, void *a1, void *a2)
-{
-	return 0;
-}
-EXPORT_SYMBOL(phy_read);
-
-int phy_write(void *a0, void *a1, void *a2)
-{
-	return 0;
-}
-EXPORT_SYMBOL(phy_write);
-
-/* ---- ping_* (2) ---- */
 int ping_subsystem(void *a0)
 {
 	return 0;
@@ -5977,7 +5744,6 @@ int ping_subsystem_init(void *a0, void *a1)
 }
 EXPORT_SYMBOL(ping_subsystem_init);
 
-/* ---- platform_* (316) ---- */
 int platform_bc12_class_ops_register(void *a0, void *a1, void *a2)
 {
 	return 0;
@@ -6002,285 +5768,285 @@ int platform_class_buckchg_ops_force_dpdm(void *a0)
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_force_dpdm);
 
-void * platform_class_buckchg_ops_get_ac_volt(void *a0)
+int platform_class_buckchg_ops_get_ac_volt(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_ac_volt);
 
-void * platform_class_buckchg_ops_get_batt_curr(void *a0)
+int platform_class_buckchg_ops_get_batt_curr(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_batt_curr);
 
-void * platform_class_buckchg_ops_get_batt_id(void *a0)
+int platform_class_buckchg_ops_get_batt_id(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_batt_id);
 
-void * platform_class_buckchg_ops_get_batt_tsns(void *a0)
+int platform_class_buckchg_ops_get_batt_tsns(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_batt_tsns);
 
-void * platform_class_buckchg_ops_get_batt_volt(void *a0)
+int platform_class_buckchg_ops_get_batt_volt(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_batt_volt);
 
-void * platform_class_buckchg_ops_get_batt_volt_sns(void *a0)
+int platform_class_buckchg_ops_get_batt_volt_sns(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_batt_volt_sns);
 
-void * platform_class_buckchg_ops_get_bus_curr(void *a0, void *a1)
+int platform_class_buckchg_ops_get_bus_curr(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_bus_curr);
 
-void * platform_class_buckchg_ops_get_bus_tsns(void *a0)
+int platform_class_buckchg_ops_get_bus_tsns(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_bus_tsns);
 
-void * platform_class_buckchg_ops_get_bus_volt(void *a0, void *a1)
+int platform_class_buckchg_ops_get_bus_volt(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_bus_volt);
 
-void * platform_class_buckchg_ops_get_chg_status(void *a0, void *a1)
+int platform_class_buckchg_ops_get_chg_status(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_chg_status);
 
-void * platform_class_buckchg_ops_get_chg_type(void *a0, void *a1)
+int platform_class_buckchg_ops_get_chg_type(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_chg_type);
 
-void * platform_class_buckchg_ops_get_die_temp(void *a0)
+int platform_class_buckchg_ops_get_die_temp(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_die_temp);
 
-void * platform_class_buckchg_ops_get_hiz_status(void *a0)
+int platform_class_buckchg_ops_get_hiz_status(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_hiz_status);
 
-void * platform_class_buckchg_ops_get_hw_rechg_threshold(void *a0, void *a1)
+int platform_class_buckchg_ops_get_hw_rechg_threshold(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_hw_rechg_threshold);
 
-void * platform_class_buckchg_ops_get_icl_status(void *a0, void *a1)
+int platform_class_buckchg_ops_get_icl_status(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_icl_status);
 
-void * platform_class_buckchg_ops_get_input_curr_lmt(void *a0, void *a1)
+int platform_class_buckchg_ops_get_input_curr_lmt(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_input_curr_lmt);
 
-void * platform_class_buckchg_ops_get_input_volt_lmt(void *a0)
+int platform_class_buckchg_ops_get_input_volt_lmt(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_input_volt_lmt);
 
-void * platform_class_buckchg_ops_get_lpd_cc1(void *a0, void *a1)
+int platform_class_buckchg_ops_get_lpd_cc1(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_lpd_cc1);
 
-void * platform_class_buckchg_ops_get_lpd_cc2(void *a0, void *a1)
+int platform_class_buckchg_ops_get_lpd_cc2(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_lpd_cc2);
 
-void * platform_class_buckchg_ops_get_lpd_control(void *a0, void *a1)
+int platform_class_buckchg_ops_get_lpd_control(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_lpd_control);
 
-void * platform_class_buckchg_ops_get_lpd_dm(void *a0, void *a1)
+int platform_class_buckchg_ops_get_lpd_dm(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_lpd_dm);
 
-void * platform_class_buckchg_ops_get_lpd_dp(void *a0, void *a1)
+int platform_class_buckchg_ops_get_lpd_dp(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_lpd_dp);
 
-void * platform_class_buckchg_ops_get_lpd_enable(void *a0, void *a1)
+int platform_class_buckchg_ops_get_lpd_enable(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_lpd_enable);
 
-void * platform_class_buckchg_ops_get_lpd_sbu1(void *a0, void *a1)
+int platform_class_buckchg_ops_get_lpd_sbu1(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_lpd_sbu1);
 
-void * platform_class_buckchg_ops_get_lpd_sbu2(void *a0, void *a1)
+int platform_class_buckchg_ops_get_lpd_sbu2(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_lpd_sbu2);
 
-void * platform_class_buckchg_ops_get_lpd_status(void *a0, void *a1)
+int platform_class_buckchg_ops_get_lpd_status(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_lpd_status);
 
-void * platform_class_buckchg_ops_get_lpd_uart_control(void *a0, void *a1)
+int platform_class_buckchg_ops_get_lpd_uart_control(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_lpd_uart_control);
 
-void * platform_class_buckchg_ops_get_online(void *a0, void *a1)
+int platform_class_buckchg_ops_get_online(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_online);
 
-void * platform_class_buckchg_ops_get_otg_boost_enable_status(void *a0, void *a1)
+int platform_class_buckchg_ops_get_otg_boost_enable_status(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_otg_boost_enable_status);
 
-void * platform_class_buckchg_ops_get_otg_boost_src(void *a0, void *a1)
+int platform_class_buckchg_ops_get_otg_boost_src(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_otg_boost_src);
 
-void * platform_class_buckchg_ops_get_otg_gate_enable_status(void *a0, void *a1)
+int platform_class_buckchg_ops_get_otg_gate_enable_status(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_otg_gate_enable_status);
 
-void * platform_class_buckchg_ops_get_otg_wls_mutex(void *a0, void *a1)
+int platform_class_buckchg_ops_get_otg_wls_mutex(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_otg_wls_mutex);
 
-void * platform_class_buckchg_ops_get_ovp_vth(void *a0, void *a1)
+int platform_class_buckchg_ops_get_ovp_vth(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_ovp_vth);
 
-void * platform_class_buckchg_ops_get_pack_ibat(void *a0, void *a1)
+int platform_class_buckchg_ops_get_pack_ibat(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_pack_ibat);
 
-void * platform_class_buckchg_ops_get_pack_tbat(void *a0, void *a1)
+int platform_class_buckchg_ops_get_pack_tbat(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_pack_tbat);
 
-void * platform_class_buckchg_ops_get_pack_vbat(void *a0, void *a1)
+int platform_class_buckchg_ops_get_pack_vbat(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_pack_vbat);
 
-void * platform_class_buckchg_ops_get_ship_mode(void *a0, void *a1)
+int platform_class_buckchg_ops_get_ship_mode(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_ship_mode);
 
-void * platform_class_buckchg_ops_get_sys_volt(void *a0)
+int platform_class_buckchg_ops_get_sys_volt(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_sys_volt);
 
-void * platform_class_buckchg_ops_get_term_curr(void *a0)
+int platform_class_buckchg_ops_get_term_curr(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_term_curr);
 
-void * platform_class_buckchg_ops_get_term_volt(void *a0, void *a1)
+int platform_class_buckchg_ops_get_term_volt(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_term_volt);
 
-void * platform_class_buckchg_ops_get_usb_aicl_cont_thd(void *a0, void *a1)
+int platform_class_buckchg_ops_get_usb_aicl_cont_thd(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_usb_aicl_cont_thd);
 
-void * platform_class_buckchg_ops_get_usb_input_swap(void *a0, void *a1)
+int platform_class_buckchg_ops_get_usb_input_swap(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_usb_input_swap);
 
-void * platform_class_buckchg_ops_get_usb_sns_volt(void *a0, void *a1)
+int platform_class_buckchg_ops_get_usb_sns_volt(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_usb_sns_volt);
 
-void * platform_class_buckchg_ops_get_usbin_collapse_rt_sts(void *a0, void *a1)
+int platform_class_buckchg_ops_get_usbin_collapse_rt_sts(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_usbin_collapse_rt_sts);
 
-void * platform_class_buckchg_ops_get_wls_curr(void *a0, void *a1)
+int platform_class_buckchg_ops_get_wls_curr(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_wls_curr);
 
-void * platform_class_buckchg_ops_get_wls_input_curr_lmt(void *a0, void *a1)
+int platform_class_buckchg_ops_get_wls_input_curr_lmt(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_wls_input_curr_lmt);
 
-void * platform_class_buckchg_ops_get_wls_input_swap(void *a0, void *a1)
+int platform_class_buckchg_ops_get_wls_input_swap(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_buckchg_ops_get_wls_input_swap);
 
@@ -6620,177 +6386,177 @@ int platform_class_cp_enable_wpcgate(void *a0, void *a1)
 }
 EXPORT_SYMBOL(platform_class_cp_enable_wpcgate);
 
-void * platform_class_cp_get_alarm_status(void *a0)
+int platform_class_cp_get_alarm_status(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_alarm_status);
 
-void * platform_class_cp_get_batovp_th(void *a0, void *a1)
+int platform_class_cp_get_batovp_th(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_batovp_th);
 
-void * platform_class_cp_get_battery_current(void *a0)
+int platform_class_cp_get_battery_current(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_battery_current);
 
-void * platform_class_cp_get_battery_present(void *a0)
+int platform_class_cp_get_battery_present(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_battery_present);
 
-void * platform_class_cp_get_battery_temperature(void *a0)
+int platform_class_cp_get_battery_temperature(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_battery_temperature);
 
-void * platform_class_cp_get_battery_voltage(void *a0, void *a1)
+int platform_class_cp_get_battery_voltage(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_battery_voltage);
 
-void * platform_class_cp_get_bus_current(void *a0, void *a1)
+int platform_class_cp_get_bus_current(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_bus_current);
 
-void * platform_class_cp_get_bus_error_status(void *a0)
+int platform_class_cp_get_bus_error_status(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_bus_error_status);
 
-void * platform_class_cp_get_bus_temperature(void *a0)
+int platform_class_cp_get_bus_temperature(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_bus_temperature);
 
-void * platform_class_cp_get_bus_voltage(void *a0, void *a1)
+int platform_class_cp_get_bus_voltage(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_bus_voltage);
 
-void * platform_class_cp_get_bypass_support(void *a0)
+int platform_class_cp_get_bypass_support(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_bypass_support);
 
-void * platform_class_cp_get_charging_enabled(void *a0, void *a1)
+int platform_class_cp_get_charging_enabled(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_charging_enabled);
 
-void * platform_class_cp_get_chip_vendor(void *a0, void *a1)
+int platform_class_cp_get_chip_vendor(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_chip_vendor);
 
-void * platform_class_cp_get_die_temperature(void *a0)
+int platform_class_cp_get_die_temperature(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_die_temperature);
 
-void * platform_class_cp_get_errorhl_stat(void *a0, void *a1)
+int platform_class_cp_get_errorhl_stat(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_errorhl_stat);
 
-void * platform_class_cp_get_fault_status(void *a0)
+int platform_class_cp_get_fault_status(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_fault_status);
 
-void * platform_class_cp_get_fsw(void *a0, void *a1)
+int platform_class_cp_get_fsw(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_fsw);
 
-void * platform_class_cp_get_fsw_step(void *a0, void *a1)
+int platform_class_cp_get_fsw_step(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_fsw_step);
 
-void * platform_class_cp_get_ibus_delta(void *a0)
+int platform_class_cp_get_ibus_delta(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_ibus_delta);
 
-void * platform_class_cp_get_ibus_total(void *a0)
+int platform_class_cp_get_ibus_total(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_ibus_total);
 
-void * platform_class_cp_get_int_stat(void *a0, void *a1, void *a2)
+int platform_class_cp_get_int_stat(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_int_stat);
 
-void * platform_class_cp_get_mode(void *a0, void *a1)
+int platform_class_cp_get_mode(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_mode);
 
-void * platform_class_cp_get_ovpgate_status(void *a0, void *a1)
+int platform_class_cp_get_ovpgate_status(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_ovpgate_status);
 
-void * platform_class_cp_get_present(void *a0, void *a1)
+int platform_class_cp_get_present(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_present);
 
-void * platform_class_cp_get_probe_ok(void *a0)
+int platform_class_cp_get_probe_ok(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_probe_ok);
 
-void * platform_class_cp_get_reg_status(void *a0)
+int platform_class_cp_get_reg_status(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_reg_status);
 
-void * platform_class_cp_get_tdie(void *a0, void *a1)
+int platform_class_cp_get_tdie(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_tdie);
 
-void * platform_class_cp_get_usb_voltage(void *a0)
+int platform_class_cp_get_usb_voltage(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_usb_voltage);
 
-void * platform_class_cp_get_vbus_present(void *a0)
+int platform_class_cp_get_vbus_present(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_cp_get_vbus_present);
 
@@ -6878,21 +6644,21 @@ int platform_class_cp_set_vout2out_uvp(void *a0, void *a1)
 }
 EXPORT_SYMBOL(platform_class_cp_set_vout2out_uvp);
 
-void * platform_class_loadsw_get_ibat_limit(void *a0)
+int platform_class_loadsw_get_ibat_limit(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_loadsw_get_ibat_limit);
 
-void * platform_class_loadsw_get_lowpower_mode(void *a0)
+int platform_class_loadsw_get_lowpower_mode(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_loadsw_get_lowpower_mode);
 
-void * platform_class_loadsw_get_present(void *a0, void *a1)
+int platform_class_loadsw_get_present(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_loadsw_get_present);
 
@@ -6980,285 +6746,285 @@ int platform_class_wireless_erase_fw(void *a0)
 }
 EXPORT_SYMBOL(platform_class_wireless_erase_fw);
 
-void * platform_class_wireless_get_auth_value(void *a0, void *a1)
+int platform_class_wireless_get_auth_value(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_auth_value);
 
-void * platform_class_wireless_get_debug_fod_type(void *a0, void *a1)
+int platform_class_wireless_get_debug_fod_type(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_debug_fod_type);
 
-void * platform_class_wireless_get_detected_freq(void *a0, void *a1)
+int platform_class_wireless_get_detected_freq(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_detected_freq);
 
-void * platform_class_wireless_get_fw_upgrade_fail_info(void *a0, void *a1)
+int platform_class_wireless_get_fw_upgrade_fail_info(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_fw_upgrade_fail_info);
 
-void * platform_class_wireless_get_hall_n_gpio_status(void *a0, void *a1)
+int platform_class_wireless_get_hall_n_gpio_status(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_hall_n_gpio_status);
 
-void * platform_class_wireless_get_hall_s_gpio_status(void *a0, void *a1)
+int platform_class_wireless_get_hall_s_gpio_status(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_hall_s_gpio_status);
 
-void * platform_class_wireless_get_iout(void *a0, void *a1)
+int platform_class_wireless_get_iout(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_iout);
 
-void * platform_class_wireless_get_magnetic_case_flag(void *a0, void *a1)
+int platform_class_wireless_get_magnetic_case_flag(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_magnetic_case_flag);
 
-void * platform_class_wireless_get_pen_down_hall_n(void *a0, void *a1)
+int platform_class_wireless_get_pen_down_hall_n(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_pen_down_hall_n);
 
-void * platform_class_wireless_get_pen_down_hall_s(void *a0, void *a1)
+int platform_class_wireless_get_pen_down_hall_s(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_pen_down_hall_s);
 
-void * platform_class_wireless_get_pen_full_flag(void *a0, void *a1)
+int platform_class_wireless_get_pen_full_flag(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_pen_full_flag);
 
-void * platform_class_wireless_get_pen_hall_ppe_n(void *a0, void *a1)
+int platform_class_wireless_get_pen_hall_ppe_n(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_pen_hall_ppe_n);
 
-void * platform_class_wireless_get_pen_hall_ppe_s(void *a0, void *a1)
+int platform_class_wireless_get_pen_hall_ppe_s(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_pen_hall_ppe_s);
 
-void * platform_class_wireless_get_pen_mac(void *a0, void *a1)
+int platform_class_wireless_get_pen_mac(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_pen_mac);
 
-void * platform_class_wireless_get_pen_place_err(void *a0, void *a1, void *a2, void *a3)
+int platform_class_wireless_get_pen_place_err(void *a0, void *a1, void *a2, void *a3)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_pen_place_err);
 
-void * platform_class_wireless_get_pen_soc(void *a0, void *a1)
+int platform_class_wireless_get_pen_soc(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_pen_soc);
 
-void * platform_class_wireless_get_pen_up_hall_n(void *a0, void *a1)
+int platform_class_wireless_get_pen_up_hall_n(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_pen_up_hall_n);
 
-void * platform_class_wireless_get_pen_up_hall_s(void *a0, void *a1)
+int platform_class_wireless_get_pen_up_hall_s(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_pen_up_hall_s);
 
-void * platform_class_wireless_get_phone_case_category(void *a0, void *a1)
+int platform_class_wireless_get_phone_case_category(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_phone_case_category);
 
-void * platform_class_wireless_get_poweroff_err_code(void *a0, void *a1)
+int platform_class_wireless_get_poweroff_err_code(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_poweroff_err_code);
 
-void * platform_class_wireless_get_project_vendor(void *a0, void *a1)
+int platform_class_wireless_get_project_vendor(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_project_vendor);
 
-void * platform_class_wireless_get_reverse_chg_en(void *a0, void *a1)
+int platform_class_wireless_get_reverse_chg_en(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_reverse_chg_en);
 
-void * platform_class_wireless_get_rsv_eppmode_fail(void *a0, void *a1)
+int platform_class_wireless_get_rsv_eppmode_fail(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_rsv_eppmode_fail);
 
-void * platform_class_wireless_get_rx_brg_status(void *a0, void *a1)
+int platform_class_wireless_get_rx_brg_status(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_rx_brg_status);
 
-void * platform_class_wireless_get_rx_err_code(void *a0, void *a1, void *a2)
+int platform_class_wireless_get_rx_err_code(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_rx_err_code);
 
-void * platform_class_wireless_get_rx_fastcharge_status(void *a0, void *a1)
+int platform_class_wireless_get_rx_fastcharge_status(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_rx_fastcharge_status);
 
-void * platform_class_wireless_get_rx_int_flag(void *a0)
+int platform_class_wireless_get_rx_int_flag(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_rx_int_flag);
 
-void * platform_class_wireless_get_rx_offset(void *a0)
+int platform_class_wireless_get_rx_offset(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_rx_offset);
 
-void * platform_class_wireless_get_rx_power_mode(void *a0, void *a1)
+int platform_class_wireless_get_rx_power_mode(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_rx_power_mode);
 
-void * platform_class_wireless_get_rx_rtx_mode(void *a0)
+int platform_class_wireless_get_rx_rtx_mode(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_rx_rtx_mode);
 
-void * platform_class_wireless_get_saved_fw_version(void *a0, void *a1)
+int platform_class_wireless_get_saved_fw_version(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_saved_fw_version);
 
-void * platform_class_wireless_get_ss_voltage(void *a0, void *a1)
+int platform_class_wireless_get_ss_voltage(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_ss_voltage);
 
-void * platform_class_wireless_get_temp(void *a0, void *a1)
+int platform_class_wireless_get_temp(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_temp);
 
-void * platform_class_wireless_get_trx_isense(void *a0, void *a1)
+int platform_class_wireless_get_trx_isense(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_trx_isense);
 
-void * platform_class_wireless_get_trx_vrect(void *a0, void *a1)
+int platform_class_wireless_get_trx_vrect(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_trx_vrect);
 
-void * platform_class_wireless_get_tx_adapter(void *a0, void *a1)
+int platform_class_wireless_get_tx_adapter(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_tx_adapter);
 
-void * platform_class_wireless_get_tx_adapter_by_i2c(void *a0, void *a1)
+int platform_class_wireless_get_tx_adapter_by_i2c(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_tx_adapter_by_i2c);
 
-void * platform_class_wireless_get_tx_err_code(void *a0, void *a1, void *a2)
+int platform_class_wireless_get_tx_err_code(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_tx_err_code);
 
-void * platform_class_wireless_get_tx_fan_speed(void *a0)
+int platform_class_wireless_get_tx_fan_speed(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_tx_fan_speed);
 
-void * platform_class_wireless_get_tx_iout(void *a0, void *a1)
+int platform_class_wireless_get_tx_iout(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_tx_iout);
 
-void * platform_class_wireless_get_tx_max_power(void *a0, void *a1)
+int platform_class_wireless_get_tx_max_power(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_tx_max_power);
 
-void * platform_class_wireless_get_tx_type(void *a0, void *a1)
+int platform_class_wireless_get_tx_type(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_tx_type);
 
-void * platform_class_wireless_get_tx_uuid(void *a0, void *a1)
+int platform_class_wireless_get_tx_uuid(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_tx_uuid);
 
-void * platform_class_wireless_get_tx_vout(void *a0, void *a1)
+int platform_class_wireless_get_tx_vout(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_tx_vout);
 
-void * platform_class_wireless_get_vout(void *a0, void *a1)
+int platform_class_wireless_get_vout(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_vout);
 
-void * platform_class_wireless_get_vout_setted(void *a0, void *a1)
+int platform_class_wireless_get_vout_setted(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_vout_setted);
 
-void * platform_class_wireless_get_vrect(void *a0, void *a1)
+int platform_class_wireless_get_vrect(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_class_wireless_get_vrect);
 
@@ -7448,333 +7214,333 @@ int platform_fg_ops_fl4p0_enable_check(void *a0)
 }
 EXPORT_SYMBOL(platform_fg_ops_fl4p0_enable_check);
 
-void * platform_fg_ops_get_adapt_power(void *a0, void *a1)
+int platform_fg_ops_get_adapt_power(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_adapt_power);
 
-void * platform_fg_ops_get_aged_flag(void *a0)
+int platform_fg_ops_get_aged_flag(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_aged_flag);
 
-void * platform_fg_ops_get_authentic(void *a0, void *a1)
+int platform_fg_ops_get_authentic(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_authentic);
 
-void * platform_fg_ops_get_batt_abnormal_info(void *a0, void *a1)
+int platform_fg_ops_get_batt_abnormal_info(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_batt_abnormal_info);
 
-void * platform_fg_ops_get_batt_cell_info(void *a0, void *a1)
+int platform_fg_ops_get_batt_cell_info(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_batt_cell_info);
 
-void * platform_fg_ops_get_batt_info(void *a0, void *a1)
+int platform_fg_ops_get_batt_info(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_batt_info);
 
-void * platform_fg_ops_get_batt_qmax(void *a0, void *a1)
+int platform_fg_ops_get_batt_qmax(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_batt_qmax);
 
-void * platform_fg_ops_get_batt_sn(void *a0, void *a1)
+int platform_fg_ops_get_batt_sn(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_batt_sn);
 
-void * platform_fg_ops_get_calc_rvalue(void *a0)
+int platform_fg_ops_get_calc_rvalue(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_calc_rvalue);
 
-void * platform_fg_ops_get_calibration_charge_energy(void *a0, void *a1)
+int platform_fg_ops_get_calibration_charge_energy(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_calibration_charge_energy);
 
-void * platform_fg_ops_get_calibration_ffc_iterm(void *a0, void *a1)
+int platform_fg_ops_get_calibration_ffc_iterm(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_calibration_ffc_iterm);
 
-void * platform_fg_ops_get_cc_coulomb_integral(void *a0, void *a1)
+int platform_fg_ops_get_cc_coulomb_integral(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_cc_coulomb_integral);
 
-void * platform_fg_ops_get_charge_status(void *a0)
+int platform_fg_ops_get_charge_status(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_charge_status);
 
-void * platform_fg_ops_get_chg_vol(void *a0)
+int platform_fg_ops_get_chg_vol(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_chg_vol);
 
-void * platform_fg_ops_get_chip_ok(void *a0)
+int platform_fg_ops_get_chip_ok(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_chip_ok);
 
-void * platform_fg_ops_get_clear_cycle_flag(void *a0, void *a1, void *a2, void *a3)
+int platform_fg_ops_get_clear_cycle_flag(void *a0, void *a1, void *a2, void *a3)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_clear_cycle_flag);
 
-void * platform_fg_ops_get_count_level1(void *a0, void *a1)
+int platform_fg_ops_get_count_level1(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_count_level1);
 
-void * platform_fg_ops_get_count_level2(void *a0, void *a1)
+int platform_fg_ops_get_count_level2(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_count_level2);
 
-void * platform_fg_ops_get_count_level3(void *a0, void *a1)
+int platform_fg_ops_get_count_level3(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_count_level3);
 
-void * platform_fg_ops_get_count_lowtemp(void *a0, void *a1)
+int platform_fg_ops_get_count_lowtemp(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_count_lowtemp);
 
-void * platform_fg_ops_get_csd_flag(void *a0, void *a1)
+int platform_fg_ops_get_csd_flag(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_csd_flag);
 
-void * platform_fg_ops_get_curr(void *a0, void *a1)
+int platform_fg_ops_get_curr(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_curr);
 
-void * platform_fg_ops_get_cutoff_voltage(void *a0, void *a1)
+int platform_fg_ops_get_cutoff_voltage(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_cutoff_voltage);
 
-void * platform_fg_ops_get_cyclecount(void *a0, void *a1)
+int platform_fg_ops_get_cyclecount(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_cyclecount);
 
-void * platform_fg_ops_get_device_name(void *a0, void *a1)
+int platform_fg_ops_get_device_name(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_device_name);
 
-void * platform_fg_ops_get_dod_count(void *a0)
+int platform_fg_ops_get_dod_count(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_dod_count);
 
-void * platform_fg_ops_get_error_state(void *a0, void *a1)
+int platform_fg_ops_get_error_state(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_error_state);
 
-void * platform_fg_ops_get_fast_mode_times(void *a0, void *a1)
+int platform_fg_ops_get_fast_mode_times(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_fast_mode_times);
 
-void * platform_fg_ops_get_fastcharge(void *a0, void *a1)
+int platform_fg_ops_get_fastcharge(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_fastcharge);
 
-void * platform_fg_ops_get_fc(void *a0, void *a1)
+int platform_fg_ops_get_fc(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_fc);
 
-void * platform_fg_ops_get_fcc(void *a0, void *a1)
+int platform_fg_ops_get_fcc(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_fcc);
 
-void * platform_fg_ops_get_fcc_default(void *a0, void *a1)
+int platform_fg_ops_get_fcc_default(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_fcc_default);
 
-void * platform_fg_ops_get_fg_vendor(void *a0, void *a1)
+int platform_fg_ops_get_fg_vendor(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_fg_vendor);
 
-void * platform_fg_ops_get_full_design(void *a0, void *a1)
+int platform_fg_ops_get_full_design(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_full_design);
 
-void * platform_fg_ops_get_iaver(void *a0, void *a1)
+int platform_fg_ops_get_iaver(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_iaver);
 
-void * platform_fg_ops_get_isc_alert_level(void *a0, void *a1)
+int platform_fg_ops_get_isc_alert_level(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_isc_alert_level);
 
-void * platform_fg_ops_get_original_temp(void *a0, void *a1)
+int platform_fg_ops_get_original_temp(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_original_temp);
 
-void * platform_fg_ops_get_pack_vendor(void *a0)
+int platform_fg_ops_get_pack_vendor(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_pack_vendor);
 
-void * platform_fg_ops_get_raw_soc(void *a0)
+int platform_fg_ops_get_raw_soc(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_raw_soc);
 
-void * platform_fg_ops_get_real_supplement_energy(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5, void *a6)
+int platform_fg_ops_get_real_supplement_energy(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5, void *a6)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_real_supplement_energy);
 
-void * platform_fg_ops_get_rm(void *a0, void *a1)
+int platform_fg_ops_get_rm(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_rm);
 
-void * platform_fg_ops_get_rsoc(void *a0, void *a1)
+int platform_fg_ops_get_rsoc(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_rsoc);
 
-void * platform_fg_ops_get_soa_alert_level(void *a0, void *a1)
+int platform_fg_ops_get_soa_alert_level(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_soa_alert_level);
 
-void * platform_fg_ops_get_soc(void *a0)
+int platform_fg_ops_get_soc(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_soc);
 
-void * platform_fg_ops_get_soh(void *a0, void *a1)
+int platform_fg_ops_get_soh(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_soh);
 
-void * platform_fg_ops_get_temp(void *a0, void *a1)
+int platform_fg_ops_get_temp(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_temp);
 
-void * platform_fg_ops_get_temp_max(void *a0)
+int platform_fg_ops_get_temp_max(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_temp_max);
 
-void * platform_fg_ops_get_temp_min(void *a0, void *a1)
+int platform_fg_ops_get_temp_min(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_temp_min);
 
-void * platform_fg_ops_get_time_ot(void *a0)
+int platform_fg_ops_get_time_ot(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_time_ot);
 
-void * platform_fg_ops_get_tte(void *a0)
+int platform_fg_ops_get_tte(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_tte);
 
-void * platform_fg_ops_get_ttf(void *a0)
+int platform_fg_ops_get_ttf(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_ttf);
 
-void * platform_fg_ops_get_ui_soh(void *a0, void *a1)
+int platform_fg_ops_get_ui_soh(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_ui_soh);
 
-void * platform_fg_ops_get_verify_digest(void *a0, void *a1, void *a2, void *a3)
+int platform_fg_ops_get_verify_digest(void *a0, void *a1, void *a2, void *a3)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_verify_digest);
 
-void * platform_fg_ops_get_volt(void *a0, void *a1)
+int platform_fg_ops_get_volt(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_volt);
 
-void * platform_fg_ops_get_vsiloss(void *a0, void *a1)
+int platform_fg_ops_get_vsiloss(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_fg_ops_get_vsiloss);
 
@@ -7862,19 +7628,18 @@ int platform_fg_ops_update_fw(void *a0)
 }
 EXPORT_SYMBOL(platform_fg_ops_update_fw);
 
-void * platform_get_qcom_scmi_device(void *a0)
+int platform_get_qcom_scmi_device(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_get_qcom_scmi_device);
 
-void * platform_mpam_get_root_group(void)
+int platform_mpam_get_root_group(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(platform_mpam_get_root_group);
 
-/* ---- pmic_* (3) ---- */
 int pmic_glink_register_client(void *a0, void *a1)
 {
 	return 0;
@@ -7893,16 +7658,15 @@ int pmic_glink_write(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(pmic_glink_write);
 
-/* ---- powerinsight_* (10) ---- */
 int powerinsight_gpu_close_opp_cost(void)
 {
 	return 0;
 }
 EXPORT_SYMBOL(powerinsight_gpu_close_opp_cost);
 
-void * powerinsight_gpu_get_opp_cnt(void)
+int powerinsight_gpu_get_opp_cnt(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(powerinsight_gpu_get_opp_cnt);
 
@@ -7954,125 +7718,123 @@ int powerinsight_wifi_wake_reason(void *a0)
 }
 EXPORT_SYMBOL(powerinsight_wifi_wake_reason);
 
-/* ---- product_* (1) ---- */
 int product_name_get(void)
 {
 	return 0;
 }
 EXPORT_SYMBOL(product_name_get);
 
-/* ---- protocol_* (73) ---- */
 int protocol_class_det_adapter_type(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(protocol_class_det_adapter_type);
 
-void * protocol_class_get_adapter_info(void *a0)
+int protocol_class_get_adapter_info(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_get_adapter_info);
 
-void * protocol_class_get_adapter_max_power(void *a0, void *a1)
+int protocol_class_get_adapter_max_power(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_get_adapter_max_power);
 
-void * protocol_class_get_adapter_power_cap(void *a0, void *a1)
+int protocol_class_get_adapter_power_cap(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_get_adapter_power_cap);
 
-void * protocol_class_get_adapter_power_curve(void *a0)
+int protocol_class_get_adapter_power_curve(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_get_adapter_power_curve);
 
-void * protocol_class_get_adapter_pps_ptf(void *a0, void *a1)
+int protocol_class_get_adapter_pps_ptf(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_get_adapter_pps_ptf);
 
-void * protocol_class_get_adapter_pwr_max_power(void *a0, void *a1)
+int protocol_class_get_adapter_pwr_max_power(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_get_adapter_pwr_max_power);
 
-void * protocol_class_get_adapter_type(void *a0, void *a1)
+int protocol_class_get_adapter_type(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_get_adapter_type);
 
-void * protocol_class_get_adapter_verified(void *a0, void *a1)
+int protocol_class_get_adapter_verified(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_get_adapter_verified);
 
-void * protocol_class_get_adapter_volt_and_curr(void *a0)
+int protocol_class_get_adapter_volt_and_curr(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_get_adapter_volt_and_curr);
 
-void * protocol_class_pd_get_adapter_id(void *a0, void *a1, void *a2, void *a3)
+int protocol_class_pd_get_adapter_id(void *a0, void *a1, void *a2, void *a3)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_adapter_id);
 
-void * protocol_class_pd_get_adapter_svid(void *a0, void *a1, void *a2, void *a3)
+int protocol_class_pd_get_adapter_svid(void *a0, void *a1, void *a2, void *a3)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_adapter_svid);
 
-void * protocol_class_pd_get_cap(void *a0)
+int protocol_class_pd_get_cap(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_cap);
 
-void * protocol_class_pd_get_cc_short_vbus(void *a0)
+int protocol_class_pd_get_cc_short_vbus(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_cc_short_vbus);
 
-void * protocol_class_pd_get_cc_status(void *a0)
+int protocol_class_pd_get_cc_status(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_cc_status);
 
-void * protocol_class_pd_get_cc_toggle(void *a0, void *a1)
+int protocol_class_pd_get_cc_toggle(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_cc_toggle);
 
-void * protocol_class_pd_get_cid_status(void *a0, void *a1)
+int protocol_class_pd_get_cid_status(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_cid_status);
 
-void * protocol_class_pd_get_current_state(void *a0, void *a1, void *a2)
+int protocol_class_pd_get_current_state(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_current_state);
 
-void * protocol_class_pd_get_data_role(void *a0, void *a1, void *a2, void *a3)
+int protocol_class_pd_get_data_role(void *a0, void *a1, void *a2, void *a3)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_data_role);
 
@@ -8082,15 +7844,15 @@ bool protocol_class_pd_get_has_dp(void *a0, void *a1)
 }
 EXPORT_SYMBOL(protocol_class_pd_get_has_dp);
 
-void * protocol_class_pd_get_otg_plugin_status(void *a0, void *a1)
+int protocol_class_pd_get_otg_plugin_status(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_otg_plugin_status);
 
-void * protocol_class_pd_get_pd_active(void *a0, void *a1)
+int protocol_class_pd_get_pd_active(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_pd_active);
 
@@ -8100,147 +7862,147 @@ void protocol_class_pd_get_pd_in_hard_reset(void *a0)
 }
 EXPORT_SYMBOL(protocol_class_pd_get_pd_in_hard_reset);
 
-void * protocol_class_pd_get_pd_type(void *a0)
+int protocol_class_pd_get_pd_type(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_pd_type);
 
-void * protocol_class_pd_get_pd_typec_accessory_mode(void *a0)
+int protocol_class_pd_get_pd_typec_accessory_mode(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_pd_typec_accessory_mode);
 
-void * protocol_class_pd_get_pd_verifed(void *a0, void *a1)
+int protocol_class_pd_get_pd_verifed(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_pd_verifed);
 
-void * protocol_class_pd_get_pdos(void *a0, void *a1, void *a2)
+int protocol_class_pd_get_pdos(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_pdos);
 
-void * protocol_class_pd_get_port_num(void)
+int protocol_class_pd_get_port_num(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_port_num);
 
-void * protocol_class_pd_get_power_role(void *a0, void *a1, void *a2, void *a3)
+int protocol_class_pd_get_power_role(void *a0, void *a1, void *a2, void *a3)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_power_role);
 
-void * protocol_class_pd_get_pps_apdo_max(void *a0)
+int protocol_class_pd_get_pps_apdo_max(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_pps_apdo_max);
 
-void * protocol_class_pd_get_pps_max_cur(void *a0)
+int protocol_class_pd_get_pps_max_cur(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_pps_max_cur);
 
-void * protocol_class_pd_get_pps_max_power(void *a0)
+int protocol_class_pd_get_pps_max_power(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_pps_max_power);
 
-void * protocol_class_pd_get_pps_max_volt(void *a0)
+int protocol_class_pd_get_pps_max_volt(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_pps_max_volt);
 
-void * protocol_class_pd_get_pps_min_volt(void *a0)
+int protocol_class_pd_get_pps_min_volt(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_pps_min_volt);
 
-void * protocol_class_pd_get_pps_ptf(void *a0)
+int protocol_class_pd_get_pps_ptf(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_pps_ptf);
 
-void * protocol_class_pd_get_pps_status(void *a0)
+int protocol_class_pd_get_pps_status(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_pps_status);
 
-void * protocol_class_pd_get_product_vdo(void *a0, void *a1)
+int protocol_class_pd_get_product_vdo(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_product_vdo);
 
-void * protocol_class_pd_get_snk_src_mode(void *a0)
+int protocol_class_pd_get_snk_src_mode(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_snk_src_mode);
 
-void * protocol_class_pd_get_support_keep_pdo(void *a0, void *a1)
+int protocol_class_pd_get_support_keep_pdo(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_support_keep_pdo);
 
-void * protocol_class_pd_get_suspend_support_status(void *a0, void *a1)
+int protocol_class_pd_get_suspend_support_status(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_suspend_support_status);
 
-void * protocol_class_pd_get_typec_cc_orientation(void *a0)
+int protocol_class_pd_get_typec_cc_orientation(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_typec_cc_orientation);
 
-void * protocol_class_pd_get_typec_mode(void *a0)
+int protocol_class_pd_get_typec_mode(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_typec_mode);
 
-void * protocol_class_pd_get_usb_suspend_supported(void *a0)
+int protocol_class_pd_get_usb_suspend_supported(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_usb_suspend_supported);
 
-void * protocol_class_pd_get_usb_vendor_id(void *a0, void *a1)
+int protocol_class_pd_get_usb_vendor_id(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_usb_vendor_id);
 
-void * protocol_class_pd_get_vdm_cmd(void *a0, void *a1, void *a2, void *a3)
+int protocol_class_pd_get_vdm_cmd(void *a0, void *a1, void *a2, void *a3)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_vdm_cmd);
 
-void * protocol_class_pd_get_verify_process(void *a0, void *a1, void *a2, void *a3, void *a4)
+int protocol_class_pd_get_verify_process(void *a0, void *a1, void *a2, void *a3, void *a4)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_verify_process);
 
-void * protocol_class_pd_get_zimi_cypress_flag(void *a0, void *a1)
+int protocol_class_pd_get_zimi_cypress_flag(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_pd_get_zimi_cypress_flag);
 
@@ -8358,9 +8120,9 @@ bool protocol_class_qc3_check_class_type(void *a0)
 }
 EXPORT_SYMBOL(protocol_class_qc3_check_class_type);
 
-void * protocol_class_qc_get_qc_type(void *a0)
+int protocol_class_qc_get_qc_type(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(protocol_class_qc_get_qc_type);
 
@@ -8400,21 +8162,21 @@ int protocol_class_set_adapter_volt_and_curr(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(protocol_class_set_adapter_volt_and_curr);
 
-/* ---- provide_* (1) ---- */
 int provide_qseecom_kernel_fun_ops(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(provide_qseecom_kernel_fun_ops);
 
-/* ---- put_* (1) ---- */
 int put_si_object(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(put_si_object);
 
-/* ---- qcom_* (105) ---- */
+void *pwrkey_irq_notifier_list;
+EXPORT_SYMBOL(pwrkey_irq_notifier_list);
+
 int qcom_alloc_io_pgtable_ops(void *a0, void *a1, void *a2)
 {
 	return 0;
@@ -8457,9 +8219,9 @@ void qcom_clk_dump(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(qcom_clk_dump);
 
-void * qcom_clk_get_voltage(void *a0, void *a1)
+int qcom_clk_get_voltage(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qcom_clk_get_voltage);
 
@@ -8475,9 +8237,9 @@ int qcom_create_ramdump_device(void *a0, void *a1)
 }
 EXPORT_SYMBOL(qcom_create_ramdump_device);
 
-void * qcom_dcvs_get_ddr_child_node(void *a0, void *a1)
+int qcom_dcvs_get_ddr_child_node(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qcom_dcvs_get_ddr_child_node);
 
@@ -8517,6 +8279,9 @@ int qcom_destroy_ramdump_device(void *a0)
 }
 EXPORT_SYMBOL(qcom_destroy_ramdump_device);
 
+void *qcom_device_shutdown_in_progress;
+EXPORT_SYMBOL(qcom_device_shutdown_in_progress);
+
 void qcom_dump(void *a0, void *a1)
 {
 	/* no-op */
@@ -8529,9 +8294,9 @@ void qcom_elf_dump(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(qcom_elf_dump);
 
-void * qcom_flash_led_get_max_avail_current(void *a0, void *a1)
+int qcom_flash_led_get_max_avail_current(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qcom_flash_led_get_max_avail_current);
 
@@ -8547,9 +8312,9 @@ void qcom_fw_elf_dump(void *a0)
 }
 EXPORT_SYMBOL(qcom_fw_elf_dump);
 
-void * qcom_get_cpucp_id(void *a0, void *a1)
+int qcom_get_cpucp_id(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qcom_get_cpucp_id);
 
@@ -8559,9 +8324,9 @@ int qcom_glink_early_ssr_notify(void *a0)
 }
 EXPORT_SYMBOL(qcom_glink_early_ssr_notify);
 
-void * qcom_glink_get_signals(void *a0)
+int qcom_glink_get_signals(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qcom_glink_get_signals);
 
@@ -8655,27 +8420,27 @@ int qcom_iommu_enable_s1_translation(void *a0)
 }
 EXPORT_SYMBOL(qcom_iommu_enable_s1_translation);
 
-void * qcom_iommu_get_asid_nr(void *a0)
+int qcom_iommu_get_asid_nr(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qcom_iommu_get_asid_nr);
 
-void * qcom_iommu_get_context_bank_nr(void *a0)
+int qcom_iommu_get_context_bank_nr(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qcom_iommu_get_context_bank_nr);
 
-void * qcom_iommu_get_fault_ids(void *a0, void *a1)
+int qcom_iommu_get_fault_ids(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qcom_iommu_get_fault_ids);
 
-void * qcom_iommu_get_mappings_configuration(void)
+int qcom_iommu_get_mappings_configuration(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qcom_iommu_get_mappings_configuration);
 
@@ -8709,33 +8474,33 @@ int qcom_mpam_config_monitor(void *a0)
 }
 EXPORT_SYMBOL(qcom_mpam_config_monitor);
 
-void * qcom_mpam_get_bw_limit(void)
+int qcom_mpam_get_bw_limit(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qcom_mpam_get_bw_limit);
 
-void * qcom_mpam_get_bw_limit_rpmsg(void)
+int qcom_mpam_get_bw_limit_rpmsg(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qcom_mpam_get_bw_limit_rpmsg);
 
-void * qcom_mpam_get_cache_partition(void *a0, void *a1)
+int qcom_mpam_get_cache_partition(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qcom_mpam_get_cache_partition);
 
-void * qcom_mpam_get_platform_bw_ctrl(void *a0, void *a1)
+int qcom_mpam_get_platform_bw_ctrl(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qcom_mpam_get_platform_bw_ctrl);
 
-void * qcom_mpam_get_version(void *a0)
+int qcom_mpam_get_version(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qcom_mpam_get_version);
 
@@ -8883,21 +8648,21 @@ int qcom_scm_dcvs_update_v2(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(qcom_scm_dcvs_update_v2);
 
-void * qcom_scm_get_sec_dump_state(void *a0)
+int qcom_scm_get_sec_dump_state(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qcom_scm_get_sec_dump_state);
 
-void * qcom_scm_get_tz_feat_id_version(void *a0, void *a1)
+int qcom_scm_get_tz_feat_id_version(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qcom_scm_get_tz_feat_id_version);
 
-void * qcom_scm_get_tz_log_feat_id(void *a0)
+int qcom_scm_get_tz_log_feat_id(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qcom_scm_get_tz_log_feat_id);
 
@@ -8997,21 +8762,15 @@ int qcom_spss_set_fw_name(void *a0, void *a1)
 }
 EXPORT_SYMBOL(qcom_spss_set_fw_name);
 
-void * qcom_ssr_get_subsys(void *a0)
-{
-	return NULL;
-}
-EXPORT_SYMBOL(qcom_ssr_get_subsys);
-
 int qcom_stats_ddr_freqsync_msg(void)
 {
 	return 0;
 }
 EXPORT_SYMBOL(qcom_stats_ddr_freqsync_msg);
 
-void * qcom_sysmon_get_txn_id(void *a0)
+int qcom_sysmon_get_txn_id(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qcom_sysmon_get_txn_id);
 
@@ -9045,14 +8804,12 @@ void qcom_va_md_unregister(void *a0, void *a1)
 }
 EXPORT_SYMBOL(qcom_va_md_unregister);
 
-/* ---- qlpmm_* (1) ---- */
-void * qlpmm_get_subsystem_lpm_data(void *a0, void *a1)
+int qlpmm_get_subsystem_lpm_data(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qlpmm_get_subsystem_lpm_data);
 
-/* ---- qptm_* (11) ---- */
 int qptm_available_node_count(void)
 {
 	return 0;
@@ -9089,27 +8846,27 @@ int qptm_for_each_node(void *a0, void *a1)
 }
 EXPORT_SYMBOL(qptm_for_each_node);
 
-void * qptm_get_energy_in_uj(void *a0, void *a1)
+int qptm_get_energy_in_uj(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qptm_get_energy_in_uj);
 
-void * qptm_get_node_id(void)
+int qptm_get_node_id(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qptm_get_node_id);
 
-void * qptm_get_node_name(void *a0)
+int qptm_get_node_name(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qptm_get_node_name);
 
-void * qptm_get_power_in_uw(void *a0, void *a1)
+int qptm_get_power_in_uw(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qptm_get_power_in_uw);
 
@@ -9119,7 +8876,6 @@ int qptm_power_data_update(void)
 }
 EXPORT_SYMBOL(qptm_power_data_update);
 
-/* ---- qrtr_* (2) ---- */
 int qrtr_peek_pkt_size(void *a0)
 {
 	return 0;
@@ -9132,7 +8888,6 @@ int qrtr_print_wakeup_reason(void *a0)
 }
 EXPORT_SYMBOL(qrtr_print_wakeup_reason);
 
-/* ---- qtee_* (5) ---- */
 int qtee_shmbridge_allocate_shm(void *a0, void *a1)
 {
 	return 0;
@@ -9163,10 +8918,9 @@ int qtee_shmbridge_register(void *a0, void *a1, void *a2, void *a3, void *a4, vo
 }
 EXPORT_SYMBOL(qtee_shmbridge_register);
 
-/* ---- qti_* (2) ---- */
-void * qti_battery_charger_get_prop(void *a0, void *a1, void *a2)
+int qti_battery_charger_get_prop(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qti_battery_charger_get_prop);
 
@@ -9176,7 +8930,6 @@ int qti_smmu_proxy_register_callbacks(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(qti_smmu_proxy_register_callbacks);
 
-/* ---- qts_* (3) ---- */
 int qts_client_register(void *a0)
 {
 	return 0;
@@ -9195,10 +8948,9 @@ int qts_ts_suspend(void *a0)
 }
 EXPORT_SYMBOL(qts_ts_suspend);
 
-/* ---- qvadj_* (2) ---- */
-void * qvadj_get_cur_voltage_overrides(void *a0, void *a1)
+int qvadj_get_cur_voltage_overrides(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(qvadj_get_cur_voltage_overrides);
 
@@ -9208,7 +8960,6 @@ int qvadj_set_next_voltage_overrides(void *a0)
 }
 EXPORT_SYMBOL(qvadj_set_next_voltage_overrides);
 
-/* ---- register_* (16) ---- */
 int register_cam_freq_hook(void *a0)
 {
 	return 0;
@@ -9245,15 +8996,15 @@ int register_hw_monitor_info(void *a0)
 }
 EXPORT_SYMBOL(register_hw_monitor_info);
 
-void * register_mi_cx_stats_get_ss_vote_info(void *a0)
+int register_mi_cx_stats_get_ss_vote_info(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(register_mi_cx_stats_get_ss_vote_info);
 
-void * register_mi_ddr_stats_get_ss_vote_info(void *a0)
+int register_mi_ddr_stats_get_ss_vote_info(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(register_mi_ddr_stats_get_ss_vote_info);
 
@@ -9269,9 +9020,9 @@ int register_mi_dflt_lat_update_cb(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(register_mi_dflt_lat_update_cb);
 
-void * register_mi_llc_stats_get_ss_vote_info(void *a0)
+int register_mi_llc_stats_get_ss_vote_info(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(register_mi_llc_stats_get_ss_vote_info);
 
@@ -9305,28 +9056,12 @@ int register_xiaomi_stylus_input_dev(void *a0)
 }
 EXPORT_SYMBOL(register_xiaomi_stylus_input_dev);
 
-/* ---- regmap_* (1) ---- */
-int __regmap_init_swr(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(__regmap_init_swr);
-
-/* ---- regulator_* (1) ---- */
 int regulator_proxy_consumer_sync_state(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(regulator_proxy_consumer_sync_state);
 
-/* ---- revert_* (1) ---- */
-int revert_creds(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(revert_creds);
-
-/* ---- rmnet_* (35) ---- */
 int rmnet_mem_cb(void *a0, void *a1)
 {
 	return 0;
@@ -9339,15 +9074,15 @@ int rmnet_mem_config_query(void *a0)
 }
 EXPORT_SYMBOL(rmnet_mem_config_query);
 
-void * rmnet_mem_get_pages_entry(void *a0, void *a1, void *a2, void *a3, void *a4)
+int rmnet_mem_get_pages_entry(void *a0, void *a1, void *a2, void *a3, void *a4)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(rmnet_mem_get_pages_entry);
 
-void * rmnet_mem_get_pool_size(void *a0)
+int rmnet_mem_get_pool_size(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(rmnet_mem_get_pool_size);
 
@@ -9537,7 +9272,6 @@ int rmnet_module_hook_wlan_ingress_rx_handler(void *a0, void *a1)
 }
 EXPORT_SYMBOL(rmnet_module_hook_wlan_ingress_rx_handler);
 
-/* ---- rpmh_* (4) ---- */
 int rpmh_drv_start(void)
 {
 	return 0;
@@ -9550,9 +9284,9 @@ void rpmh_drv_stop(void)
 }
 EXPORT_SYMBOL(rpmh_drv_stop);
 
-void * rpmh_get_device(void *a0, void *a1)
+int rpmh_get_device(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(rpmh_get_device);
 
@@ -9562,23 +9296,21 @@ int rpmh_write_sleep_and_wake_no_child(void)
 }
 EXPORT_SYMBOL(rpmh_write_sleep_and_wake_no_child);
 
-/* ---- rproc_* (1) ---- */
 int rproc_recovery_set_fn(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(rproc_recovery_set_fn);
 
-/* ---- sched_* (4) ---- */
 int sched_entity_freq_enable(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(sched_entity_freq_enable);
 
-void * sched_entity_freq_get_runq_count(void *a0)
+int sched_entity_freq_get_runq_count(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(sched_entity_freq_get_runq_count);
 
@@ -9594,14 +9326,12 @@ int sched_lpm_disallowed_time(void *a0, void *a1)
 }
 EXPORT_SYMBOL(sched_lpm_disallowed_time);
 
-/* ---- schedule_* (1) ---- */
 int schedule_resume_suspend_work(void *a0, void *a1)
 {
 	return 0;
 }
 EXPORT_SYMBOL(schedule_resume_suspend_work);
 
-/* ---- sdca_* (2) ---- */
 void * sdca_devices_debugfs_dentry_create(void *a0, void *a1)
 {
 	return NULL;
@@ -9614,7 +9344,6 @@ void sdca_devices_debugfs_dentry_remove(void *a0)
 }
 EXPORT_SYMBOL(sdca_devices_debugfs_dentry_remove);
 
-/* ---- sde_* (2) ---- */
 int sde_i2c_byte_read(void *a0)
 {
 	return 0;
@@ -9627,23 +9356,21 @@ int sde_i2c_byte_write(void *a0)
 }
 EXPORT_SYMBOL(sde_i2c_byte_write);
 
-/* ---- should_* (1) ---- */
 int should_boost_bus_dcvs(void)
 {
 	return 0;
 }
 EXPORT_SYMBOL(should_boost_bus_dcvs);
 
-/* ---- si_* (3) ---- */
 int si_core_client_env_open(void *a0, void *a1, void *a2, void *a3)
 {
 	return 0;
 }
 EXPORT_SYMBOL(si_core_client_env_open);
 
-void * si_core_get_client_env(void *a0, void *a1)
+int si_core_get_client_env(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(si_core_get_client_env);
 
@@ -9653,10 +9380,9 @@ int si_object_do_invoke(void *a0, void *a1, void *a2, void *a3, void *a4)
 }
 EXPORT_SYMBOL(si_object_do_invoke);
 
-/* ---- sipa_* (8) ---- */
-void * sipa_get_channels(void *a0)
+int sipa_get_channels(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(sipa_get_channels);
 
@@ -9672,9 +9398,9 @@ void sipa_i2c_remove(void *a0)
 }
 EXPORT_SYMBOL(sipa_i2c_remove);
 
-void sipa_i2c_shutdown(void *a0)
+int sipa_i2c_shutdown(void *a0)
 {
-	/* no-op */
+	return 0;
 }
 EXPORT_SYMBOL(sipa_i2c_shutdown);
 
@@ -9684,9 +9410,9 @@ int sipa_multi_channel_load_fw(void *a0)
 }
 EXPORT_SYMBOL(sipa_multi_channel_load_fw);
 
-void sipa_multi_channel_power_off(void *a0)
+int sipa_multi_channel_power_off(void *a0)
 {
-	/* no-op */
+	return 0;
 }
 EXPORT_SYMBOL(sipa_multi_channel_power_off);
 
@@ -9702,14 +9428,12 @@ void sipa_multi_channel_reg_dump(void *a0)
 }
 EXPORT_SYMBOL(sipa_multi_channel_reg_dump);
 
-/* ---- slim_* (1) ---- */
 int slim_stream_unprepare_disconnect_port(void *a0, void *a1, void *a2)
 {
 	return 0;
 }
 EXPORT_SYMBOL(slim_stream_unprepare_disconnect_port);
 
-/* ---- smem_* (4) ---- */
 int smem_mailbox_read(void *a0)
 {
 	return 0;
@@ -9734,7 +9458,6 @@ int smem_mailbox_write(void *a0, void *a1, void *a2, void *a3)
 }
 EXPORT_SYMBOL(smem_mailbox_write);
 
-/* ---- snd_* (6) ---- */
 int snd_event_client_deregister(void *a0)
 {
 	return 0;
@@ -9771,7 +9494,6 @@ int snd_event_notify(void *a0, void *a1)
 }
 EXPORT_SYMBOL(snd_event_notify);
 
-/* ---- soc_* (9) ---- */
 int soc_aux_deinit_only_sia81xx(void *a0)
 {
 	return 0;
@@ -9802,15 +9524,15 @@ void soc_sia81xx_deinit(void *a0)
 }
 EXPORT_SYMBOL(soc_sia81xx_deinit);
 
-void * soc_sia81xx_get_aux_num(void *a0)
+int soc_sia81xx_get_aux_num(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(soc_sia81xx_get_aux_num);
 
-void * soc_sia81xx_get_codec_conf_num(void *a0)
+int soc_sia81xx_get_codec_conf_num(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(soc_sia81xx_get_codec_conf_num);
 
@@ -9826,76 +9548,69 @@ int soc_sia91xx_init(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(soc_sia91xx_init);
 
-/* ---- socinfo_* (9) ---- */
-void * socinfo_get_feature_code(void)
-{
-	return NULL;
-}
-EXPORT_SYMBOL(socinfo_get_feature_code);
-
-void * socinfo_get_part_count(void *a0)
-{
-	return NULL;
-}
-EXPORT_SYMBOL(socinfo_get_part_count);
-
-void * socinfo_get_part_info(void *a0)
-{
-	return NULL;
-}
-EXPORT_SYMBOL(socinfo_get_part_info);
-
-void * socinfo_get_partinfo_chip_id(void *a0)
-{
-	return NULL;
-}
-EXPORT_SYMBOL(socinfo_get_partinfo_chip_id);
-
-void * socinfo_get_partinfo_part_name(void *a0)
-{
-	return NULL;
-}
-EXPORT_SYMBOL(socinfo_get_partinfo_part_name);
-
-void * socinfo_get_partinfo_vulkan_id(void *a0)
-{
-	return NULL;
-}
-EXPORT_SYMBOL(socinfo_get_partinfo_vulkan_id);
-
-void * socinfo_get_pcode(void)
-{
-	return NULL;
-}
-EXPORT_SYMBOL(socinfo_get_pcode);
-
-void * socinfo_get_serial_number(void *a0)
-{
-	return NULL;
-}
-EXPORT_SYMBOL(socinfo_get_serial_number);
-
-void * socinfo_get_subpart_info(void *a0, void *a1, void *a2)
-{
-	return NULL;
-}
-EXPORT_SYMBOL(socinfo_get_subpart_info);
-
-/* ---- softnet_* (1) ---- */
-int softnet_data(void *a0)
+int socinfo_get_feature_code(void)
 {
 	return 0;
 }
-EXPORT_SYMBOL(softnet_data);
+EXPORT_SYMBOL(socinfo_get_feature_code);
 
-/* ---- spec_* (1) ---- */
+int socinfo_get_part_count(void *a0)
+{
+	return 0;
+}
+EXPORT_SYMBOL(socinfo_get_part_count);
+
+int socinfo_get_part_info(void *a0)
+{
+	return 0;
+}
+EXPORT_SYMBOL(socinfo_get_part_info);
+
+int socinfo_get_partinfo_chip_id(void *a0)
+{
+	return 0;
+}
+EXPORT_SYMBOL(socinfo_get_partinfo_chip_id);
+
+int socinfo_get_partinfo_part_name(void *a0)
+{
+	return 0;
+}
+EXPORT_SYMBOL(socinfo_get_partinfo_part_name);
+
+int socinfo_get_partinfo_vulkan_id(void *a0)
+{
+	return 0;
+}
+EXPORT_SYMBOL(socinfo_get_partinfo_vulkan_id);
+
+int socinfo_get_pcode(void)
+{
+	return 0;
+}
+EXPORT_SYMBOL(socinfo_get_pcode);
+
+int socinfo_get_serial_number(void *a0)
+{
+	return 0;
+}
+EXPORT_SYMBOL(socinfo_get_serial_number);
+
+int socinfo_get_subpart_info(void *a0, void *a1, void *a2)
+{
+	return 0;
+}
+EXPORT_SYMBOL(socinfo_get_subpart_info);
+
+struct bus_type soundwire_type;
+EXPORT_SYMBOL(soundwire_type);
+
 int spec_sync_wait_bind_array(void *a0, void *a1)
 {
 	return 0;
 }
 EXPORT_SYMBOL(spec_sync_wait_bind_array);
 
-/* ---- spf_* (2) ---- */
 int spf_core_apm_close_all(void)
 {
 	return 0;
@@ -9908,14 +9623,12 @@ bool spf_core_is_apm_ready(void *a0)
 }
 EXPORT_SYMBOL(spf_core_is_apm_ready);
 
-/* ---- spmi_* (1) ---- */
 int spmi_pmic_arb_map_address(void *a0, void *a1, void *a2)
 {
 	return 0;
 }
 EXPORT_SYMBOL(spmi_pmic_arb_map_address);
 
-/* ---- sps_* (35) ---- */
 int sps_alloc_endpoint(void)
 {
 	return 0;
@@ -10000,45 +9713,45 @@ int sps_free_mem(void *a0)
 }
 EXPORT_SYMBOL(sps_free_mem);
 
-void * sps_get_bam_addr(void *a0)
+int sps_get_bam_addr(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(sps_get_bam_addr);
 
-void * sps_get_bam_debug_info(void *a0)
+int sps_get_bam_debug_info(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(sps_get_bam_debug_info);
 
-void * sps_get_config(void *a0, void *a1)
+int sps_get_config(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(sps_get_config);
 
-void * sps_get_event(void *a0)
+int sps_get_event(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(sps_get_event);
 
-void * sps_get_free_count(void *a0)
+int sps_get_free_count(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(sps_get_free_count);
 
-void * sps_get_iovec(void *a0)
+int sps_get_iovec(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(sps_get_iovec);
 
-void * sps_get_unused_desc_num(void *a0)
+int sps_get_unused_desc_num(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(sps_get_unused_desc_num);
 
@@ -10126,58 +9839,57 @@ int sps_transfer_one(void *a0, void *a1, void *a2, void *a3, void *a4)
 }
 EXPORT_SYMBOL(sps_transfer_one);
 
-/* ---- strategy_* (38) ---- */
 bool strategy_class_fg_dual_is_chip_ok(void *a0)
 {
 	return false;
 }
 EXPORT_SYMBOL(strategy_class_fg_dual_is_chip_ok);
 
-bool strategy_class_fg_get_authentic(void)
+int strategy_class_fg_get_authentic(void *a0)
 {
-	return false;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_get_authentic);
 
-void * strategy_class_fg_get_comp_fcc(void *a0)
+int strategy_class_fg_get_comp_fcc(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_get_comp_fcc);
 
-void * strategy_class_fg_get_comp_rm(void *a0)
+int strategy_class_fg_get_comp_rm(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_get_comp_rm);
 
-void * strategy_class_fg_get_dc(void *a0)
+int strategy_class_fg_get_dc(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_get_dc);
 
-void * strategy_class_fg_get_fastcharge(void)
+int strategy_class_fg_get_fastcharge(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_get_fastcharge);
 
-int strategy_class_fg_get_fcc(void)
+int strategy_class_fg_get_fcc(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_get_fcc);
 
-void * strategy_class_fg_get_first_termination(void *a0)
+int strategy_class_fg_get_first_termination(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_get_first_termination);
 
-void * strategy_class_fg_get_health(void *a0)
+int strategy_class_fg_get_health(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_get_health);
 
@@ -10187,37 +9899,37 @@ bool strategy_class_fg_get_is_support_fast_mode(void *a0)
 }
 EXPORT_SYMBOL(strategy_class_fg_get_is_support_fast_mode);
 
-void * strategy_class_fg_get_model_name(void *a0)
+int strategy_class_fg_get_model_name(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_get_model_name);
 
-int strategy_class_fg_get_pack_vendor_id(void)
+int strategy_class_fg_get_pack_vendor_id(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_get_pack_vendor_id);
 
-int strategy_class_fg_get_rm(void)
+int strategy_class_fg_get_rm(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_get_rm);
 
-void * strategy_class_fg_get_soh(void *a0)
+int strategy_class_fg_get_soh(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_get_soh);
 
-void * strategy_class_fg_get_vacc(void *a0)
+int strategy_class_fg_get_vacc(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_get_vacc);
 
-int strategy_class_fg_get_voltage_mean(void)
+int strategy_class_fg_get_voltage_mean(void *a0)
 {
 	return 0;
 }
@@ -10229,63 +9941,63 @@ bool strategy_class_fg_is_chip_ok(void)
 }
 EXPORT_SYMBOL(strategy_class_fg_is_chip_ok);
 
-void * strategy_class_fg_ops_get_charging_done(void *a0)
+int strategy_class_fg_ops_get_charging_done(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_ops_get_charging_done);
 
-void * strategy_class_fg_ops_get_current(void *a0)
+int strategy_class_fg_ops_get_current(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_ops_get_current);
 
-void * strategy_class_fg_ops_get_cyclecount(void *a0)
+int strategy_class_fg_ops_get_cyclecount(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_ops_get_cyclecount);
 
-void * strategy_class_fg_ops_get_real_soc_decimal(void)
+int strategy_class_fg_ops_get_real_soc_decimal(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_ops_get_real_soc_decimal);
 
-void * strategy_class_fg_ops_get_rsoc(void *a0)
+int strategy_class_fg_ops_get_rsoc(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_ops_get_rsoc);
 
-void * strategy_class_fg_ops_get_soc(void)
+int strategy_class_fg_ops_get_soc(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_ops_get_soc);
 
-void * strategy_class_fg_ops_get_soc_decimal(void *a0, void *a1)
+int strategy_class_fg_ops_get_soc_decimal(void *a0, void *a1)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_ops_get_soc_decimal);
 
-void * strategy_class_fg_ops_get_temperature(void *a0)
+int strategy_class_fg_ops_get_temperature(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_ops_get_temperature);
 
-void * strategy_class_fg_ops_get_thermal_temperature(void *a0)
+int strategy_class_fg_ops_get_thermal_temperature(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_ops_get_thermal_temperature);
 
-void * strategy_class_fg_ops_get_voltage(void *a0)
+int strategy_class_fg_ops_get_voltage(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_fg_ops_get_voltage);
 
@@ -10325,27 +10037,27 @@ int strategy_class_fg_set_fastcharge(void *a0)
 }
 EXPORT_SYMBOL(strategy_class_fg_set_fastcharge);
 
-void * strategy_class_wireless_op_get_rx_iout_limit(void *a0)
+int strategy_class_wireless_op_get_rx_iout_limit(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_wireless_op_get_rx_iout_limit);
 
-void * strategy_class_wireless_ops_get_adapter_charger_mode(void *a0)
+int strategy_class_wireless_ops_get_adapter_charger_mode(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_wireless_ops_get_adapter_charger_mode);
 
-void * strategy_class_wireless_ops_get_adapter_power(void *a0)
+int strategy_class_wireless_ops_get_adapter_power(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_wireless_ops_get_adapter_power);
 
-void * strategy_class_wireless_ops_get_wls_type(void *a0)
+int strategy_class_wireless_ops_get_wls_type(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(strategy_class_wireless_ops_get_wls_type);
 
@@ -10355,7 +10067,6 @@ int strategy_class_wireless_ops_set_parallel_charge(void *a0)
 }
 EXPORT_SYMBOL(strategy_class_wireless_ops_set_parallel_charge);
 
-/* ---- stream_* (3) ---- */
 int stream_agg_add_channel(void *a0, void *a1, void *a2, void *a3, void *a4, void *a5, void *a6, void *a7)
 {
 	return 0;
@@ -10374,7 +10085,6 @@ int stream_agg_remove_channel(void *a0, void *a1, void *a2, void *a3)
 }
 EXPORT_SYMBOL(stream_agg_remove_channel);
 
-/* ---- subsystem_* (3) ---- */
 int subsystem_sleep_debug_enable(void *a0)
 {
 	return 0;
@@ -10393,7 +10103,6 @@ void subsystem_sleep_stats_dbg_unregister(void)
 }
 EXPORT_SYMBOL(subsystem_sleep_stats_dbg_unregister);
 
-/* ---- swr_* (25) ---- */
 int swr_bulk_write(void *a0, void *a1, void *a2, void *a3, void *a4)
 {
 	return 0;
@@ -10460,9 +10169,9 @@ void swr_driver_unregister(void *a0)
 }
 EXPORT_SYMBOL(swr_driver_unregister);
 
-void * swr_get_logical_dev_num(void *a0, void *a1, void *a2)
+int swr_get_logical_dev_num(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(swr_get_logical_dev_num);
 
@@ -10544,14 +10253,12 @@ int swr_write(void *a0, void *a1, void *a2, void *a3)
 }
 EXPORT_SYMBOL(swr_write);
 
-/* ---- swrm_* (1) ---- */
 int swrm_wcd_notify(void *a0, void *a1, void *a2)
 {
 	return 0;
 }
 EXPORT_SYMBOL(swrm_wcd_notify);
 
-/* ---- synx_* (6) ---- */
 int synx_hwfence_enable_resources(void *a0, void *a1, void *a2)
 {
 	return 0;
@@ -10588,7 +10295,6 @@ int synx_signal_n(void *a0)
 }
 EXPORT_SYMBOL(synx_signal_n);
 
-/* ---- sysmon_* (7) ---- */
 int sysmon_stats_query_ddr_residency(void *a0)
 {
 	return 0;
@@ -10631,7 +10337,6 @@ int sysmon_stats_query_sleep(void *a0)
 }
 EXPORT_SYMBOL(sysmon_stats_query_sleep);
 
-/* ---- sysstats_* (4) ---- */
 int sysstats_register_iterate_kgsl_process_privates(void *a0)
 {
 	return 0;
@@ -10656,14 +10361,12 @@ int sysstats_unregister_kgsl_stats_cb(void)
 }
 EXPORT_SYMBOL(sysstats_unregister_kgsl_stats_cb);
 
-/* ---- system_* (1) ---- */
 int system_heap_allocate_async_read(void *a0, void *a1, void *a2, void *a3, void *a4)
 {
 	return 0;
 }
 EXPORT_SYMBOL(system_heap_allocate_async_read);
 
-/* ---- tas25xx_* (8) ---- */
 bool tas25xx_check_if_algo_ctrl_bypassed(void *a0)
 {
 	return false;
@@ -10676,15 +10379,15 @@ int tas25xx_deregister_misc(void *a0)
 }
 EXPORT_SYMBOL(tas25xx_deregister_misc);
 
-void * tas25xx_get_drv_channel_opmode(void)
+int tas25xx_get_drv_channel_opmode(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(tas25xx_get_drv_channel_opmode);
 
-void * tas25xx_get_state(void *a0)
+int tas25xx_get_state(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(tas25xx_get_state);
 
@@ -10712,7 +10415,6 @@ int tas25xx_register_misc(void *a0)
 }
 EXPORT_SYMBOL(tas25xx_register_misc);
 
-/* ---- tmc_* (2) ---- */
 int tmc_etr_byte_cntr_start(void *a0)
 {
 	return 0;
@@ -10725,7 +10427,6 @@ void tmc_etr_byte_cntr_stop(void *a0)
 }
 EXPORT_SYMBOL(tmc_etr_byte_cntr_stop);
 
-/* ---- trigger_* (2) ---- */
 void trigger_dump_disable(void *a0)
 {
 	/* no-op */
@@ -10738,7 +10439,6 @@ int trigger_dump_enable(void *a0)
 }
 EXPORT_SYMBOL(trigger_dump_enable);
 
-/* ---- ufs_* (3) ---- */
 int ufs_ffu_reboot_reason_reboot(void *a0)
 {
 	return 0;
@@ -10757,7 +10457,6 @@ int ufs_scsi_write_partition(void *a0, void *a1, void *a2, void *a3)
 }
 EXPORT_SYMBOL(ufs_scsi_write_partition);
 
-/* ---- unregister_* (9) ---- */
 int unregister_cam_freq_hook(void)
 {
 	return 0;
@@ -10812,7 +10511,6 @@ int unregister_xiaomi_stylus_input_dev(void *a0)
 }
 EXPORT_SYMBOL(unregister_xiaomi_stylus_input_dev);
 
-/* ---- update_* (8) ---- */
 int update_abnormal_event(void *a0)
 {
 	return 0;
@@ -10861,7 +10559,6 @@ int update_weak_doubletap_value(void *a0)
 }
 EXPORT_SYMBOL(update_weak_doubletap_value);
 
-/* ---- usb_* (21) ---- */
 int usb_add_redriver(void *a0)
 {
 	return 0;
@@ -10874,21 +10571,21 @@ int usb_add_repeater_dev(void *a0)
 }
 EXPORT_SYMBOL(usb_add_repeater_dev);
 
-void * usb_get_redriver_by_phandle(void *a0, void *a1, void *a2)
+int usb_get_redriver_by_phandle(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(usb_get_redriver_by_phandle);
 
-void * usb_get_repeater_by_node(void *a0)
+int usb_get_repeater_by_node(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(usb_get_repeater_by_node);
 
-void * usb_get_repeater_by_phandle(void *a0, void *a1, void *a2)
+int usb_get_repeater_by_phandle(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(usb_get_repeater_by_phandle);
 
@@ -10988,10 +10685,9 @@ int usb_remove_repeater_dev(void *a0)
 }
 EXPORT_SYMBOL(usb_remove_repeater_dev);
 
-/* ---- vis_* (18) ---- */
-void * vis_dis_get_fps(void *a0, void *a1, void *a2, void *a3, void *a4)
+int vis_dis_get_fps(void *a0, void *a1, void *a2, void *a3, void *a4)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(vis_dis_get_fps);
 
@@ -11097,236 +10793,45 @@ int vis_ops_wait_handshaking_command(void *a0)
 }
 EXPORT_SYMBOL(vis_ops_wait_handshaking_command);
 
-/* ---- wakeup_* (1) ---- */
 int wakeup_xswapds(void)
 {
 	return 0;
 }
 EXPORT_SYMBOL(wakeup_xswapds);
 
-/* ---- walt_* (3) ---- */
-void * walt_get_cpus_in_state1(void *a0)
+int walt_get_cpus_in_state1(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(walt_get_cpus_in_state1);
 
-void * walt_get_cpus_taken(void)
+int walt_get_cpus_taken(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(walt_get_cpus_taken);
 
-void * walt_get_halted_cpus(void)
+int walt_get_halted_cpus(void)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(walt_get_halted_cpus);
 
-/* ---- waltgov_* (1) ---- */
 int waltgov_cam_cpu(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(waltgov_cam_cpu);
 
-/* ---- wcd_* (31) ---- */
-int wcd_cal_create_hwdep(void *a0, void *a1, void *a2)
+int wcd9378_codec_get_dev_num(void *a0)
 {
 	return 0;
-}
-EXPORT_SYMBOL(wcd_cal_create_hwdep);
-
-int wcd_cancel_btn_work(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_cancel_btn_work);
-
-int wcd_cls_h_fsm(void *a0, void *a1, void *a2, void *a3, void *a4)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_cls_h_fsm);
-
-int wcd_cls_h_init(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_cls_h_init);
-
-int wcd_disable_irq(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_disable_irq);
-
-int wcd_enable_curr_micbias(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_enable_curr_micbias);
-
-int wcd_enable_irq(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_enable_irq);
-
-int wcd_free_irq(void *a0, void *a1, void *a2)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_free_irq);
-
-void wcd_irq_exit(void *a0, void *a1)
-{
-	/* no-op */
-}
-EXPORT_SYMBOL(wcd_irq_exit);
-
-int wcd_irq_init(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_irq_init);
-
-int wcd_mbhc_adc_init(void *a0, void *a1, void *a2)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_mbhc_adc_init);
-
-int wcd_mbhc_elec_hs_report_unplug(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_mbhc_elec_hs_report_unplug);
-
-int wcd_mbhc_find_plug_and_report(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_mbhc_find_plug_and_report);
-
-void * wcd_mbhc_get_button_mask(void *a0)
-{
-	return NULL;
-}
-EXPORT_SYMBOL(wcd_mbhc_get_button_mask);
-
-int wcd_mbhc_hs_elec_irq(void *a0, void *a1, void *a2)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_mbhc_hs_elec_irq);
-
-int wcd_mbhc_jack_report(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_mbhc_jack_report);
-
-int wcd_mbhc_report_plug(void *a0, void *a1, void *a2)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_mbhc_report_plug);
-
-int wcd_request_irq(void *a0, void *a1, void *a2, void *a3, void *a4)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_request_irq);
-
-void wcd_swch_level_remove(void *a0)
-{
-	/* no-op */
-}
-EXPORT_SYMBOL(wcd_swch_level_remove);
-
-int wcd_usbss_audio_config(void *a0, void *a1, void *a2)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_usbss_audio_config);
-
-int wcd_usbss_dpdm_switch_update(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_usbss_dpdm_switch_update);
-
-void * wcd_usbss_get_sbu_switch_orientation(void)
-{
-	return NULL;
-}
-EXPORT_SYMBOL(wcd_usbss_get_sbu_switch_orientation);
-
-int wcd_usbss_linearizer_rdac_cal_code_select(void *a0)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_usbss_linearizer_rdac_cal_code_select);
-
-int wcd_usbss_reg_notifier(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_usbss_reg_notifier);
-
-int wcd_usbss_register_update(void *a0, void *a1, void *a2)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_usbss_register_update);
-
-int wcd_usbss_regmap_init(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_usbss_regmap_init);
-
-int wcd_usbss_set_linearizer_sw_tap(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_usbss_set_linearizer_sw_tap);
-
-int wcd_usbss_set_switch_settings_enable(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_usbss_set_switch_settings_enable);
-
-int wcd_usbss_switch_update(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_usbss_switch_update);
-
-int wcd_usbss_unreg_notifier(void *a0, void *a1)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_usbss_unreg_notifier);
-
-int wcd_usbss_update_default_trim(void)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd_usbss_update_default_trim);
-
-/* ---- wcd9378_* (16) ---- */
-void * wcd9378_codec_get_dev_num(void *a0)
-{
-	return NULL;
 }
 EXPORT_SYMBOL(wcd9378_codec_get_dev_num);
 
-void * wcd9378_get_micb_vout_ctl_val(void *a0)
+int wcd9378_get_micb_vout_ctl_val(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(wcd9378_get_micb_vout_ctl_val);
 
@@ -11342,9 +10847,9 @@ void wcd9378_mbhc_deinit(void *a0)
 }
 EXPORT_SYMBOL(wcd9378_mbhc_deinit);
 
-void * wcd9378_mbhc_get_impedance(void *a0)
+int wcd9378_mbhc_get_impedance(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(wcd9378_mbhc_get_impedance);
 
@@ -11402,9 +10907,9 @@ int wcd9378_sdca_writeable_register(void *a0)
 }
 EXPORT_SYMBOL(wcd9378_sdca_writeable_register);
 
-void * wcd9378_soc_get_mbhc(void *a0)
+int wcd9378_soc_get_mbhc(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(wcd9378_soc_get_mbhc);
 
@@ -11414,24 +10919,17 @@ int wcd9378_swr_dmic_register_notifier(void *a0)
 }
 EXPORT_SYMBOL(wcd9378_swr_dmic_register_notifier);
 
-/* ---- wcd937x_* (14) ---- */
-void * wcd937x_codec_get_dev_num(void *a0)
+int wcd937x_codec_get_dev_num(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(wcd937x_codec_get_dev_num);
 
-void * wcd937x_get_codec_variant(void *a0)
+int wcd937x_get_codec_variant(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(wcd937x_get_codec_variant);
-
-void * wcd937x_get_micb_vout_ctl_val(void *a0)
-{
-	return NULL;
-}
-EXPORT_SYMBOL(wcd937x_get_micb_vout_ctl_val);
 
 int wcd937x_info_create_codec_entry(void *a0)
 {
@@ -11439,15 +10937,9 @@ int wcd937x_info_create_codec_entry(void *a0)
 }
 EXPORT_SYMBOL(wcd937x_info_create_codec_entry);
 
-void wcd937x_mbhc_deinit(void *a0)
+int wcd937x_mbhc_get_impedance(void *a0)
 {
-	/* no-op */
-}
-EXPORT_SYMBOL(wcd937x_mbhc_deinit);
-
-void * wcd937x_mbhc_get_impedance(void *a0)
-{
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(wcd937x_mbhc_get_impedance);
 
@@ -11462,12 +10954,6 @@ void wcd937x_mbhc_hs_detect_exit(void *a0)
 	/* no-op */
 }
 EXPORT_SYMBOL(wcd937x_mbhc_hs_detect_exit);
-
-int wcd937x_mbhc_init(void *a0, void *a1, void *a2)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd937x_mbhc_init);
 
 int wcd937x_mbhc_micb_adjust_voltage(void *a0, void *a1, void *a2)
 {
@@ -11493,36 +10979,29 @@ int wcd937x_micbias_control(void *a0, void *a1, void *a2, void *a3)
 }
 EXPORT_SYMBOL(wcd937x_micbias_control);
 
-void * wcd937x_soc_get_mbhc(void *a0)
+int wcd937x_soc_get_mbhc(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(wcd937x_soc_get_mbhc);
 
-/* ---- wcd938x_* (16) ---- */
 int wcd938x_codec_force_enable_micbias_v2(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(wcd938x_codec_force_enable_micbias_v2);
 
-void * wcd938x_codec_get_dev_num(void *a0)
+int wcd938x_codec_get_dev_num(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(wcd938x_codec_get_dev_num);
 
-void * wcd938x_get_codec_variant(void *a0)
+int wcd938x_get_codec_variant(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(wcd938x_get_codec_variant);
-
-void * wcd938x_get_micb_vout_ctl_val(void *a0)
-{
-	return NULL;
-}
-EXPORT_SYMBOL(wcd938x_get_micb_vout_ctl_val);
 
 int wcd938x_info_create_codec_entry(void *a0)
 {
@@ -11530,15 +11009,9 @@ int wcd938x_info_create_codec_entry(void *a0)
 }
 EXPORT_SYMBOL(wcd938x_info_create_codec_entry);
 
-void wcd938x_mbhc_deinit(void *a0)
+int wcd938x_mbhc_get_impedance(void *a0)
 {
-	/* no-op */
-}
-EXPORT_SYMBOL(wcd938x_mbhc_deinit);
-
-void * wcd938x_mbhc_get_impedance(void *a0)
-{
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(wcd938x_mbhc_get_impedance);
 
@@ -11553,12 +11026,6 @@ void wcd938x_mbhc_hs_detect_exit(void *a0)
 	/* no-op */
 }
 EXPORT_SYMBOL(wcd938x_mbhc_hs_detect_exit);
-
-int wcd938x_mbhc_init(void *a0, void *a1, void *a2)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd938x_mbhc_init);
 
 int wcd938x_mbhc_micb_adjust_voltage(void *a0, void *a1, void *a2)
 {
@@ -11584,9 +11051,9 @@ int wcd938x_micbias_control(void *a0, void *a1, void *a2, void *a3)
 }
 EXPORT_SYMBOL(wcd938x_micbias_control);
 
-void * wcd938x_soc_get_mbhc(void *a0)
+int wcd938x_soc_get_mbhc(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(wcd938x_soc_get_mbhc);
 
@@ -11596,30 +11063,23 @@ int wcd938x_swr_dmic_register_notifier(void *a0)
 }
 EXPORT_SYMBOL(wcd938x_swr_dmic_register_notifier);
 
-/* ---- wcd939x_* (17) ---- */
 int wcd939x_codec_force_enable_micbias_v2(void *a0, void *a1, void *a2)
 {
 	return 0;
 }
 EXPORT_SYMBOL(wcd939x_codec_force_enable_micbias_v2);
 
-void * wcd939x_codec_get_dev_num(void *a0)
+int wcd939x_codec_get_dev_num(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(wcd939x_codec_get_dev_num);
 
-void * wcd939x_get_codec_variant(void *a0)
+int wcd939x_get_codec_variant(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(wcd939x_get_codec_variant);
-
-void * wcd939x_get_micb_vout_ctl_val(void *a0)
-{
-	return NULL;
-}
-EXPORT_SYMBOL(wcd939x_get_micb_vout_ctl_val);
 
 int wcd939x_info_create_codec_entry(void)
 {
@@ -11627,15 +11087,9 @@ int wcd939x_info_create_codec_entry(void)
 }
 EXPORT_SYMBOL(wcd939x_info_create_codec_entry);
 
-void wcd939x_mbhc_deinit(void *a0)
+int wcd939x_mbhc_get_impedance(void *a0)
 {
-	/* no-op */
-}
-EXPORT_SYMBOL(wcd939x_mbhc_deinit);
-
-void * wcd939x_mbhc_get_impedance(void *a0)
-{
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(wcd939x_mbhc_get_impedance);
 
@@ -11650,12 +11104,6 @@ void wcd939x_mbhc_hs_detect_exit(void *a0)
 	/* no-op */
 }
 EXPORT_SYMBOL(wcd939x_mbhc_hs_detect_exit);
-
-int wcd939x_mbhc_init(void *a0, void *a1, void *a2)
-{
-	return 0;
-}
-EXPORT_SYMBOL(wcd939x_mbhc_init);
 
 int wcd939x_mbhc_micb_adjust_voltage(void *a0, void *a1, void *a2)
 {
@@ -11687,9 +11135,9 @@ int wcd939x_slave_register_notify(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(wcd939x_slave_register_notify);
 
-void * wcd939x_soc_get_mbhc(void *a0)
+int wcd939x_soc_get_mbhc(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(wcd939x_soc_get_mbhc);
 
@@ -11699,14 +11147,180 @@ int wcd939x_swr_dmic_register_notifier(void *a0, void *a1, void *a2)
 }
 EXPORT_SYMBOL(wcd939x_swr_dmic_register_notifier);
 
-/* ---- wcdcal_* (1) ---- */
-void * wcdcal_get_fw_cal(void *a0)
+int wcd_cal_create_hwdep(void *a0, void *a1, void *a2)
 {
-	return NULL;
+	return 0;
+}
+EXPORT_SYMBOL(wcd_cal_create_hwdep);
+
+int wcd_cls_h_fsm(void *a0, void *a1, void *a2, void *a3, void *a4)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_cls_h_fsm);
+
+int wcd_cls_h_init(void *a0)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_cls_h_init);
+
+int wcd_disable_irq(void *a0, void *a1)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_disable_irq);
+
+int wcd_enable_curr_micbias(void *a0, void *a1)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_enable_curr_micbias);
+
+int wcd_enable_irq(void *a0, void *a1)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_enable_irq);
+
+int wcd_free_irq(void *a0, void *a1, void *a2)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_free_irq);
+
+void wcd_irq_exit(void *a0, void *a1)
+{
+	/* no-op */
+}
+EXPORT_SYMBOL(wcd_irq_exit);
+
+int wcd_irq_init(void *a0, void *a1)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_irq_init);
+
+int wcd_mbhc_adc_init(void *a0, void *a1, void *a2)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_mbhc_adc_init);
+
+int wcd_mbhc_find_plug_and_report(void *a0, void *a1)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_mbhc_find_plug_and_report);
+
+int wcd_mbhc_hs_elec_irq(void *a0, void *a1, void *a2)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_mbhc_hs_elec_irq);
+
+int wcd_mbhc_jack_report(void *a0)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_mbhc_jack_report);
+
+int wcd_mbhc_report_plug(void *a0, void *a1, void *a2)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_mbhc_report_plug);
+
+int wcd_request_irq(void *a0, void *a1, void *a2, void *a3, void *a4)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_request_irq);
+
+void wcd_swch_level_remove(void *a0)
+{
+	/* no-op */
+}
+EXPORT_SYMBOL(wcd_swch_level_remove);
+
+int wcd_usbss_audio_config(void *a0, void *a1, void *a2)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_usbss_audio_config);
+
+int wcd_usbss_dpdm_switch_update(void *a0, void *a1)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_usbss_dpdm_switch_update);
+
+int wcd_usbss_get_sbu_switch_orientation(void)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_usbss_get_sbu_switch_orientation);
+
+int wcd_usbss_linearizer_rdac_cal_code_select(void *a0)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_usbss_linearizer_rdac_cal_code_select);
+
+int wcd_usbss_reg_notifier(void *a0, void *a1)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_usbss_reg_notifier);
+
+int wcd_usbss_register_update(void *a0, void *a1, void *a2)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_usbss_register_update);
+
+int wcd_usbss_regmap_init(void *a0, void *a1)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_usbss_regmap_init);
+
+int wcd_usbss_set_linearizer_sw_tap(void *a0, void *a1)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_usbss_set_linearizer_sw_tap);
+
+int wcd_usbss_set_switch_settings_enable(void *a0, void *a1)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_usbss_set_switch_settings_enable);
+
+int wcd_usbss_switch_update(void *a0, void *a1)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_usbss_switch_update);
+
+int wcd_usbss_unreg_notifier(void *a0, void *a1)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_usbss_unreg_notifier);
+
+int wcd_usbss_update_default_trim(void)
+{
+	return 0;
+}
+EXPORT_SYMBOL(wcd_usbss_update_default_trim);
+
+int wcdcal_get_fw_cal(void *a0)
+{
+	return 0;
 }
 EXPORT_SYMBOL(wcdcal_get_fw_cal);
 
-/* ---- wcnss_* (5) ---- */
 bool wcnss_check_pool_lists(void)
 {
 	return false;
@@ -11737,14 +11351,12 @@ void wcnss_prealloc_put(void *a0)
 }
 EXPORT_SYMBOL(wcnss_prealloc_put);
 
-/* ---- wled_* (1) ---- */
 int wled_flash_led_prepare(void)
 {
 	return 0;
 }
 EXPORT_SYMBOL(wled_flash_led_prepare);
 
-/* ---- wlfw_* (119) ---- */
 int wlfw_antenna_grant_req_msg_v01_ei(void *a0)
 {
 	return 0;
@@ -11955,15 +11567,15 @@ int wlfw_fw_ssr_ind_msg_v01_ei(void *a0)
 }
 EXPORT_SYMBOL(wlfw_fw_ssr_ind_msg_v01_ei);
 
-void * wlfw_get_info_req_msg_v01_ei(void *a0)
+int wlfw_get_info_req_msg_v01_ei(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(wlfw_get_info_req_msg_v01_ei);
 
-void * wlfw_get_info_resp_msg_v01_ei(void *a0)
+int wlfw_get_info_resp_msg_v01_ei(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(wlfw_get_info_resp_msg_v01_ei);
 
@@ -12303,9 +11915,9 @@ int wlfw_request_mem_ind_msg_v01_ei(void *a0)
 }
 EXPORT_SYMBOL(wlfw_request_mem_ind_msg_v01_ei);
 
-void * wlfw_respond_get_info_ind_msg_v01_ei(void *a0)
+int wlfw_respond_get_info_ind_msg_v01_ei(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(wlfw_respond_get_info_ind_msg_v01_ei);
 
@@ -12459,10 +12071,9 @@ int wlfw_xo_trim_ind_msg_v01_ei(void *a0)
 }
 EXPORT_SYMBOL(wlfw_xo_trim_ind_msg_v01_ei);
 
-/* ---- wsa883x_* (3) ---- */
-void * wsa883x_codec_get_dev_num(void *a0)
+int wsa883x_codec_get_dev_num(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(wsa883x_codec_get_dev_num);
 
@@ -12478,10 +12089,9 @@ int wsa883x_set_channel_map(void *a0, void *a1, void *a2, void *a3, void *a4, vo
 }
 EXPORT_SYMBOL(wsa883x_set_channel_map);
 
-/* ---- wsa884x_* (3) ---- */
-void * wsa884x_codec_get_dev_num(void *a0)
+int wsa884x_codec_get_dev_num(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(wsa884x_codec_get_dev_num);
 
@@ -12497,10 +12107,9 @@ int wsa884x_set_channel_map(void *a0, void *a1, void *a2, void *a3, void *a4, vo
 }
 EXPORT_SYMBOL(wsa884x_set_channel_map);
 
-/* ---- xiaomi_* (5) ---- */
-void * xiaomi_get_gesture_type(void *a0)
+int xiaomi_get_gesture_type(void *a0)
 {
-	return NULL;
+	return 0;
 }
 EXPORT_SYMBOL(xiaomi_get_gesture_type);
 
@@ -12528,90 +12137,8 @@ int xiaomi_unregister_panel_notifier(void *a0, void *a1)
 }
 EXPORT_SYMBOL(xiaomi_unregister_panel_notifier);
 
-/* ---- zs_* (1) ---- */
 int zs_map_object_straddle_info(void *a0)
 {
 	return 0;
 }
 EXPORT_SYMBOL(zs_map_object_straddle_info);
-
-
-/* ==================== 变量定义 ==================== */
-
-int current_log_level;
-EXPORT_SYMBOL(current_log_level);
-
-struct qmi_elem_info dhms_mem_alloc_addr_info_type_v01_ei[1];
-EXPORT_SYMBOL(dhms_mem_alloc_addr_info_type_v01_ei);
-
-struct qmi_elem_info dms_get_mac_address_req_msg_v01_ei[1];
-EXPORT_SYMBOL(dms_get_mac_address_req_msg_v01_ei);
-
-struct qmi_elem_info dms_get_mac_address_resp_msg_v01_ei[1];
-EXPORT_SYMBOL(dms_get_mac_address_resp_msg_v01_ei);
-
-void *gprbus;
-EXPORT_SYMBOL(gprbus);
-
-struct qmi_elem_info ims_private_service_mt_invite_ind_msg_v01_ei[1];
-EXPORT_SYMBOL(ims_private_service_mt_invite_ind_msg_v01_ei);
-
-struct qmi_elem_info ims_private_service_subscribe_ind_req_msg_v01_ei[1];
-EXPORT_SYMBOL(ims_private_service_subscribe_ind_req_msg_v01_ei);
-
-struct qmi_elem_info ims_private_service_subscribe_ind_rsp_msg_v01_ei[1];
-EXPORT_SYMBOL(ims_private_service_subscribe_ind_rsp_msg_v01_ei);
-
-struct qmi_elem_info ims_private_service_wfc_call_status_ind_msg_v01_ei[1];
-EXPORT_SYMBOL(ims_private_service_wfc_call_status_ind_msg_v01_ei);
-
-struct qmi_elem_info ims_private_service_wfc_call_twt_config_req_msg_v01_ei[1];
-EXPORT_SYMBOL(ims_private_service_wfc_call_twt_config_req_msg_v01_ei);
-
-struct qmi_elem_info ims_private_service_wfc_call_twt_config_rsp_msg_v01_ei[1];
-EXPORT_SYMBOL(ims_private_service_wfc_call_twt_config_rsp_msg_v01_ei);
-
-struct kobject low_lat_mem_kobject;
-EXPORT_SYMBOL(low_lat_mem_kobject);
-
-struct qmi_elem_info mem_alloc_generic_req_msg_data_v01_ei[1];
-EXPORT_SYMBOL(mem_alloc_generic_req_msg_data_v01_ei);
-
-struct qmi_elem_info mem_alloc_generic_resp_msg_data_v01_ei[1];
-EXPORT_SYMBOL(mem_alloc_generic_resp_msg_data_v01_ei);
-
-struct qmi_elem_info mem_free_generic_req_msg_data_v01_ei[1];
-EXPORT_SYMBOL(mem_free_generic_req_msg_data_v01_ei);
-
-struct qmi_elem_info mem_free_generic_resp_msg_data_v01_ei[1];
-EXPORT_SYMBOL(mem_free_generic_resp_msg_data_v01_ei);
-
-struct qmi_elem_info mem_query_size_req_msg_data_v01_ei[1];
-EXPORT_SYMBOL(mem_query_size_req_msg_data_v01_ei);
-
-struct qmi_elem_info mem_query_size_resp_msg_data_v01_ei[1];
-EXPORT_SYMBOL(mem_query_size_resp_msg_data_v01_ei);
-
-void *memcheck_kgsl_memstat;
-EXPORT_SYMBOL(memcheck_kgsl_memstat);
-
-void *memcheck_walk_process_privates;
-EXPORT_SYMBOL(memcheck_walk_process_privates);
-
-void *mi_smart_refill_pools;
-EXPORT_SYMBOL(mi_smart_refill_pools);
-
-void *micam_amu_data;
-EXPORT_SYMBOL(micam_amu_data);
-
-void *miui_power_enhance;
-EXPORT_SYMBOL(miui_power_enhance);
-
-unsigned long pwrkey_irq_notifier_list;
-EXPORT_SYMBOL(pwrkey_irq_notifier_list);
-
-void *qcom_device_shutdown_in_progress;
-EXPORT_SYMBOL(qcom_device_shutdown_in_progress);
-
-struct bus_type soundwire_type;
-EXPORT_SYMBOL(soundwire_type);
