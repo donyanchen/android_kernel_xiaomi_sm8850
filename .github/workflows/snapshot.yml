@@ -40,7 +40,7 @@ jobs:
       - name: 记录版本信息
         run: |
           mkdir -p dist
-          mv ack.tar.gz "dist/common-${BRANCH}.tar.gz"
+          mv ack.tar.gz "dist/common-${{ inputs.ack_branch }}.tar.gz"
           {
             echo "# ACK 源码快照"
             echo ""
