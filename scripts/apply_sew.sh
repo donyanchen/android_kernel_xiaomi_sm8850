@@ -66,6 +66,9 @@ fi
 
 source scripts/libabk.sh
 source scripts/sew_opt.sh
+
+# --- 禁用与 6.12 不兼容的模块（会改坏 vmscan.c）---
+add_kshrink_lruvecd() { abk_log "跳过 add_kshrink_lruvecd（6.12 下 vmscan.c 补丁不成立）"; }
 source scripts/other_opt.sh
 source scripts/set_defconfig.sh
 
