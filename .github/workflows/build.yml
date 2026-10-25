@@ -74,33 +74,12 @@ jobs:
         env:
           PRIVATE_REPO_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
         run: |
-          # 依赖已迁到私有仓库，私有 Release 资产必须走 API 端点
+          # 依赖已迁到私有仓库，私有 Release 资产必须走 API 端点。
+          # 用 base64 落盘，避免 printf/sed 的转义把脚本内容改坏。
           mkdir -p /usr/local/bin
-          printf '%s\n' \
-            '#!/usr/bin/env bash' \
-            '# 从私有仓库 pudding-private 的 Release 下载构建依赖' \
-            '# 私有 Release 资产必须走 API 端点，browser_download_url 需要认证' \
-            'set -e' \
-            '' \
-            'NAME="$1"' \
-            'OUT="${2:-$1}"' \
-            'TOKEN="${PRIVATE_REPO_TOKEN:-}"' \
-            '[ -n "$TOKEN" ] || { echo "getdep: PRIVATE_REPO_TOKEN 未注入" >&2; exit 1; }' \
-            'API="https://api.github.com/repos/donyanchen/pudding-private/releases"' \
-            '' \
-            'ID=$(curl -sf -H "Authorization: token $TOKEN" "$API/tags/deps" \\' \
-            '     | python3 -c "import sys,json;d=json.load(sys.stdin);print(next(a['\''id'\''] for a in d['\''assets'\''] if a['\''name'\'']=='\''$NAME'\''))")' \
-            '' \
-            'curl -fL --retry 3 --retry-delay 5 \\' \
-            '  -H "Authorization: token $TOKEN" \\' \
-            '  -H "Accept: application/octet-stream" \\' \
-            '  -o "$OUT" \\' \
-            '  "$API/assets/$ID"' \
-            '' \
-            'echo "  下载完成: $NAME -> $OUT ($(stat -c %s "$OUT") 字节)"' \
-            > /usr/local/bin/getdep
+          echo 'IyEvdXNyL2Jpbi9lbnYgYmFzaAojIOS7juengeacieS7k+W6kyBwdWRkaW5nLXByaXZhdGUg55qEIFJlbGVhc2Ug5LiL6L295p6E5bu65L6d6LWWCiMg56eB5pyJIFJlbGVhc2Ug6LWE5Lqn5b+F6aG76LWwIEFQSSDnq6/ngrnvvIxicm93c2VyX2Rvd25sb2FkX3VybCDpnIDopoHorqTor4EKc2V0IC1lCgpOQU1FPSIkMSIKT1VUPSIkezI6LSQxfSIKVE9LRU49IiR7UFJJVkFURV9SRVBPX1RPS0VOOj/nvLrlsJEgc2VjcmV0IFBSSVZBVEVfUkVQT19UT0tFTn0iCkFQST0iaHR0cHM6Ly9hcGkuZ2l0aHViLmNvbS9yZXBvcy9kb255YW5jaGVuL3B1ZGRpbmctcHJpdmF0ZS9yZWxlYXNlcyIKCklEPSQoY3VybCAtc2YgLUggIkF1dGhvcml6YXRpb246IHRva2VuICRUT0tFTiIgIiRBUEkvdGFncy9kZXBzIiBcCiAgICAgfCBweXRob24zIC1jICJpbXBvcnQgc3lzLGpzb247ZD1qc29uLmxvYWQoc3lzLnN0ZGluKTtwcmludChuZXh0KGFbJ2lkJ10gZm9yIGEgaW4gZFsnYXNzZXRzJ10gaWYgYVsnbmFtZSddPT0nJE5BTUUnKSkiKQoKY3VybCAtZkwgLS1yZXRyeSAzIC0tcmV0cnktZGVsYXkgNSBcCiAgLUggIkF1dGhvcml6YXRpb246IHRva2VuICRUT0tFTiIgXAogIC1IICJBY2NlcHQ6IGFwcGxpY2F0aW9uL29jdGV0LXN0cmVhbSIgXAogIC1vICIkT1VUIiBcCiAgIiRBUEkvYXNzZXRzLyRJRCIKCmVjaG8gIiAg5LiL6L295a6M5oiQOiAkTkFNRSAtPiAkT1VUICgkKHN0YXQgLWMgJXMgIiRPVVQiKSDlrZfoioIpIgo=' | base64 -d > /usr/local/bin/getdep
           chmod +x /usr/local/bin/getdep
-          echo "getdep 已安装"
+          bash -n /usr/local/bin/getdep && echo "getdep 语法检查通过"
 
       - name: 准备 ACK 源码
         env:
