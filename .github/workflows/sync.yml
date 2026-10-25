@@ -55,6 +55,35 @@ jobs:
           echo "opt_gki_kernel: $SEW"
           echo "ADIOS: $ADIOS"
 
+      - name: 检查仓库内源码是否过期
+        id: vendor
+        run: |
+          if [ ! -f vendor/ack/manifest.json ]; then
+            echo "stale=yes" >> "$GITHUB_OUTPUT"
+            echo "仓库内无源码快照"
+            exit 0
+          fi
+          STORED=$(python3 -c "import json;print(json.load(open('vendor/ack/manifest.json')).get('branch',''))" 2>/dev/null)
+          echo "仓库内分支: $STORED"
+          echo "上游最新: ${{ steps.ack.outputs.latest }}"
+          if [ "$STORED" != "${{ steps.ack.outputs.latest }}" ]; then
+            echo "stale=yes" >> "$GITHUB_OUTPUT"
+            echo "→ 需要重新入库"
+          else
+            echo "stale=no" >> "$GITHUB_OUTPUT"
+            echo "→ 已是最新"
+          fi
+
+      - name: 自动重新入库（源码有新版本时）
+        if: steps.vendor.outputs.stale == 'yes'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "触发 Vendor Source 工作流"
+          gh workflow run vendor-source.yml --repo "$GITHUB_REPOSITORY" \
+            --ref main -f ack_branch=${{ steps.ack.outputs.latest }} -f chunk_mb=90
+          echo "已触发，稍后检查"
+
       - name: 生成报告
         run: |
           {
