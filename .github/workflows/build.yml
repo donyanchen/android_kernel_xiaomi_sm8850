@@ -3,6 +3,11 @@ name: Build Kernel
 on:
   workflow_dispatch:
     inputs:
+      ksu:
+        description: 'Root 方案（sukisu / fina）'
+        required: true
+        default: 'sukisu'
+        type: string
       device:
         description: '目标设备代号（pudding=小米17 / myron=红米K90ProMax）'
         required: true
@@ -210,9 +215,18 @@ jobs:
       - name: 集成 SukiSU
         run: |
           cd ws/common
-          export FOLKSU_URL="https://github.com/donyanchen/SukiSU-Ultra.git"
-          export FOLKSU_REF="pudding"
-          curl -LSs "https://raw.githubusercontent.com/donyanchen/SukiSU-Ultra/refs/heads/pudding/kernel/setup.sh" | bash -s pudding
+          KSU="${{ inputs.ksu }}"
+          [ -z "$KSU" ] && KSU=sukisu
+          echo "Root 方案: $KSU"
+          if [ "$KSU" = "fina" ]; then
+            export FOLKSU_URL="https://github.com/donyanchen/FinaSU.git"
+            export FOLKSU_REF="master"
+            curl -LSs "https://raw.githubusercontent.com/donyanchen/FinaSU/refs/heads/master/kernel/setup.sh" | bash -s master
+          else
+            export FOLKSU_URL="https://github.com/donyanchen/SukiSU-Ultra.git"
+            export FOLKSU_REF="pudding"
+            curl -LSs "https://raw.githubusercontent.com/donyanchen/SukiSU-Ultra/refs/heads/pudding/kernel/setup.sh" | bash -s pudding
+          fi
           UAPI_SRC=$(find . -maxdepth 3 -type d -name uapi | grep -i kernelsu | head -1)
           [ -z "$UAPI_SRC" ] && UAPI_SRC=$(find . -maxdepth 3 -type d -name uapi | head -1)
           echo "uapi 来源: $UAPI_SRC"
