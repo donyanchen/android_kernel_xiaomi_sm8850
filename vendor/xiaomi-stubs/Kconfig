@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: GPL-2.0
+config XIAOMI_STUBS
+	bool "小米私有符号桩函数"
+	default y
+	help
+	  为小米闭源符号提供空实现，使厂商模块可以正常加载。
