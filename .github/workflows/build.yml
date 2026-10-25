@@ -325,6 +325,44 @@ jobs:
           if [ "$ADIOS_OK" = "1" ]; then
             echo "CONFIG_MQ_IOSCHED_ADIOS=y" >> arch/arm64/configs/pudding_defconfig
           fi
+          # --- 高通开源子系统 CONFIG（补 upstream 类导出符号）---
+          cat >> arch/arm64/configs/pudding_defconfig <<'EOF'
+# 无线
+CONFIG_CFG80211=y
+CONFIG_MAC80211=y
+CONFIG_WLAN_VENDOR_QCOM=y
+# 网络加速
+CONFIG_IPA3=y
+CONFIG_GSI=y
+CONFIG_RMNET_IPA3=y
+CONFIG_IPA_UT=y
+# 总线 / 传输
+CONFIG_MHI_BUS=y
+CONFIG_MHI_BUS_PCI_GENERIC=y
+CONFIG_QCOM_QMI_HELPERS=y
+CONFIG_QCOM_SMEM=y
+CONFIG_QCOM_GLINK=y
+CONFIG_QCOM_SMD_RPM=y
+# 音频
+CONFIG_SND_SOC_WCD_MBHC=y
+CONFIG_SND_SOC_WCD938X=y
+CONFIG_SND_SOC_WSA883X=y
+CONFIG_SND_SOC_WSA884X=y
+CONFIG_SLIMBUS=y
+CONFIG_SOUNDWIRE=y
+CONFIG_SWRM=y
+CONFIG_QCOM_Q6V5_PAS=y
+CONFIG_QCOM_LPASS=y
+# 调试 / 跟踪
+CONFIG_CORESIGHT=y
+CONFIG_CORESIGHT_LINK_AND_SINK_TMC=y
+CONFIG_CORESIGHT_STM=y
+CONFIG_CORESIGHT_CTI=y
+CONFIG_HWSPINLOCK=y
+EOF
+          echo "--- 已追加高通子系统 CONFIG"
+          grep -cE '^(CONFIG_|# CONFIG_)' arch/arm64/configs/pudding_defconfig
+
           echo "--- defconfig 行数: $(wc -l < arch/arm64/configs/pudding_defconfig)"
 
       - name: 编译
