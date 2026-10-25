@@ -39,6 +39,14 @@ jobs:
             aria2 ccache rsync cpio libncurses-dev kmod
           ccache -M 2G || true
 
+      - name: 解析上游提交
+        id: rev
+        run: |
+          SHA=$(git ls-remote https://android.googlesource.com/kernel/common "refs/heads/${{ inputs.ack_branch }}" 2>/dev/null | awk '{print $1}')
+          [ -z "$SHA" ] && SHA="unknown"
+          echo "commit=$SHA" >> "$GITHUB_OUTPUT"
+          echo "ACK ${{ inputs.ack_branch }} @ $SHA"
+
       - name: 恢复源码与工具链缓存
         id: srccache
         uses: actions/cache@v4
@@ -47,7 +55,7 @@ jobs:
             cache/common
             cache/clang19
             cache/rust
-          key: srccache-${{ inputs.ack_branch }}-${{ hashFiles('manifest/source.json') }}
+          key: srccache-${{ inputs.ack_branch }}-${{ steps.rev.outputs.commit }}
 
       - name: ccache 缓存
         uses: actions/cache@v4
