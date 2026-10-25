@@ -68,6 +68,25 @@ jobs:
       - name: 准备 ACK 源码
         run: |
           mkdir -p ws cache
+          # ① 仓库内分块源码（离线、最高优先级）
+          PARTS=$(ls vendor/ack/*.part-* 2>/dev/null | head -1)
+          if [ -n "$PARTS" ]; then
+            echo "✓ 使用仓库内分块源码（vendor/ack）"
+            cat vendor/ack/*.part-* > /tmp/ack.tar.gz
+            echo "拼回大小: $(du -h /tmp/ack.tar.gz | cut -f1)"
+            if [ -f vendor/ack/manifest.json ]; then
+              WANT=$(python3 -c "import json;print(json.load(open('vendor/ack/manifest.json'))['sha256'])" 2>/dev/null || echo "")
+              GOT=$(sha256sum /tmp/ack.tar.gz | cut -d' ' -f1)
+              [ -n "$WANT" ] && echo "SHA256 校验: $([ "$WANT" = "$GOT" ] && echo 通过 || echo 不匹配)"
+            fi
+            mkdir -p ws/common
+            tar xzf /tmp/ack.tar.gz -C ws/common
+            rm -f /tmp/ack.tar.gz
+            echo "文件数: $(find ws/common -type f | wc -l)"
+            head -3 ws/common/Makefile
+            exit 0
+          fi
+          # ② 本地缓存
           if [ -f cache/common/Makefile ]; then
             echo "✓ 缓存命中，跳过下载（rsync 到 ws/common）"
             mkdir -p ws/common
