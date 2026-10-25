@@ -168,12 +168,12 @@ jobs:
           echo "$PWD/rust/bin" >> "$GITHUB_PATH"
           ls -l clang19/bin/clang clang19/bin/ld.lld || true
 
-      - name: 集成 FinaSU
+      - name: 集成 SukiSU
         run: |
           cd ws/common
-          export FOLKSU_URL="https://github.com/donyanchen/FinaSU.git"
+          export FOLKSU_URL="https://github.com/donyanchen/SukiSU-Ultra.git"
           export FOLKSU_REF="pudding"
-          curl -LSs "https://raw.githubusercontent.com/donyanchen/FinaSU/refs/heads/pudding/kernel/setup.sh" | bash -s pudding
+          curl -LSs "https://raw.githubusercontent.com/donyanchen/SukiSU-Ultra/refs/heads/pudding/kernel/setup.sh" | bash -s pudding
           UAPI_SRC=$(find . -maxdepth 3 -type d -name uapi | grep -i kernelsu | head -1)
           [ -z "$UAPI_SRC" ] && UAPI_SRC=$(find . -maxdepth 3 -type d -name uapi | head -1)
           echo "uapi 来源: $UAPI_SRC"
