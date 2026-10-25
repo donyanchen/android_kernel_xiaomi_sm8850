@@ -385,6 +385,7 @@ jobs:
           fi
           # 跳过模块符号 CRC 校验（结构体实测与原厂一致）
           python3 "$GITHUB_WORKSPACE/scripts/patch_modversion.py" . || true
+          python3 "$GITHUB_WORKSPACE/scripts/patch_vermagic.py" . || true
           # 解除 MODULE_SCMVERSION 对 LOCALVERSION_AUTO 的依赖
           python3 "$GITHUB_WORKSPACE/scripts/patch_kconfig.py" . || true
           WL="$GITHUB_WORKSPACE/configs/abi_symbollist.raw"
