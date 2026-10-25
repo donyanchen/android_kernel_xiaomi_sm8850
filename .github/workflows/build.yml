@@ -305,7 +305,7 @@ jobs:
         continue-on-error: true
         run: |
           cd ws
-          if git clone --depth=1 -b oki-android16-6.12 https://github.com/cctv18/susfs4oki.git susfs4ksu 2>&1 | tail -2; then
+          if git clone --depth=1 -b oki-android16-6.12-dev https://github.com/cctv18/susfs4oki.git susfs4ksu 2>&1 | tail -2; then
             cp susfs4ksu/kernel_patches/fs/* common/fs/ 2>/dev/null || true
             cp susfs4ksu/kernel_patches/include/linux/* common/include/linux/ 2>/dev/null || true
             P="$PWD/susfs4ksu/kernel_patches/50_add_susfs_in_gki-android16-6.12.patch"
