@@ -1,132 +1,115 @@
-# Pudding Kernel — 完整 ABI 兼容方案
+# Pudding Kernel — ABI 兼容进展
 
-> 目标：让自编译内核能加载小米 17（pudding / canoe / sm8850）全部 404 个厂商模块
-> 数据来源：全部从真机与官方固件提取，无推测
+> 目标机型：小米 17（pudding / canoe / sm8850，HyperOS OS4.0.5.0.XPCCNXM）
+> 最后更新：2026-10-25
 
----
+## 一、当前结论
 
-## 一、覆盖度核算
+**编译已通过，但 ABI CRC 尚未对齐。**
 
 ```
-设备导出符号                        14,734
-404 个厂商模块真正依赖的符号          6,150
-
-产物原本已有                         2,727  (44.3%)
-闭源符号桩函数                         842  (13.7%)
-高通开源子系统                        2,581  (42.0%)
-                                   ─────────
-合计覆盖                            6,150  (100.0%)
+构建 #54 (40163180526)   ✅ 成功
+Image 大小               39.7 MB
+vmlinux.symvers          10,061 条
+module_layout CRC        0xbc47a22e   （设备 0x797f2b3e ❌）
+与设备 4,593 个真实 CRC 对比：一致 891 / 2,799 = 31.8%
 ```
 
-## 二、三层方案
+## 二、已确认的事实
 
-### 第 1 层：配置对齐（44.3%）
+### 设备基准（真机提取）
 
-设备 `/proc/config.gz` 的 2369 项作为 defconfig 基线，叠加 ABI 严格对齐项。
-
-**关键 ABI 开关**（缺一项 `module_layout` CRC 就错）：
-
-| CONFIG | 作用 |
+| 项目 | 值 |
 |---|---|
-| `TRIM_UNUSED_KSYMS=y` | 按白名单裁剪 ksymtab |
-| `EXTENDED_MODVERSIONS=y` | CRC 迁入 `__ksymtab`，条目 12 字节 |
-| `CFI_ICALL_NORMALIZE_INTEGERS=y` | CFI 间接调用归一化 |
-| `MODULE_SCMVERSION=y` | `struct module` +256 `scmversion` |
-| `DEBUG_INFO_BTF_MODULES=y` | `struct module` +1364 `btf_base_data_size` |
-| `RUST=y` | 3655 个 `_RNv*` 符号 + KABI 保留位 |
+| 内核 | `6.12.69-android16-6-g43b5ab7e247d-abogki561813157-4k` |
+| vermagic | `6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64` |
+| 内核本体导出符号 | 9,933（`__ksymtab_*` 无 `[模块]` 后缀） |
+| 模块导出符号 | 4,801 |
+| 404 个厂商模块依赖内核提供的符号 | **2,716** |
+| `struct module` | 1,600 字节 / 75 成员 |
+| 槽位 | `_b`，boot_b = `/dev/block/sde57`，header v4，内核段裸 Image |
 
-**白名单**：`configs/abi_symbollist.raw`，14,734 项，从设备 `__ksymtab_*` 提取。
-
-### 第 2 层：闭源符号桩（13.7%）
-
-`vendor/xiaomi-stubs/xiaomi_stubs.c`，842 个符号。
-
-**签名推断来源**：
+### 源码版本
 
 ```
-404 个 .ko 全部反汇编  →  30,288 个调用点
-                          ↓
-              x0-x7 寄存器写入分析
-                          ↓
-                  参数个数（642 个，多数置信度 1.00）
+ACK 分支        android16-6.12-2026-03（SUBLEVEL 69，与设备一致）
+头文件比对      6,306 / 6,321 逐字节相同（剥离注释后）
+差异文件        15 个（小米/高通定制 patch）
+结构体成员名    16,936 个共有，仅 8 个差异
 ```
 
-**变参函数特殊处理**（参数分布从 2 到 8 发散，即变参）：
-
-```c
-int __mca_log_err(const char *fmt, const char *func, int line, ...);
-int __mca_log_info(const char *fmt, const char *func, int line, ...);
-int __mca_log_debug(const char *fmt, const char *func, int line, ...);
+差异头文件：
+```
+blkdev.h  compaction.h  slab.h  vmalloc.h  sched/ext.h  sched/task_stack.h
+net/af_unix.h  net/bluetooth/l2cap.h  scsi/scsi_device.h
+trace/events/f2fs.h  trace/hooks/{blk,fault,fs,vmscan}.h  uapi/linux/f2fs.h
 ```
 
-反汇编实证：
+### 符号覆盖
 
 ```
-adrp x0, .rodata / add x0    → 格式串
-adrp x1, .rodata / add x1    → 函数名
-mov  w2, #159                → 行号
-bl   __mca_log_err
+需要内核导出                 2,716
+ACK 源码提供                 2,672  (98.4%)
+无法补（宏/内联）               30
 ```
 
-**变量类符号**（31 个，非函数）：用真实定义，例如 QMI 描述符 `_ei` 后缀
+去掉 30 个后不需要任何桩函数 —— 全部由内核自身提供。
 
-```c
-struct qmi_elem_info data_ep_id_type_v01_ei[1];
-```
-
-### 第 3 层：高通开源子系统（42.0%）
-
-从 `OnePlusOSS/android_kernel_modules_and_devicetree_oneplus_sm8850`
-（分支 `oneplus/sm8850_b_16.0.0_oneplus_15`）sparse-checkout 拉取：
+## 三、CRC 不符的分界
 
 ```
-vendor/qcom/opensource/dataipa            → ipa_* / ipa3_* / gsi_*
-vendor/qcom/opensource/synx-kernel        → synx_*
-vendor/qcom/opensource/dsp-kernel         → fastrpc_* / adsp_*
-vendor/qcom/opensource/datarmnet          → rmnet_*
-vendor/qcom/opensource/securemsm-kernel   → qce_*
+memset / strlen / snprintf / sscanf / strncmp       ✅ 一致
+ktime_get_with_offset（枚举参数）                    ✅ 一致
+__alloc_skb / __amba_driver_register / devm_kmalloc  ❌ 不符
 ```
 
-其余由 CONFIG 打开（`CFG80211` / `MHI_BUS` / `CORESIGHT` / `SLIMBUS` /
-`SOUNDWIRE` / `QCOM_QMI_HELPERS` 等）。
+**genksyms 算法正确，问题在类型定义本身。**
 
-## 三、CI 流水线
+已定位并修复的一处：
 
-```
-1. 准备 ACK 源码
-2. 准备工具链（clang 19 / rust 1.82）
-3. 集成 SukiSU
-4. 兼容性补丁
-5. 集成高通开源子系统（sparse-checkout）
-6. 桩函数挂进 drivers/Makefile + Kconfig
-7. 配置内核（设备真配置 + ABI 对齐 + 子系统 CONFIG）
-8. 编译（装 pahole 生成 BTF）
-9. ABI 硬校验 ← module_layout CRC 必须 == 0x797f2b3e
+```kconfig
+config MODULE_SCMVERSION
+	depends on LOCALVERSION_AUTO        ← 曾因关闭 AUTO 导致 scmversion 字段缺失
 ```
 
-## 四、验证基准
+`scripts/patch_kconfig.py` 解除该依赖，保留 `LOCALVERSION_AUTO=n` 以免 UTM_RELEASE 带 `-g<sha>`。
 
-| 项目 | 设备基准 | 校验方式 |
+## 四、版本串伪装
+
+`/proc/version` 需要与原厂逐字一致：
+
+```
+Linux version 6.12.69-android16-6-g43b5ab7e247d-abogki561813157-4k
+(kleaf@build-host)
+(Android (14043575, +pgo, +bolt, +lto, +mlgo, based on r536225) clang version 19.0.1 (...), LLD 19.0.1)
+#1 SMP PREEMPT Tue Sep  8 15:08:49 UTC 2026
+```
+
+两种实现：
+
+| 方式 | 脚本 | 说明 |
 |---|---|---|
-| `module_layout` CRC | `0x797f2b3e` | `vmlinux.symvers` 比对 |
-| `struct module` | 1600 字节 / 75 成员 | `pahole -C module vmlinux` |
-| 导出符号数 | 14,734 | `wc -l vmlinux.symvers` |
-| vermagic | `6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64` | strings |
+| 编译期 | `scripts/fake_version.py` | 替换 `init/version-timestamp.c` 的 `release=` 与 `LINUX_COMPILER` |
+| 离线 | `scripts/patch_image.py` | 对已编译 Image 做等长二进制替换（版本串 52 字节、编译器号 8 位数字均可等长替换） |
 
-## 五、数据文件
+`KBUILD_BUILD_TIMESTAMP` 必须是 `Tue Sep  8 15:08:49 UTC 2026`（date 默认格式），
+写成 ISO 格式会导致 `uname -v` 与原厂不同。
 
-| 文件 | 内容 |
+## 五、工具
+
+| 脚本 | 用途 |
 |---|---|
-| `configs/pudding_full.defconfig` | 设备 2369 项配置 |
-| `configs/pudding_abi.fragment` | ABI 严格对齐 |
-| `configs/abi_symbollist.raw` | 14,734 项导出符号白名单 |
-| `vendor/xiaomi-stubs/xiaomi_stubs.c` | 842 个闭源符号桩 |
+| `scripts/config_diff.py` | 构建出的 `.config` 与设备配置全量 diff |
+| `scripts/fake_version.py` | 编译期版本串伪装 |
+| `scripts/patch_image.py` | 离线镜像版本串补丁 |
+| `scripts/patch_kconfig.py` | 解除 MODULE_SCMVERSION 依赖 |
+| `tools/extract_crc.py` | 从 404 个 `.ko` 提取真实符号 CRC |
+| `tools/infer_params.py` | 反汇编推断外部符号参数个数 |
+| `tools/gen_stubs.py` | 生成 ABI 桩函数 |
+| `tools/cmp_structs.py` | BTF 结构体布局比对 |
 
-## 六、已知限制
+## 六、待办
 
-1. **功能退化**：`mca_*`（小米充电）桩函数返回 0，充电策略逻辑失效，
-   但不影响模块加载与系统启动。
-2. **200 个无调用点符号**：参数个数按命名规律推断，CRC 可能与设备不同，
-   会导致对应模块加载失败（不影响其它模块）。可从设备符号表进一步反推收敛。
-3. **源码版本差异**：一加 sm8850 与小米 sm8850 同平台但出厂时间不同，
-   个别符号签名可能有差异。
+1. 拿到构建产物的 `.config`，与设备配置全量 diff（诊断步骤已加）
+2. 找出导致结构体类型差异的 CONFIG 项
+3. CRC 对齐后再评估刷机
