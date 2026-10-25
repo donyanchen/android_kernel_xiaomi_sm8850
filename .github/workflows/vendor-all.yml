@@ -1,0 +1,91 @@
+name: Vendor All
+
+# 把全部外部依赖切块提交进本仓库（GitHub 单文件上限 100 MB）。
+# 不使用 Release。构建时全部从仓库内拼回。
+#
+# 产物：
+#   vendor/ack/        ACK 内核源码      ~243 MB  3 块
+#   vendor/clang/      clang r536225     ~1 GB
+#   vendor/rust/       rust 1.82.0       ~200 MB
+#   vendor/sukisu/     SukiSU 源码       ~5 MB
+#   vendor/opt-gki/    小米优化移植包    ~1 MB
+#
+# 每个组件单独提交，避免单次推送超过 2 GB 上限。
+
+on:
+  workflow_dispatch:
+    inputs:
+      ack_branch:
+        description: 'ACK 分支'
+        required: true
+        default: 'android16-6.12-2026-03'
+        type: string
+      chunk_mb:
+        description: '分块大小 MB（上限 90）'
+        required: true
+        default: '90'
+        type: string
+      what:
+        description: '要入库的组件（all / ack / clang / rust / small）'
+        required: true
+        default: 'all'
+        type: string
+
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 配置 git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: 入库 ACK 源码
+        if: inputs.what == 'all' || inputs.what == 'ack'
+        run: bash "$GITHUB_WORKSPACE/scripts/vendor_one.sh" \
+               ack "${{ inputs.ack_branch }}" "${{ inputs.chunk_mb }}" \
+               "https://android.googlesource.com/kernel/common/+archive/refs/heads/${{ inputs.ack_branch }}.tar.gz"
+
+      - name: 入库 clang 工具链
+        if: inputs.what == 'all' || inputs.what == 'clang'
+        run: bash "$GITHUB_WORKSPACE/scripts/vendor_one.sh" \
+               clang "r536225" "${{ inputs.chunk_mb }}" \
+               "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r536225.tar.gz"
+
+      - name: 入库 rust 工具链
+        if: inputs.what == 'all' || inputs.what == 'rust'
+        run: bash "$GITHUB_WORKSPACE/scripts/vendor_one.sh" \
+               rust "1.82.0" "${{ inputs.chunk_mb }}" \
+               "https://android.googlesource.com/platform/prebuilts/rust/+archive/refs/heads/main/linux-x86/1.82.0.tar.gz"
+
+      - name: 入库 SukiSU 与移植包
+        if: inputs.what == 'all' || inputs.what == 'small'
+        run: |
+          bash "$GITHUB_WORKSPACE/scripts/vendor_one.sh" \
+            sukisu "main" "${{ inputs.chunk_mb }}" \
+            "https://github.com/SukiSU-Ultra/SukiSU-Ultra/archive/refs/heads/main.tar.gz"
+          bash "$GITHUB_WORKSPACE/scripts/vendor_one.sh" \
+            opt-gki "main" "${{ inputs.chunk_mb }}" \
+            "https://github.com/donothavename/opt_gki_kernel_android13-5.15/archive/refs/heads/main.tar.gz"
+
+      - name: 汇总
+        run: |
+          {
+            echo "## 依赖入库完成"
+            echo ""
+            echo "| 组件 | 体积 |"
+            echo "|---|---|"
+            for d in vendor/*/; do
+              [ -d "$d" ] && echo "| $(basename "$d") | $(du -sh "$d" | cut -f1) |"
+            done
+            echo ""
+            echo "仓库总体积: $(du -sh vendor | cut -f1)"
+          } >> "$GITHUB_STEP_SUMMARY"
+          cat "$GITHUB_STEP_SUMMARY"
