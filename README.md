@@ -12,31 +12,6 @@ vermagic    6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64
 
 ---
 
-## 仓库内容说明
-
-**本仓库只包含构建流程与开源代码，不含设备私有数据。**
-
-| 内容 | 位置 | 是否公开 |
-|---|---|---|
-| CI 定义、构建脚本、上游补丁、自写工具 | 本仓库 | ✅ 公开 |
-| 设备 ABI 符号表、原厂 defconfig、厂商桩函数、Kconfig | `donyanchen/pudding-private` | ❌ 私有 |
-| Linux 内核源码 | `android.googlesource.com`（构建时拉取） | ✅ 公开 |
-| Root 方案源码 | `donyanchen/FinaSU` / `donyanchen/SukiSU-Ultra` | ✅ 公开 |
-
-**为什么要这样分**：内核与 Root 方案都是 GPL-2.0，必须开源；而 ABI 符号表、原厂配置、厂商符号签名是**从设备固件逆向得到的数据**，不是内核代码，不受 GPL 约束，因此单独存放在私有仓库。
-
-### 构建前必须配置
-
-在仓库 Settings → Secrets and variables → Actions 添加：
-
-| Name | 值 |
-|---|---|
-| `PRIVATE_REPO_TOKEN` | 只勾 `Contents: Read-only`、限定 `pudding-private` 的 fine-grained token |
-
-CI 的「拉取私有配置」步骤会用它 clone 私有仓库；**secret 缺失时构建会直接失败**，不会用空配置编出废镜像。
-
----
-
 ## 功能
 
 | 功能 | 状态 | 说明 |
