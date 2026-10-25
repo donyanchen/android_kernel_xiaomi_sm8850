@@ -97,8 +97,15 @@ jobs:
           cd ws
           BRANCH="${{ inputs.ack_branch }}"
           echo "分支: $BRANCH"
-          curl -L --retry 3 --retry-delay 5 -o ack.tar.gz \
-            "https://android.googlesource.com/kernel/common/+archive/refs/heads/${BRANCH}.tar.gz"
+          MIRROR="https://github.com/${GITHUB_REPOSITORY}/releases/download/deps/ack-common.tar.gz"
+          UPSTREAM="https://android.googlesource.com/kernel/common/+archive/refs/heads/${BRANCH}.tar.gz"
+          echo "--- 尝试本仓库 Release"
+          if curl -fL --retry 2 -o ack.tar.gz "$MIRROR" 2>/dev/null; then
+            echo "✓ 来自本仓库 Release"
+          else
+            echo "--- 回退到上游"
+            curl -L --retry 3 --retry-delay 5 -o ack.tar.gz "$UPSTREAM"
+          fi
           ls -lh ack.tar.gz
           mkdir -p common
           tar xzf ack.tar.gz -C common
@@ -121,12 +128,22 @@ jobs:
           cd ws
           GC=https://android.googlesource.com/platform/prebuilts
           echo "--- clang r536225"
-          curl -L --retry 3 --retry-delay 5 -o clang.tar.gz \
-            "$GC/clang/host/linux-x86/+archive/refs/heads/main/clang-r536225.tar.gz"
+          if curl -fL --retry 2 -o clang.tar.gz \
+               "https://github.com/${GITHUB_REPOSITORY}/releases/download/deps/clang-r536225.tar.gz" 2>/dev/null; then
+            echo "✓ clang 来自本仓库 Release"
+          else
+            curl -L --retry 3 --retry-delay 5 -o clang.tar.gz \
+              "$GC/clang/host/linux-x86/+archive/refs/heads/main/clang-r536225.tar.gz"
+          fi
           mkdir -p clang19 && tar xzf clang.tar.gz -C clang19
           echo "--- rust 1.82.0"
-          curl -L --retry 3 --retry-delay 5 -o rust.tar.gz \
-            "$GC/rust/+archive/refs/heads/main/linux-x86/1.82.0.tar.gz"
+          if curl -fL --retry 2 -o rust.tar.gz \
+               "https://github.com/${GITHUB_REPOSITORY}/releases/download/deps/rust-1.82.0.tar.gz" 2>/dev/null; then
+            echo "✓ rust 来自本仓库 Release"
+          else
+            curl -L --retry 3 --retry-delay 5 -o rust.tar.gz \
+              "$GC/rust/+archive/refs/heads/main/linux-x86/1.82.0.tar.gz"
+          fi
           mkdir -p rust && tar xzf rust.tar.gz -C rust
           ls clang19/bin/clang clang19/bin/ld.lld rust/bin/rustc 2>&1
           du -sh clang19 rust
