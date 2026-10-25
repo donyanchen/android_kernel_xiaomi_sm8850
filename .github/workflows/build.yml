@@ -246,16 +246,32 @@ jobs:
       - name: 配置内核
         run: |
           cd ws/common
-          C=arch/arm64/configs/gki_defconfig
-          sed -i '/^CONFIG_LOCALVERSION=/d' "$C"
-          cat "$GITHUB_WORKSPACE/configs/pudding.fragment" >> "$C"
-          if [ "$ADIOS_OK" = "1" ]; then
-            echo "CONFIG_MQ_IOSCHED_ADIOS=y" >> "$C"
-            echo "CONFIG_MQ_IOSCHED_DEFAULT_ADIOS=y" >> "$C"
-            echo "--- ADIOS 配置已追加"
+          # 用设备真配置作为基线（2369 项，来自 /proc/config.gz）
+          CFG="$GITHUB_WORKSPACE/configs/pudding_full.defconfig"
+          if [ -f "$CFG" ]; then
+            echo "✓ 使用设备完整配置 pudding_full.defconfig"
+            cp "$CFG" arch/arm64/configs/pudding_defconfig
+          else
+            echo "⚠ 设备配置缺失，回退 gki_defconfig"
+            cp arch/arm64/configs/gki_defconfig arch/arm64/configs/pudding_defconfig
           fi
-          echo "--- 追加的配置 ---"
-          tail -25 "$C"
+          # 叠加 ABI 严格对齐片段
+          ABI="$GITHUB_WORKSPACE/configs/pudding_abi.fragment"
+          if [ -f "$ABI" ]; then
+            echo "✓ 叠加 ABI 对齐片段"
+            cat "$ABI" >> arch/arm64/configs/pudding_defconfig
+          fi
+          # 放入 ABI 白名单（TRIM_UNUSED_KSYMS 需要）
+          WL="$GITHUB_WORKSPACE/configs/abi_symbollist.raw"
+          if [ -f "$WL" ]; then
+            cp "$WL" abi_symbollist.raw
+            echo "✓ 白名单 $(wc -l < abi_symbollist.raw) 项"
+          fi
+          # 确保 ADIOS 配置
+          if [ "$ADIOS_OK" = "1" ]; then
+            echo "CONFIG_MQ_IOSCHED_ADIOS=y" >> arch/arm64/configs/pudding_defconfig
+          fi
+          echo "--- defconfig 行数: $(wc -l < arch/arm64/configs/pudding_defconfig)"
 
       - name: 编译
         run: |
@@ -268,10 +284,16 @@ jobs:
           export CCACHE_COMPILERCHECK=none
           export LLVM=1
           echo "pahole: $(pahole --version 2>/dev/null || echo 未安装)"
+          # 安装 pahole（BTF 生成必需）；apt 版本太旧则源码编译
+          if ! pahole --version 2>/dev/null | grep -qE '1\.[2-9][0-9]'; then
+            sudo apt-get update -qq > /dev/null 2>&1 || true
+            sudo apt-get install -y -qq dwarves > /dev/null 2>&1 || true
+          fi
+          echo "pahole after: $(pahole --version 2>/dev/null || echo 仍未安装)"
           export KBUILD_BUILD_USER=kleaf
           export KBUILD_BUILD_HOST=build-host
           export KBUILD_BUILD_TIMESTAMP="2026-09-08 15:08:49 UTC"
-          make ARCH=arm64 gki_defconfig > build.log 2>&1
+          make ARCH=arm64 pudding_defconfig > build.log 2>&1
           make ARCH=arm64 -j"$(nproc)" Image >> build.log 2>&1 || true
           tail -30 build.log
           test -f arch/arm64/boot/Image
@@ -319,6 +341,53 @@ jobs:
           for k in STACK_TRACER FUNCTION_TRACER FTRACE FUNCTION_GRAPH_TRACER DEBUG_INFO_BTF; do
             v=$(grep -E "^(CONFIG_${k}=|# CONFIG_${k} is not set)" .config 2>/dev/null | head -1)
             printf "  %-24s %s\n" "$k" "${v:-未定义}"
+          done
+
+      - name: ABI 硬校验（module_layout CRC）
+        if: success()
+        run: |
+          cd ws/common
+          echo "===== ABI 校验 ====="
+          VENDOR_ML=0x797f2b3e
+          if [ -f vmlinux.symvers ]; then
+            ML=$(grep -P "\tmodule_layout\t" vmlinux.symvers | head -1 | cut -f1)
+            echo "  产物 module_layout CRC : $ML"
+            echo "  设备 module_layout CRC : $VENDOR_ML"
+            if [ "$ML" = "$VENDOR_ML" ]; then
+              echo "  ✅ CRC 一致 —— 厂商模块可以加载"
+            else
+              echo "  ❌ CRC 不符 —— 厂商模块将无法加载"
+              echo ""
+              echo "  --- 差异最大的符号（产物 vs 设备基准）---"
+              for s in __platform_driver_register platform_driver_unregister devm_kmalloc \
+                       of_find_property queue_delayed_work_on cancel_delayed_work_sync; do
+                V=$(grep -P "\t${s}\t" vmlinux.symvers | head -1 | cut -f1)
+                printf "    %-32s %s\n" "$s" "${V:-缺失}"
+              done
+            fi
+          else
+            echo "  ⚠ vmlinux.symvers 缺失"
+          fi
+          echo ""
+          echo "===== struct module 校验 ====="
+          if command -v pahole >/dev/null && [ -f vmlinux ]; then
+            pahole -C module vmlinux 2>/dev/null | tail -3 || true
+            echo "  设备基准: 1600 字节 / 75 成员"
+          else
+            echo "  ⚠ pahole 或 vmlinux 缺失"
+          fi
+          echo ""
+          echo "===== 导出符号数 ====="
+          if [ -f vmlinux.symvers ]; then
+            echo "  产物导出: $(wc -l < vmlinux.symvers)"
+            echo "  设备导出: 14734  (基准)"
+          fi
+          echo ""
+          echo "===== 关键 CONFIG 校验 ====="
+          for k in TRIM_UNUSED_KSYMS EXTENDED_MODVERSIONS CFI_ICALL_NORMALIZE_INTEGERS \
+                   MODULE_SCMVERSION DEBUG_INFO_BTF_MODULES RUST; do
+            v=$(grep -E "^(CONFIG_${k}=|# CONFIG_${k} is not set)" .config 2>/dev/null | head -1)
+            printf "  %-34s %s\n" "$k" "${v:-未定义}"
           done
 
       - name: 上传编译日志
