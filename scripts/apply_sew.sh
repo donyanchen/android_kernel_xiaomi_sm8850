@@ -46,7 +46,9 @@ lines = open(p).read().split("\n")
 out, skipped = [], 0
 for ln in lines:
     is_inject = ("sed -i" in ln) and (
-        ("DECLARE_HOOK" in ln) or ("DECLARE_RESTRICTED_HOOK" in ln)
+        ("DECLARE_HOOK" in ln)
+        or ("DECLARE_RESTRICTED_HOOK" in ln)
+        or ("\\ntrace_android_" in ln)
     )
     hits = [h for h in existing if h in ln]
     if is_inject and hits:
@@ -69,6 +71,7 @@ add_kshrink_lruvecd()   { abk_log "跳过 add_kshrink_lruvecd（vmscan.c 不兼�
 add_mi_rmap_efficiency() { abk_log "跳过 add_mi_rmap_efficiency（vmscan.c 不兼容）"; }
 add_os4port_sched()     { abk_log "跳过 add_os4port_sched（futex_key 类型不可见）"; }
 opt_page_clear()        { abk_log "跳过 opt_page_clear（clear_page.S 在 KVM hyp 无法汇编）"; }
+opt_trace_printk()      { abk_log "跳过 opt_trace_printk（6.12 bpf 无 BPF_FUNC_pr_debug）"; }
 
 abk_log "KERNEL_ROOT=$KERNEL_ROOT"
 abk_log "DEFCONFIG=$DEFCONFIG"
