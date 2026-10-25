@@ -70,6 +70,35 @@ jobs:
           restore-keys: |
             ccache-${{ inputs.ack_branch }}-
 
+      - name: 依赖下载辅助
+        run: |
+          # 依赖已迁到私有仓库，私有 Release 资产必须走 API 端点
+          mkdir -p /usr/local/bin
+          printf '%s\n' \
+            '#!/usr/bin/env bash' \
+            '# 从私有仓库 pudding-private 的 Release 下载构建依赖' \
+            '# 私有 Release 资产必须走 API 端点，browser_download_url 需要认证' \
+            'set -e' \
+            '' \
+            'NAME="$1"' \
+            'OUT="${2:-$1}"' \
+            'TOKEN="${PRIVATE_REPO_TOKEN:?缺少 secret PRIVATE_REPO_TOKEN}"' \
+            'API="https://api.github.com/repos/donyanchen/pudding-private/releases"' \
+            '' \
+            'ID=$(curl -sf -H "Authorization: token $TOKEN" "$API/tags/deps" \\' \
+            '     | python3 -c "import sys,json;d=json.load(sys.stdin);print(next(a['\''id'\''] for a in d['\''assets'\''] if a['\''name'\'']=='\''$NAME'\''))")' \
+            '' \
+            'curl -fL --retry 3 --retry-delay 5 \\' \
+            '  -H "Authorization: token $TOKEN" \\' \
+            '  -H "Accept: application/octet-stream" \\' \
+            '  -o "$OUT" \\' \
+            '  "$API/assets/$ID"' \
+            '' \
+            'echo "  下载完成: $NAME -> $OUT ($(stat -c %s "$OUT") 字节)"' \
+            > /usr/local/bin/getdep
+          chmod +x /usr/local/bin/getdep
+          echo "getdep 已安装"
+
       - name: 准备 ACK 源码
         run: |
           mkdir -p ws cache
@@ -102,11 +131,10 @@ jobs:
           cd ws
           BRANCH="${{ inputs.ack_branch }}"
           echo "分支: $BRANCH"
-          MIRROR="https://github.com/${GITHUB_REPOSITORY}/releases/download/deps/ack-common.tar.gz"
           UPSTREAM="https://android.googlesource.com/kernel/common/+archive/refs/heads/${BRANCH}.tar.gz"
-          echo "--- 尝试本仓库 Release"
-          if curl -fL --retry 2 -o ack.tar.gz "$MIRROR" 2>/dev/null; then
-            echo "✓ 来自本仓库 Release"
+          echo "--- 尝试私有仓库 Release"
+          if getdep ack-common.tar.gz ack.tar.gz 2>/dev/null; then
+            echo "✓ 来自私有仓库 Release"
           else
             echo "--- 回退到上游"
             curl -L --retry 3 --retry-delay 5 -o ack.tar.gz "$UPSTREAM"
@@ -133,9 +161,8 @@ jobs:
           cd ws
           GC=https://android.googlesource.com/platform/prebuilts
           echo "--- clang r536225"
-          if curl -fL --retry 2 -o clang.tar.gz \
-               "https://github.com/${GITHUB_REPOSITORY}/releases/download/deps/clang-r536225.tar.gz" 2>/dev/null; then
-            echo "✓ clang 来自本仓库 Release"
+          if getdep clang-r536225.tar.gz clang.tar.gz 2>/dev/null; then
+            echo "✓ clang 来自私有仓库 Release"
           else
             curl -L --retry 3 --retry-delay 5 -o clang.tar.gz \
               "$GC/clang/host/linux-x86/+archive/refs/heads/main/clang-r536225.tar.gz"
@@ -145,11 +172,9 @@ jobs:
           if [ -x cache/rust/bin/rustc ] && [ -x cache/rust/bin/bindgen ]; then
             echo "rust/bindgen 缓存命中"
           else
-            curl -L --retry 3 --retry-delay 5 -o rust.tar.gz \
-              "https://github.com/${GITHUB_REPOSITORY}/releases/download/deps/rust-1.82.0.tar.gz"
+            getdep rust-1.82.0.tar.gz rust.tar.gz
             mkdir -p rust && tar xzf rust.tar.gz -C rust && rm -f rust.tar.gz
-            curl -L --retry 3 --retry-delay 5 -o bindgen.tgz \
-              "https://github.com/${GITHUB_REPOSITORY}/releases/download/deps/bindgen-0.69.5.tar.gz"
+            getdep bindgen-0.69.5.tar.gz bindgen.tgz
             tar xzf bindgen.tgz -C rust/bin && rm -f bindgen.tgz
           fi
           ls rust/bin/rustc rust/bin/bindgen 2>&1
@@ -348,8 +373,7 @@ jobs:
         run: |
           mkdir -p ws/rust/bin
           if [ ! -x ws/rust/bin/bindgen ]; then
-            curl -L --retry 3 --retry-delay 5 -o /tmp/bg.tgz \
-              "https://github.com/${GITHUB_REPOSITORY}/releases/download/deps/bindgen-0.69.5.tar.gz"
+            getdep bindgen-0.69.5.tar.gz /tmp/bg.tgz
             tar xzf /tmp/bg.tgz -C ws/rust/bin
             chmod +x ws/rust/bin/bindgen
           fi
