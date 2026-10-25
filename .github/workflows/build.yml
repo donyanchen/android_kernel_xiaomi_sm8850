@@ -305,7 +305,7 @@ jobs:
           if [ -f Module.symvers ]; then
             grep -E "\bkobject_uevent_env\b" Module.symvers || echo "  ⚠ 未找到符号"
           else
-            echo "  ⚠ 无 Module.symvers"
+            echo "  ⚠ 无 vmlinux.symvers"
           fi
           echo
           echo "===== ③ struct module 尺寸 ====="
@@ -336,5 +336,5 @@ jobs:
           name: Image-6.12.69
           path: |
             ws/common/arch/arm64/boot/Image
-            ws/common/Module.symvers
+            ws/common/vmlinux.symvers
             ws/common/.config
