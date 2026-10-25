@@ -357,6 +357,25 @@ jobs:
           fi
           cp protected_module_names_list ../protected_module_names_list 2>/dev/null || true
           echo "protected_module_names_list 就位"
+          # SUSFS 配置（补丁成功才加）
+          if [ "$SUSFS_OK" = "1" ]; then
+            echo 'CONFIG_KSU_SUSFS=y' >> arch/arm64/configs/pudding_defconfig
+            echo 'CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y' >> arch/arm64/configs/pudding_defconfig
+            echo 'CONFIG_KSU_SUSFS_SUS_PATH=y' >> arch/arm64/configs/pudding_defconfig
+            echo 'CONFIG_KSU_SUSFS_SUS_MOUNT=y' >> arch/arm64/configs/pudding_defconfig
+            echo 'CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y' >> arch/arm64/configs/pudding_defconfig
+            echo 'CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y' >> arch/arm64/configs/pudding_defconfig
+            echo 'CONFIG_KSU_SUSFS_SUS_KSTAT=y' >> arch/arm64/configs/pudding_defconfig
+            echo 'CONFIG_KSU_SUSFS_TRY_UMOUNT=y' >> arch/arm64/configs/pudding_defconfig
+            echo 'CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y' >> arch/arm64/configs/pudding_defconfig
+            echo 'CONFIG_KSU_SUSFS_SPOOF_UNAME=y' >> arch/arm64/configs/pudding_defconfig
+            echo 'CONFIG_KSU_SUSFS_ENABLE_LOG=y' >> arch/arm64/configs/pudding_defconfig
+            echo 'CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y' >> arch/arm64/configs/pudding_defconfig
+            echo 'CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y' >> arch/arm64/configs/pudding_defconfig
+            echo 'CONFIG_KSU_SUSFS_OPEN_REDIRECT=y' >> arch/arm64/configs/pudding_defconfig
+            echo 'CONFIG_KSU_SUSFS_SUS_MAP=y' >> arch/arm64/configs/pudding_defconfig
+            echo "SUSFS 配置已追加"
+          fi
           if [ "$ADIOS_OK" = "1" ]; then
             echo "CONFIG_MQ_IOSCHED_ADIOS=y" >> arch/arm64/configs/pudding_defconfig
           fi
