@@ -156,62 +156,7 @@ su -c "od -An -tx4 /sys/fs/selinux/status"
 
 ---
 
-## 4. 踩坑记录
-
-### 4.1 最贵的一次：卡开机动画，根因是 ASHMEM
-
-```
-缺 CONFIG_ASHMEM
- → zygote: Failed to create ashmem
- → FATAL EXCEPTION IN SYSTEM PROCESS
- → 卡开机动画（内核不崩、pstore 空）
- → BootFailReport 计数超限 → 自动禁用所有 KSU 模块
-```
-
-ACK 6.12 中 ASHMEM 依赖 RUST，RUST 需 bindgen。CI 工具链缓存命中导致 bindgen 从未安装，`RUST_IS_AVAILABLE=n`，kconfig **静默丢弃** RUST 与 ASHMEM（不报错）。
-
-### 4.2 `/proc/kallsyms` 里带方括号的是模块导出
-
-不是内核导出。统计口径：
-- 内核本体导出 9,933
-- 模块导出 4,801
-- 404 个厂商模块真正需要内核提供 2,716
-
-### 4.3 不要设 `persist.adb.tcp.port=5555`
-
-会让系统把 adb 从 USB 组合里剔除，插电脑只剩 MTP，重启不恢复。清掉后还要 `settings put global adb_enabled 0→1` 触发重新组合。
-
-### 4.4 手机直连手机做 USB 调试
-
-必须 OTG 在主机侧，两边都是 device 时只有充电。
-
-### 4.5 GitHub Actions 的 YAML heredoc
-
-`run: |` 里 heredoc 顶格写会让整个 workflow 失效（jobs=0，运行名显示文件路径）。
-
-### 4.6 `CONFIG_MODULE_SIG_PROTECT` 需要额外文件
-
-内核树根必须有 `protected_module_names_list` 文件，否则：
-
-```
-make[2]: *** No rule to make target 'protected_module_names_list', needed by 'Module.symvers'
-```
-
-### 4.7 `setup.sh` 分支不存在时静默回退
-
-SukiSU 的 `setup.sh` 里：
-
-```sh
-git checkout "$1" && echo "[-] Checked out $1." || echo "[-] Checkout default branch"
-```
-
-从上游 clone 时 `git checkout pudding` 会失败，`||` 分支吞掉错误，**编出一个不含任何修复的内核，CI 却显示绿色**。
-
-已修正：clone 指向 fork，checkout 失败直接 `exit 1`。
-
----
-
-## 5. 已知限制与待办
+## 4. 已知限制与待办
 
 ### 已知限制
 
@@ -229,7 +174,7 @@ git checkout "$1" && echo "[-] Checked out $1." || echo "[-] Checkout default br
 
 ---
 
-## 6. 相关仓库
+## 5. 相关仓库
 
 | 仓库 | 内容 |
 |---|---|
