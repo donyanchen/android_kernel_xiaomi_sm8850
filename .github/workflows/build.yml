@@ -316,6 +316,8 @@ jobs:
             echo "叠加高通子系统配置"
             cat "$EXTRA" >> arch/arm64/configs/pudding_defconfig
           fi
+          # 解除 MODULE_SCMVERSION 对 LOCALVERSION_AUTO 的依赖
+          python3 "$GITHUB_WORKSPACE/scripts/patch_kconfig.py" . || true
           WL="$GITHUB_WORKSPACE/configs/abi_symbollist.raw"
           if [ -f "$WL" ]; then
             cp "$WL" abi_symbollist.raw
@@ -450,6 +452,18 @@ jobs:
             v=$(grep -E "^(CONFIG_${k}=|# CONFIG_${k} is not set)" .config 2>/dev/null | head -1)
             printf "  %-34s %s\n" "$k" "${v:-未定义}"
           done
+
+      - name: 配置差异诊断
+        if: always()
+        run: |
+          cd ws/common
+          if [ -f .config ] && [ -f "$GITHUB_WORKSPACE/configs/pudding_full.defconfig" ]; then
+            echo "===== .config vs 设备配置 ====="
+            python3 "$GITHUB_WORKSPACE/scripts/config_diff.py" "$GITHUB_WORKSPACE/configs/pudding_full.defconfig" .config || true
+            cp .config "$GITHUB_WORKSPACE/built.config" || true
+          else
+            echo "缺少 .config"
+          fi
 
       - name: 上传编译日志
         if: always()
