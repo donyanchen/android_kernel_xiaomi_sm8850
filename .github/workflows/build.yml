@@ -310,6 +310,8 @@ jobs:
               cd common
               if patch -p1 --dry-run -F3 < "$P" > /tmp/susfs.log 2>&1; then
                 patch -p1 -F3 < "$P"
+                echo "--- 补 Kconfig 定义（50_ 补丁不含，需 10_ 的内容）---"
+                python3 "$GITHUB_WORKSPACE/scripts/patch_susfs_kconfig.py" "$PWD" || true
                 echo "SUSFS_OK=1" >> "$GITHUB_ENV"
                 echo "SUSFS 补丁成功"
               else
@@ -573,6 +575,26 @@ jobs:
             echo "bindgen: $(command -v bindgen || echo 缺)"
             bash scripts/rust_is_available.sh 2>&1 | tail -12 || true
             exit 1
+          fi
+
+      - name: SUSFS 校验
+        if: always()
+        run: |
+          cd ws/common
+          echo "===== SUSFS 校验 ====="
+          SUSFS_OK="${SUSFS_OK:-0}"
+          echo "  补丁状态: SUSFS_OK=$SUSFS_OK"
+          if [ -f .config ]; then
+            N=$(grep -c '^CONFIG_KSU_SUSFS' .config 2>/dev/null || echo 0)
+            echo "  .config 中 KSU_SUSFS 项: $N"
+            grep '^CONFIG_KSU_SUSFS' .config 2>/dev/null | head -6 || true
+            if [ "$SUSFS_OK" = "1" ] && [ "$N" -eq 0 ]; then
+              echo "  ❌ 补丁成功但 Kconfig 未生效 —— 检查 patch_susfs_kconfig.py"
+              exit 1
+            fi
+            echo "  ✅ SUSFS 配置已生效"
+          else
+            echo "  ⚠ 无 .config，跳过"
           fi
 
       - name: 上传编译日志
