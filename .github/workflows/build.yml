@@ -18,6 +18,11 @@ on:
         required: true
         default: true
         type: boolean
+      disp_version:
+        description: '内核显示版本串（默认对齐原厂，改这里可自定义）'
+        required: false
+        default: ''
+        type: string
       sew_opt:
         description: '应用小米优化移植包（mi_rmap/kshrink/unfairmem/unionpower 等，5.15→6.12 移植，可能失败）'
         required: true
@@ -180,9 +185,9 @@ jobs:
         id: ver
         run: |
           cd ws/common
-          SHA=$(git -C "$GITHUB_WORKSPACE" rev-parse --short=12 HEAD 2>/dev/null || echo 000000000000)
-          RUN=$(printf '%09d' "${{ github.run_number }}")
-          DISP="6.12.69-android16-6-g${SHA}-abogki${RUN}-4k"
+          # 显示版本串对齐原厂，避免特征检测
+          # 原厂：6.12.69-android16-6-g43b5ab7e247d-abogki561813157-4k
+          DISP="${{ inputs.disp_version || '6.12.69-android16-6-g43b5ab7e247d-abogki561813157-4k' }}"
           echo "显示版本: $DISP"
           echo "DISP=$DISP" >> "$GITHUB_ENV"
           VF=init/version-timestamp.c
