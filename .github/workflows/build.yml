@@ -295,6 +295,27 @@ jobs:
             cd "$GITHUB_WORKSPACE"
           fi
 
+      - name: 安装 bindgen（CONFIG_RUST / ASHMEM 必需）
+        run: |
+          export PATH="$PWD/ws/rust/bin:$PATH"
+          echo "rustc: $(command -v rustc || echo 缺)"
+          echo "cargo: $(command -v cargo || echo 缺)"
+          if ! command -v bindgen >/dev/null 2>&1; then
+            sudo apt-get update -qq >/dev/null 2>&1 || true
+            sudo apt-get install -y -qq libclang-dev >/dev/null 2>&1 || true
+            if command -v cargo >/dev/null 2>&1; then
+              echo "用 cargo 安装 bindgen-cli"
+              cargo install bindgen-cli --version 0.69.5 --root /tmp/bg >/dev/null 2>&1 || true
+              export PATH="/tmp/bg/bin:$PATH"
+            fi
+          fi
+          echo "bindgen: $(command -v bindgen || echo 未安装)"
+          bindgen --version 2>&1 | head -1 || true
+          if [ -x ws/common/scripts/rust_is_available.sh ]; then
+            bash ws/common/scripts/rust_is_available.sh 2>&1 | tail -6 || true
+          fi
+          echo "/tmp/bg/bin" >> "$GITHUB_PATH"
+
       - name: 配置内核
         run: |
           cd ws/common
