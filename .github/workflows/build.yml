@@ -297,7 +297,9 @@ jobs:
           SEW_DIR=$(ls -d /tmp/sew/*/ | head -1)
           echo "移植包: $SEW_DIR"
           export KERNEL_ROOT="$GITHUB_WORKSPACE/ws"
-          export DEFCONFIG="$GITHUB_WORKSPACE/ws/common/arch/arm64/configs/gki_defconfig"
+          DEV="${{ inputs.device }}"
+          [ -z "$DEV" ] && DEV=pudding
+          export DEFCONFIG="$GITHUB_WORKSPACE/ws/common/arch/arm64/configs/${DEV}_defconfig"
           echo "DEFCONFIG 存在: $([ -f "$DEFCONFIG" ] && echo yes || echo no)"
           bash "$GITHUB_WORKSPACE/scripts/apply_sew.sh" "$SEW_DIR" 2>&1 | tail -50 || true
           echo "--- 移除重复的 vendor hook 声明 ---"
@@ -489,6 +491,8 @@ jobs:
         run: |
           cd ws/common
           IMG=arch/arm64/boot/Image
+          DISP=$(strings -a "$IMG" | grep -oE '6\.12\.[0-9]+-android16-6-[a-z0-9]+-abogki[0-9]+-4k' | head -1)
+          echo "  实际版本串: ${DISP:-未找到}"
           echo "===== vermagic（必须等于 6.12.69-android16-6-4k）====="
           strings -a "$IMG" | grep -E "^6\.12\..*SMP preempt" | head -2
           echo "===== 显示串 ====="
@@ -505,8 +509,8 @@ jobs:
         run: |
           cd ws/common
           echo "===== 基准（小米17 官方内核）====="
-          echo "  struct module : 1600 字节 / 75 成员"
-          echo "  kobject_uevent_env CRC : 0x8bb6d45c"
+          echo "  struct module : 1600 字节 / 75 成员（两机型实测一致）"
+          echo "  (CRC 仅供参考，check_version 已跳过校验)"
           echo
           echo "===== ④ 关键符号 CRC ====="
           if [ -f Module.symvers ]; then
@@ -533,23 +537,16 @@ jobs:
         run: |
           cd ws/common
           echo "===== ABI 校验 ====="
-          VENDOR_ML=0x797f2b3e
+          # CRC 说明：本内核 kernel/module/version.c 的 check_version() 直接返回 1，
+          # 跳过符号 CRC 校验。产物 CRC 与设备原厂必然不同（编译器不同），
+          # 这不影响厂商模块加载——pudding 已实测开机 + 全部模块加载。
+          # 此处仅打印信息，不做失败判定。
           if [ -f vmlinux.symvers ]; then
             ML=$(grep -P "\tmodule_layout\t" vmlinux.symvers | head -1 | cut -f1)
-            echo "  产物 module_layout CRC : $ML"
-            echo "  设备 module_layout CRC : $VENDOR_ML"
-            if [ "$ML" = "$VENDOR_ML" ]; then
-              echo "  ✅ CRC 一致 —— 厂商模块可以加载"
-            else
-              echo "  ❌ CRC 不符 —— 厂商模块将无法加载"
-              echo ""
-              echo "  --- 差异最大的符号（产物 vs 设备基准）---"
-              for s in __platform_driver_register platform_driver_unregister devm_kmalloc \
-                       of_find_property queue_delayed_work_on cancel_delayed_work_sync; do
-                V=$(grep -P "\t${s}\t" vmlinux.symvers | head -1 | cut -f1)
-                printf "    %-32s %s\n" "$s" "${V:-缺失}"
-              done
-            fi
+            KU=$(grep -P "\tkobject_uevent_env\t" vmlinux.symvers | head -1 | cut -f1)
+            echo "  产物 module_layout CRC    : ${ML:-缺失}"
+            echo "  产物 kobject_uevent_env   : ${KU:-缺失}"
+            echo "  校验策略: check_version() 跳过，CRC 一致与否不影响模块加载"
           else
             echo "  ⚠ vmlinux.symvers 缺失"
           fi
@@ -579,6 +576,8 @@ jobs:
         if: always()
         run: |
           cd ws/common
+          DEV="${{ inputs.device }}"
+          [ -z "$DEV" ] && DEV=pudding
           if [ -f .config ] && [ -f "$GITHUB_WORKSPACE/configs/${DEV}_full.defconfig" ]; then
             echo "===== .config vs 设备配置 ====="
             python3 "$GITHUB_WORKSPACE/scripts/config_diff.py" "$GITHUB_WORKSPACE/configs/${DEV}_full.defconfig" .config || true
