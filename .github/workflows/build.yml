@@ -310,6 +310,34 @@ jobs:
           ls "$KERNEL_ROOT/common/drivers/xiaomi" 2>/dev/null | head -3
           ls "$KERNEL_ROOT/common/drivers/mihw" 2>/dev/null | head -3
 
+      - name: 应用 backport 补丁（linux-6.12.y stable）
+        run: |
+          cd "$GITHUB_WORKSPACE/ws/common"
+          PAT="$GITHUB_WORKSPACE/patches/backport"
+          if [ ! -d "$PAT" ]; then
+            echo "无 backport 目录，跳过"
+            exit 0
+          fi
+          ok=0; skip=0
+          for p in "$PAT"/*.patch; do
+            [ -f "$p" ] || continue
+            name=$(basename "$p")
+            if git apply --check "$p" 2>/dev/null; then
+              if git apply "$p" 2>/dev/null; then
+                echo "  [OK]   $name"
+                ok=$((ok+1))
+              else
+                echo "  [FAIL] $name 应用出错"
+                skip=$((skip+1))
+              fi
+            else
+              echo "  [SKIP] $name 上下文不匹配"
+              skip=$((skip+1))
+            fi
+          done
+          echo "backport 结果: 成功 $ok 个，跳过 $skip 个"
+          echo "注意：单个补丁失败不阻塞编译，最终以 ABI 校验为准"
+
       - name: 集成高通开源子系统
         continue-on-error: true
         run: |
