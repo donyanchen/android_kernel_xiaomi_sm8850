@@ -33,6 +33,11 @@ on:
         required: false
         default: ''
         type: string
+      backport_exclude:
+        description: '临时排除的 backport 补丁（冒号分隔的关键字，如 150-ufs:500-xhci）'
+        required: false
+        default: ''
+        type: string
       sew_opt:
         description: '应用小米优化移植包（mi_rmap/kshrink/unfairmem/unionpower 等，5.15→6.12 移植，可能失败）'
         required: true
@@ -315,6 +320,8 @@ jobs:
           ls "$KERNEL_ROOT/common/drivers/mihw" 2>/dev/null | head -3
 
       - name: 应用 backport 补丁（linux-6.12.y stable）
+        env:
+          BACKPORT_EXCLUDE: ${{ inputs.backport_exclude }}
         run: |
           cd "$GITHUB_WORKSPACE/ws/common"
           PAT="$GITHUB_WORKSPACE/patches/backport"
@@ -323,9 +330,22 @@ jobs:
             exit 0
           fi
           ok=0; skip=0
+          # 临时排除列表（二分排查用），冒号分隔
+          EXCLUDE="${BACKPORT_EXCLUDE:-}"
           for p in "$PAT"/*.patch; do
             [ -f "$p" ] || continue
             name=$(basename "$p")
+            if [ -n "$EXCLUDE" ]; then
+              skip_hit=0
+              for ex in $(echo "$EXCLUDE" | tr ':' ' '); do
+                case "$name" in *"$ex"*) skip_hit=1;; esac
+              done
+              if [ "$skip_hit" = "1" ]; then
+                echo "  [EXCLUDED] $name （二分排查排除）"
+                skip=$((skip+1))
+                continue
+              fi
+            fi
             if git apply --check "$p" 2>/dev/null; then
               if git apply "$p" 2>/dev/null; then
                 echo "  [OK]   $name"
