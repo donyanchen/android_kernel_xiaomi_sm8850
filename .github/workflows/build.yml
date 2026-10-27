@@ -52,7 +52,7 @@ jobs:
           sudo apt-get install -y -qq bc bison build-essential flex libssl-dev \
             libelf-dev libdw-dev lz4 zstd python3 zip unzip \
             aria2 ccache rsync cpio libncurses-dev kmod
-          ccache -M 2G || true
+          ccache -M 6G || true
 
       - name: 解析上游提交
         id: rev
@@ -76,8 +76,12 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.ccache
-          key: ccache-${{ inputs.ack_branch }}-${{ github.run_id }}
+          # key 必须稳定才能命中：用 ack_branch + device + 源码 SHA 组合，
+          # 绝不能带 run_id（那样每次都是新 key，永远不命中）。
+          # 末尾带源码 SHA，源码变动时自然失效，避免拿到过期草稿。
+          key: ccache-${{ inputs.ack_branch }}-${{ inputs.device }}-${{ steps.rev.outputs.commit }}
           restore-keys: |
+            ccache-${{ inputs.ack_branch }}-${{ inputs.device }}-
             ccache-${{ inputs.ack_branch }}-
 
       - name: 依赖下载辅助
@@ -487,6 +491,13 @@ jobs:
           export CC="ccache clang"
           export CCACHE_DIR="$HOME/.ccache"
           export CCACHE_COMPILERCHECK=none
+          # 提高命中率：忽略时间戳/路径差异，只按内容哈希
+          export CCACHE_SLOPPINESS="time_macros,include_file_ctime,include_file_mtime,file_stat_matches,pch_defines"
+          export CCACHE_BASEDIR="$PWD"
+          export CCACHE_NOHASHDIR=true
+          export CCACHE_MAXSIZE=6G
+          ccache -z >/dev/null 2>&1 || true
+          echo "ccache 状态: $(ccache -s 2>/dev/null | grep -E 'cache size|files in cache' | tr '\n' ' ')" 
           export LLVM=1
           export RUSTC=rustc
           export BINDGEN=bindgen
@@ -508,9 +519,18 @@ jobs:
           [ -z "$DEV" ] && DEV=pudding
           echo "编译目标设备: $DEV"
           ls -l arch/arm64/configs/${DEV}_defconfig || { echo "::error::缺少 ${DEV}_defconfig"; exit 1; }
-          make ARCH=arm64 ${DEV}_defconfig > build.log 2>&1
-          make ARCH=arm64 -j"$(nproc)" Image >> build.log 2>&1 || true
-          tail -30 build.log
+          make ARCH=arm64 ${DEV}_defconfig > build.log 2>&1 || {
+            echo "::error::defconfig 失败"; tail -40 build.log; exit 1; }
+          # 内核编译并行度：nproc+2 通常最快（IO 与计算可重叠）
+          JOBS=$(( $(nproc) + 2 ))
+          echo "并行任务数: $JOBS (nproc=$(nproc))"
+          START=$(date +%s)
+          make ARCH=arm64 -j"$JOBS" Image >> build.log 2>&1 || {
+            echo "::error::编译失败"; tail -60 build.log; exit 1; }
+          END=$(date +%s)
+          echo "编译耗时: $((END-START)) 秒"
+          ccache -s 2>/dev/null | grep -E 'cache hit|Hits|Misses|storage' || true
+          tail -20 build.log
           test -f arch/arm64/boot/Image
           ls -lh arch/arm64/boot/Image
 
