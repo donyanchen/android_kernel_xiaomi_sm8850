@@ -44,6 +44,29 @@ OFFICIAL_COMPILER = (
 )
 OFFICIAL_UTS_VERSION = '#1 SMP PREEMPT Tue Sep  8 15:08:49 UTC 2026'
 
+# 各机型原厂 UTS_VERSION（从真机 /proc/version 实测）
+# release 决定机型，据此选用对应的 uts_version，避免 uname.txt 里混入别的设备数据
+KNOWN_UTS = {
+    '6.12.69-android16-6-gb1493ec68d4a-abogki514973465-4k':
+        '#1 SMP PREEMPT Tue Sep  8 15:08:49 UTC 2026',   # myron / K90 Pro Max
+    '6.12.69-android16-6-g43b5ab7e247d-abogki561813157-4k':
+        '#1 SMP PREEMPT Tue Sep  8 15:08:49 UTC 2026',   # pudding / 小米17
+}
+
+
+def pick_uts_version(ver, from_file):
+    """优先用已知机型的原厂值；未知机型才用文件里的"""
+    if ver in KNOWN_UTS:
+        want = KNOWN_UTS[ver]
+        if from_file and from_file != want:
+            print(f'  ! uname.txt 的 uts_version 与原厂不符，改用已知值')
+            print(f'    文件值: {from_file}')
+            print(f'    原厂值: {want}')
+        return want
+    if from_file:
+        return from_file
+    return OFFICIAL_UTS_VERSION
+
 
 def read_proc_version(path):
     """从 uname.txt / /proc/version 提取 release 与 UTS_VERSION"""
@@ -214,8 +237,8 @@ def main():
 
     if not ver:
         ver = OFFICIAL_VER
-    if not uts_version:
-        uts_version = OFFICIAL_UTS_VERSION
+    # 用机型白名单校正 uts_version（uname.txt 里可能是别的设备的数据）
+    uts_version = pick_uts_version(ver, uts_version)
 
     print()
     print('[1/2] 覆盖 include/generated/ 定义（唯一源头）')
