@@ -1,0 +1,35 @@
+From a3d06921ce7506e56eb9b3444a70dbbe9c69cac4 Mon Sep 17 00:00:00 2001
+From: Neill Kapron <nkapron@google.com>
+Date: Thu, 23 Jul 2026 22:49:34 +0000
+Subject: [PATCH] ANDROID: fuse-bpf: fix verifier bypass in
+ fuse_prog_is_valid_access
+
+Enforce read-only access for out_args[i].value in
+fuse_prog_is_valid_access() to prevent verifier bypass and arbitrary
+kernel writes/frees.
+
+Fixes: be926e6761d2 ("ANDROID: fuse-bpf: fuse-bpf v1.3")
+Bug: 508702133
+Assisted-by: Antigravity:gemini-3.1-pro
+Signed-off-by: Neill Kapron <nkapron@google.com>
+Cherrypick-From: https://android-review.googlesource.com/q/commit:5c7556339e29dd5f140bcd61b505922ecd180b10
+Merged-In: I9a913a95a9695e92adbcffbbaca175815a55d948
+Change-Id: I9a913a95a9695e92adbcffbbaca175815a55d948
+Signed-off-by: Neill Kapron <nkapron@google.com>
+---
+ kernel/bpf/bpf_fuse.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/kernel/bpf/bpf_fuse.c b/kernel/bpf/bpf_fuse.c
+index c6aa670bc54c13..992eb2dd5aa673 100644
+--- a/kernel/bpf/bpf_fuse.c
++++ b/kernel/bpf/bpf_fuse.c
+@@ -53,6 +53,8 @@ static bool fuse_prog_is_valid_access(int off, int size,
+ 		if (off == offsetof(struct fuse_bpf_args, out_args[i].value)) {
+ 			info->reg_type = PTR_TO_BUF;
+ 			info->ctx_field_size = 256;
++			if (type != BPF_READ)
++				return false;
+ 			return true;
+ 		}
+ 	}
