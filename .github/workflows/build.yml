@@ -219,15 +219,24 @@ jobs:
           KSU="${{ inputs.ksu }}"
           [ -z "$KSU" ] && KSU=sukisu
           echo "Root 方案: $KSU"
+          # SukiSU 版本必须钉死：setup.sh 传分支名会 checkout 分支 HEAD，
+          # 导致每次构建的 SukiSU 代码都可能不同（同一 commit 却出现
+          # ksu_ver 41085 / 41095 的差异），构建不可复现。
+          # 传入 commit 后 git checkout <commit> 走 detached HEAD，版本固定。
+          # 1b0a5ee4c4e8 = 发布版 Xiaomi17-build-261026134716 使用的版本
+          SUKISU_REF="${SUKISU_REF:-1b0a5ee4c4e8}"
+          echo "SukiSU 固定版本: $SUKISU_REF"
           if [ "$KSU" = "fina" ]; then
             export FOLKSU_URL="https://github.com/donyanchen/FinaSU.git"
             export FOLKSU_REF="pudding"
             curl -LSs "https://raw.githubusercontent.com/donyanchen/FinaSU/refs/heads/pudding/kernel/setup.sh" | bash -s pudding
           else
             export FOLKSU_URL="https://github.com/donyanchen/SukiSU-Ultra.git"
-            export FOLKSU_REF="pudding"
-            curl -LSs "https://raw.githubusercontent.com/donyanchen/SukiSU-Ultra/refs/heads/pudding/kernel/setup.sh" | bash -s pudding
+            export FOLKSU_REF="$SUKISU_REF"
+            curl -LSs "https://raw.githubusercontent.com/donyanchen/SukiSU-Ultra/refs/heads/pudding/kernel/setup.sh" | bash -s "$SUKISU_REF"
           fi
+          echo "SukiSU 实际版本: $(cd KernelSU 2>/dev/null && git rev-parse HEAD 2>/dev/null || echo unknown)"
+          echo "SukiSU 描述:     $(cd KernelSU 2>/dev/null && git describe --always --dirty 2>/dev/null || echo unknown)"
           UAPI_SRC=$(find . -maxdepth 3 -type d -name uapi | grep -i kernelsu | head -1)
           [ -z "$UAPI_SRC" ] && UAPI_SRC=$(find . -maxdepth 3 -type d -name uapi | head -1)
           echo "uapi 来源: $UAPI_SRC"
