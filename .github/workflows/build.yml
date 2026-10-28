@@ -821,20 +821,61 @@ jobs:
           DEV="${{ inputs.device }}"
           [ -z "$DEV" ] && DEV=pudding
           TAG="${DEV}-build-$(date -u +%y%m%d%H%M%S)"
-          FILES=""
-          [ -f "$GITHUB_WORKSPACE/boot_${DEV}_nokpm.img.gz" ] && FILES="$FILES $GITHUB_WORKSPACE/boot_${DEV}_nokpm.img.gz"
-          [ -f "$GITHUB_WORKSPACE/kernel_seg_${DEV}.bin.gz" ] && FILES="$FILES $GITHUB_WORKSPACE/kernel_seg_${DEV}.bin.gz"
-          [ -f "$GITHUB_WORKSPACE/scripts/flash_ondevice.sh" ] && FILES="$FILES $GITHUB_WORKSPACE/scripts/flash_ondevice.sh"
-          if [ ! -f "$GITHUB_WORKSPACE/boot_${DEV}_nokpm.img.gz" ]; then
+          IMG="$GITHUB_WORKSPACE/boot_${DEV}_nokpm.img"
+          if [ ! -f "$IMG.gz" ]; then
             echo "::error::没有 boot_${DEV}_nokpm.img.gz，拒绝发布"
             exit 1
           fi
-          gh release create "$TAG" $FILES \
-            --title "$TAG" \
-            --notes "内核 $(strings -a ws/common/arch/arm64/boot/Image | grep -oE '6\.12\.[0-9]+-android16-6-[a-z0-9]+-abogki[0-9]+-4k' | head -1)
-          ACK 钉死 @ ${{ steps.rev.outputs.commit }}
-          刷法：fastboot flash boot_b boot_${DEV}_nokpm.img（96MB 整分区，保持 AVB 布局）
-          手机端：解压 kernel_seg_${DEV}.bin.gz 后用 scripts/flash_ondevice.sh 拼接刷入，不要用 magiskboot/AK3 重打包。"
+
+          # ---- 附带产物：裸内核 / 配置 / 符号表 / 刷机说明 ----
+          gzip -9 -n -c ws/common/arch/arm64/boot/Image > "$GITHUB_WORKSPACE/Image-6.12.69.gz"
+          cp -f ws/common/.config "$GITHUB_WORKSPACE/${DEV}.config"
+          cp -f ws/common/vmlinux.symvers "$GITHUB_WORKSPACE/${DEV}.symvers" 2>/dev/null || true
+          VER=$(strings -a ws/common/arch/arm64/boot/Image | grep -oE '6\.12\.[0-9]+-android16-6-[a-z0-9]+-abogki[0-9]+-4k' | head -1)
+
+          cat > "$GITHUB_WORKSPACE/README-刷机.md" <<'MDEOF'
+          # __TAG__
+
+          内核版本串：`__VER__`
+          ACK 基线（钉死）：`__ACK__`
+          SukiSU（钉死）：`1b0a5ee4c4e8`
+
+          ## 小米17 (pudding) 刷法
+
+          这块机的 boot 分区是 `[header + kernel 段][vbmeta@0x2304000][AVB 尾]` 三段固定偏移，
+          **只能用下面两种方式，不要用 AnyKernel3 / magiskboot 重打包**（会把 vbmeta 挪位，刷完卡第一屏且不报错）。
+
+          ### A. 有电脑（fastboot）
+          ```
+          gunzip boot___DEV___nokpm.img.gz
+          fastboot flash boot_b boot___DEV___nokpm.img
+          fastboot reboot
+          ```
+
+          ### B. 手机上（root，无需电脑）
+          ```
+          gunzip kernel_seg___DEV__.bin.gz
+          su -c "sh flash_ondevice.sh /sdcard/Download/kernel_seg___DEV__.bin"
+          ```
+          只做三次 dd，vbmeta / AVB 页脚一个字节不动。
+
+          ### 回退
+          fastboot 刷回上一版 `boot_xxx_nokpm.img`，或用本次之前的 `kernel_seg_*.bin` 重跑 B。
+
+          ## 其它文件
+          - `Image-6.12.69.gz`：裸 arm64 Image（自己打包用）
+          - `__DEV__.config`：最终生效的 .config
+          - `__DEV__.symvers`：vmlinux.symvers
+          MDEOF
+          sed -i "s/__TAG__/$TAG/;s/__VER__/$VER/;s/__ACK__/${{ steps.rev.outputs.commit }}/g;s/__DEV__/$DEV/g" "$GITHUB_WORKSPACE/README-刷机.md"
+
+          FILES="$IMG.gz $GITHUB_WORKSPACE/kernel_seg_${DEV}.bin.gz $GITHUB_WORKSPACE/flash_ondevice.sh"
+          FILES="$FILES $GITHUB_WORKSPACE/Image-6.12.69.gz $GITHUB_WORKSPACE/${DEV}.config $GITHUB_WORKSPACE/README-刷机.md"
+          [ -f "$GITHUB_WORKSPACE/${DEV}.symvers" ] && FILES="$FILES $GITHUB_WORKSPACE/${DEV}.symvers"
+
+          gh release create "$TAG" $FILES --title "$TAG" --notes "内核 $VER
+          fastboot 刷 boot_${DEV}_nokpm.img；手机上用 kernel_seg_${DEV}.bin.gz + flash_ondevice.sh。
+          不要用 AnyKernel3 / magiskboot 重打包（会把 vbmeta 挪位导致卡第一屏）。"
 
       - name: 上传产物
         if: success()
