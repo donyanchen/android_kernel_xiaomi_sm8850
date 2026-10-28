@@ -385,6 +385,11 @@ jobs:
           # ---------- 应用后校验：文件必须真的变了 ----------
           echo
           echo "===== 补丁后校验 ====="
+          if [ "$ok" -eq 0 ]; then
+            echo "  本次没有任何补丁被应用（全部排除或全部跳过），跳过校验"
+            echo "  ✓ 无补丁构建"
+            exit 0
+          fi
           CHANGED_FILES=0
           [ -s "$SNAP" ] && CHANGED_FILES=$(md5sum -c "$SNAP" 2>/dev/null | grep -c FAILED || true)
           echo "  关键文件被修改数: $CHANGED_FILES / $(wc -l < "$SNAP")"
