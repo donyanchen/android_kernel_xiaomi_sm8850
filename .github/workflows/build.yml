@@ -23,6 +23,15 @@ on:
         required: false
         default: ''
         type: string
+      publish:
+        description: '发布方式（draft=先建草稿，人工验证后再公开；public=直接公开；none=只留 artifact 不建 Release）'
+        required: true
+        default: 'draft'
+        type: choice
+        options:
+          - draft
+          - public
+          - none
       boot_template:
         description: '原版 boot 整分区镜像（URL 或私有 Release 资产名；留空用 boot_template_<dev>.img.gz）'
         required: false
@@ -922,7 +931,14 @@ jobs:
           FILES="$FILES $GITHUB_WORKSPACE/Image-6.12.69.gz $GITHUB_WORKSPACE/${DEV}.config $GITHUB_WORKSPACE/README-flash.md"
           [ -f "$GITHUB_WORKSPACE/${DEV}.symvers" ] && FILES="$FILES $GITHUB_WORKSPACE/${DEV}.symvers"
 
-          gh release create "$TAG" $FILES --title "$TAG" --notes "内核 $VER
+          PUBLISH="${{ inputs.publish }}"
+          [ -z "$PUBLISH" ] && PUBLISH=draft
+          case "$PUBLISH" in
+            none) echo "publish=none，不建 Release（产物仍在 artifact 里）"; exit 0;;
+            draft) DRAFTFLAG="--draft";;
+            *) DRAFTFLAG="";;
+          esac
+          gh release create "$TAG" $FILES $DRAFTFLAG --title "$TAG" --notes "内核 $VER
           fastboot 刷 boot_${DEV}_nokpm.img；手机上用 kernel_seg_${DEV}.bin.gz + flash_ondevice.sh。
           不要用 AnyKernel3 / magiskboot 重打包（会把 vbmeta 挪位导致卡第一屏）。"
 
