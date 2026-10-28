@@ -565,6 +565,11 @@ jobs:
             echo "叠加高通子系统配置"
             cat "$EXTRA" >> arch/arm64/configs/${DEV}_defconfig
           fi
+          FEAT="$GITHUB_WORKSPACE/configs/features.config"
+          if [ "${{ inputs.features }}" = "true" ] && [ -f "$FEAT" ]; then
+            echo "叠加 features.config（TLS / AF_UNIX_OOB 等）"
+            cat "$FEAT" >> arch/arm64/configs/${DEV}_defconfig
+          fi
           # 跳过模块符号 CRC 校验（结构体实测与原厂一致）
           python3 "$GITHUB_WORKSPACE/scripts/patch_modversion.py" . || true
           python3 "$GITHUB_WORKSPACE/scripts/patch_vermagic.py" . || true
@@ -661,6 +666,30 @@ jobs:
             echo "  len=${#l}  ${l: -45}"
           done || true
           echo "（仅供参考：原厂内核本来就有两条 banner，长度差 1，不影响启动）"
+
+      - name: 版本串 / 功能开关硬校验
+        if: success()
+        run: |
+          cd ws/common
+          IMG=arch/arm64/boot/Image
+          strings -a "$IMG" | grep '^Linux version 6\.12' > /tmp/banners.txt || true
+          TOTAL=$(wc -l < /tmp/banners.txt)
+          GOOD=$(grep -c '#1 SMP PREEMPT Tue Sep  8 15:08:49 UTC 2026' /tmp/banners.txt || true)
+          echo "Linux version 条数: $TOTAL，其中带 #1 的: $GOOD"
+          sed -n '1,3p' /tmp/banners.txt | cut -c1-120
+          if [ "$TOTAL" -eq 0 ]; then
+            echo "::error::镜像里找不到 Linux version 串"; exit 1
+          fi
+          if [ "$TOTAL" -ne "$GOOD" ]; then
+            echo "::error::还有 banner 不是 #1（fake_version v3 没生效，检测器能扫出来）"; exit 1
+          fi
+          if [ "${{ inputs.features }}" = "true" ]; then
+            for k in TLS AF_UNIX_OOB; do
+              v=$(grep -E "^CONFIG_${k}=" .config || true)
+              echo "  $k -> ${v:-未启用}"
+              [ -n "$v" ] || { echo "::error::features.config 里的 CONFIG_${k} 没生效"; exit 1; }
+            done
+          fi
 
       - name: GKI ABI 校验
         if: success()
