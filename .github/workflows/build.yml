@@ -330,6 +330,14 @@ jobs:
             exit 0
           fi
 
+          # !!! 关键 !!!
+          # ws/common 没有自己的 .git，git 会向上找到 $GITHUB_WORKSPACE/.git，
+          # 于是 git apply 按父仓库根解析 'fs/f2fs/data.c'，路径不存在 -> 补丁被静默丢弃。
+          # 设置 GIT_CEILING_DIRECTORIES 阻止向上查找，并把 git apply 换成 patch -p1。
+          export GIT_CEILING_DIRECTORIES="$GITHUB_WORKSPACE"
+          echo "已设置 GIT_CEILING_DIRECTORIES=$GIT_CEILING_DIRECTORIES"
+          command -v patch >/dev/null || apk add --no-cache patch 2>/dev/null || true
+
           # ---------- 应用前快照：确认补丁真的改到文件 ----------
           echo "===== 补丁前状态 ====="
           echo "  PWD = $PWD"
@@ -365,16 +373,21 @@ jobs:
                 continue
               fi
             fi
-            if git apply --check "$p" 2>/dev/null; then
-              if git apply "$p" 2>/dev/null; then
+            # 用 patch -p1（按当前目录工作，不受 git 仓库根影响）
+            if patch -p1 --dry-run --forward --no-backup-if-mismatch \
+                     -i "$p" -d "$PWD" > /tmp/patch_dry.log 2>&1; then
+              if patch -p1 --forward --no-backup-if-mismatch \
+                       -i "$p" -d "$PWD" >> /tmp/patch.log 2>&1; then
                 echo "  [OK]   $name"
                 ok=$((ok+1))
               else
                 echo "  [FAIL] $name 应用出错"
+                tail -5 /tmp/patch.log
                 skip=$((skip+1))
               fi
             else
               echo "  [SKIP] $name 上下文不匹配"
+              grep -E "FAILED|Hunk|can't find|Reversed" /tmp/patch_dry.log | head -3
               skip=$((skip+1))
             fi
           done
