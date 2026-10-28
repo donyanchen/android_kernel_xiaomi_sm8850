@@ -18,6 +18,11 @@ on:
         required: true
         default: 'android16-6.12-2026-03'
         type: string
+      ack_commit:
+        description: 'ACK 源码提交（必须钉死，留空用默认 #82 基线）'
+        required: false
+        default: ''
+        type: string
       kpm:
         description: '启用内建 KPM'
         required: true
@@ -58,13 +63,16 @@ jobs:
             libelf-dev libdw-dev lz4 zstd python3 zip unzip \
             aria2 ccache rsync cpio libncurses-dev kmod
 
-      - name: 解析上游提交
+      - name: 解析上游提交（钉死，不跟分支 HEAD）
         id: rev
         run: |
-          SHA=$(git ls-remote https://android.googlesource.com/kernel/common "refs/heads/${{ inputs.ack_branch }}" 2>/dev/null | awk '{print $1}')
-          [ -z "$SHA" ] && SHA="unknown"
+          # 写死 commit：ACK 分支是移动分支，ls-remote 取 HEAD 会让每次构建的基线都不同
+          # （#82 = 162041188e，10-27 之后 = bd23acc843，差 6 个提交，无法复现）。
+          # 仓库里并没有 vendor/ack，所以"仓库内分块源码"分支永远不会命中。
+          SHA="${{ inputs.ack_commit }}"
+          [ -z "$SHA" ] && SHA="162041188e96c974a8078481672bfddc1ca10f9a"
           echo "commit=$SHA" >> "$GITHUB_OUTPUT"
-          echo "ACK ${{ inputs.ack_branch }} @ $SHA"
+          echo "ACK 钉死 @ $SHA"
 
       - name: 恢复源码与工具链缓存
         id: srccache
@@ -123,7 +131,8 @@ jobs:
           cd ws
           BRANCH="${{ inputs.ack_branch }}"
           echo "分支: $BRANCH"
-          UPSTREAM="https://android.googlesource.com/kernel/common/+archive/refs/heads/${BRANCH}.tar.gz"
+          SHA="${{ steps.rev.outputs.commit }}"
+          UPSTREAM="https://android.googlesource.com/kernel/common/+archive/${SHA}.tar.gz"
           echo "--- 尝试私有仓库 Release"
           if getdep ack-common.tar.gz ack.tar.gz; then
             echo "✓ 来自私有仓库 Release"
@@ -233,7 +242,9 @@ jobs:
           else
             export FOLKSU_URL="https://github.com/donyanchen/SukiSU-Ultra.git"
             export FOLKSU_REF="$SUKISU_REF"
-            curl -LSs "https://raw.githubusercontent.com/donyanchen/SukiSU-Ultra/refs/heads/pudding/kernel/setup.sh" | bash -s "$SUKISU_REF"
+            # setup.sh 也必须从钉死的 commit 取：走 refs/heads/pudding 的话，
+            # 分支头一变，即使 SUKISU_REF 是 commit 也会拿到新的脚本（版本串已坐实漂移）。
+            curl -LSs "https://raw.githubusercontent.com/donyanchen/SukiSU-Ultra/${SUKISU_REF}/kernel/setup.sh" | bash -s "$SUKISU_REF"
           fi
           echo "SukiSU 实际版本: $(cd KernelSU 2>/dev/null && git rev-parse HEAD 2>/dev/null || echo unknown)"
           echo "SukiSU 描述:     $(cd KernelSU 2>/dev/null && git describe --always --dirty 2>/dev/null || echo unknown)"
@@ -758,6 +769,23 @@ jobs:
           path: ws/common/build.log
           if-no-files-found: ignore
 
+      - name: 打包整分区 boot 镜像（保持 AVB 布局）
+        if: success()
+        continue-on-error: true
+        run: |
+          cd ws/common
+          DEV="${{ inputs.device }}"
+          [ -z "$DEV" ] && DEV=pudding
+          # 私有仓库 configs/boot_template_<dev>.img = 一颗确认能开机的 96MB 整分区镜像
+          TPL="$GITHUB_WORKSPACE/configs/boot_template_${DEV}.img"
+          if [ ! -f "$TPL" ]; then
+            echo "⚠ 缺少整分区模板 $TPL，跳过打包（只上传裸 Image）"
+            exit 0
+          fi
+          OUT="$GITHUB_WORKSPACE/boot_${DEV}_nokpm.img"
+          python3 "$GITHUB_WORKSPACE/scripts/pack_boot.py" "$TPL" arch/arm64/boot/Image "$OUT"
+          echo "产物: $OUT  $(stat -c %s "$OUT") 字节  md5=$(md5sum "$OUT" | cut -d' ' -f1)"
+
       - name: 上传产物
         if: success()
         uses: actions/upload-artifact@v4
@@ -767,3 +795,4 @@ jobs:
             ws/common/arch/arm64/boot/Image
             ws/common/vmlinux.symvers
             ws/common/.config
+            boot_*_nokpm.img
