@@ -774,7 +774,6 @@ jobs:
 
       - name: 打包整分区 boot 镜像（保持 AVB 布局）
         if: success()
-        continue-on-error: true
         env:
           PRIVATE_REPO_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
         run: |
@@ -790,8 +789,10 @@ jobs:
             fi
           fi
           if [ ! -f "$TPL" ]; then
-            echo "⚠ 没有整分区模板 boot_template_${DEV}.img(.gz)，跳过打包（只上传裸 Image）"
-            exit 0
+            echo "::error::没有整分区模板 boot_template_${DEV}.img(.gz)，无法产出可刷镜像"
+            echo "  补救：手机上 su -c 'sh dump_boot_template.sh' 导出当前 boot 分区，"
+            echo "        上传成 pudding-private Release(deps) 的 boot_template_${DEV}.img.gz"
+            exit 1
           fi
           OUT="$GITHUB_WORKSPACE/boot_${DEV}_nokpm.img"
           python3 "$GITHUB_WORKSPACE/scripts/pack_boot.py" "$TPL" arch/arm64/boot/Image "$OUT"
@@ -807,6 +808,9 @@ jobs:
           print(f'kernel 段: {ks} 字节')
           PYEOF
           gzip -9 -n -c "$GITHUB_WORKSPACE/kernel_seg_${DEV}.bin" > "$GITHUB_WORKSPACE/kernel_seg_${DEV}.bin.gz"
+
+          # 硬门槛：布局必须与模板一致（vbmeta/AVB 一个字节不能动），内核必须真的是这次编的
+          python3 "$GITHUB_WORKSPACE/scripts/verify_boot_image.py" "$TPL" "$OUT" arch/arm64/boot/Image "$GITHUB_WORKSPACE/kernel_seg_${DEV}.bin"
           ls -la "$GITHUB_WORKSPACE"/boot_${DEV}_nokpm.img.gz "$GITHUB_WORKSPACE"/kernel_seg_${DEV}.bin.gz
 
       - name: 自动发布（出可直接刷的包）
@@ -821,7 +825,10 @@ jobs:
           [ -f "$GITHUB_WORKSPACE/boot_${DEV}_nokpm.img.gz" ] && FILES="$FILES $GITHUB_WORKSPACE/boot_${DEV}_nokpm.img.gz"
           [ -f "$GITHUB_WORKSPACE/kernel_seg_${DEV}.bin.gz" ] && FILES="$FILES $GITHUB_WORKSPACE/kernel_seg_${DEV}.bin.gz"
           [ -f "$GITHUB_WORKSPACE/scripts/flash_ondevice.sh" ] && FILES="$FILES $GITHUB_WORKSPACE/scripts/flash_ondevice.sh"
-          if [ -z "$FILES" ]; then echo "没有可发布的产物，跳过"; exit 0; fi
+          if [ ! -f "$GITHUB_WORKSPACE/boot_${DEV}_nokpm.img.gz" ]; then
+            echo "::error::没有 boot_${DEV}_nokpm.img.gz，拒绝发布"
+            exit 1
+          fi
           gh release create "$TAG" $FILES \
             --title "$TAG" \
             --notes "内核 $(strings -a ws/common/arch/arm64/boot/Image | grep -oE '6\.12\.[0-9]+-android16-6-[a-z0-9]+-abogki[0-9]+-4k' | head -1)
