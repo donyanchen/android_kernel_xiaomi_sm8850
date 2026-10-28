@@ -918,7 +918,7 @@ jobs:
           MDEOF
           sed -i "s/__TAG__/$TAG/;s/__VER__/$VER/;s/__ACK__/${{ steps.rev.outputs.commit }}/g;s/__DEV__/$DEV/g" "$GITHUB_WORKSPACE/README-刷机.md"
 
-          FILES="$IMG.gz $GITHUB_WORKSPACE/kernel_seg_${DEV}.bin.gz $GITHUB_WORKSPACE/flash_ondevice.sh"
+          FILES="$IMG.gz $GITHUB_WORKSPACE/kernel_seg_${DEV}.bin.gz $GITHUB_WORKSPACE/scripts/flash_ondevice.sh"
           FILES="$FILES $GITHUB_WORKSPACE/Image-6.12.69.gz $GITHUB_WORKSPACE/${DEV}.config $GITHUB_WORKSPACE/README-刷机.md"
           [ -f "$GITHUB_WORKSPACE/${DEV}.symvers" ] && FILES="$FILES $GITHUB_WORKSPACE/${DEV}.symvers"
 
