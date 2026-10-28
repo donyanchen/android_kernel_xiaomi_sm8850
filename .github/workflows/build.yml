@@ -23,6 +23,11 @@ on:
         required: false
         default: ''
         type: string
+      boot_template:
+        description: '原版 boot 整分区镜像（URL 或私有 Release 资产名；留空用 boot_template_<dev>.img.gz）'
+        required: false
+        default: ''
+        type: string
       kpm:
         description: '启用内建 KPM'
         required: true
@@ -809,11 +814,26 @@ jobs:
           cd ws/common
           DEV="${{ inputs.device }}"
           [ -z "$DEV" ] && DEV=pudding
-          # 整分区骨架：优先用私有仓库 configs/boot_template_<dev>.img，
-          # 没有就从私有 Release(deps) 拉 boot_template_<dev>.img.gz
           TPL="$GITHUB_WORKSPACE/configs/boot_template_${DEV}.img"
-          if [ ! -f "$TPL" ]; then
-            if getdep "boot_template_${DEV}.img.gz" /tmp/tpl.img.gz; then
+
+          # ① 本次指定了原版 boot（URL 或 Release 资产名）→ 用它，优先级最高
+          #    固件更新后 boot 分区布局可能变，所以每次构建都可以带一份当次的官方 boot。
+          BOOT_IN="${{ inputs.boot_template }}"
+          if [ -n "$BOOT_IN" ]; then
+            echo "使用本次指定的原版 boot: $BOOT_IN"
+            case "$BOOT_IN" in
+              http://*|https://*) curl -L --retry 3 --retry-delay 5 -o /tmp/tpl.raw "$BOOT_IN" ;;
+              *) getdep "$BOOT_IN" /tmp/tpl.raw ;;
+            esac
+            case "$BOOT_IN" in
+              *.gz|*.gzip) gunzip -c /tmp/tpl.raw > "$TPL" ;;
+              *) cp /tmp/tpl.raw "$TPL" ;;
+            esac
+          fi
+
+          # ② 没指定 → 私有仓库 configs/ 里的文件，或 Release(deps) 里的默认模板
+          if [ ! -s "$TPL" ]; then
+            if [ ! -f "$TPL" ] && getdep "boot_template_${DEV}.img.gz" /tmp/tpl.img.gz; then
               gunzip -c /tmp/tpl.img.gz > "$TPL"
             fi
           fi
