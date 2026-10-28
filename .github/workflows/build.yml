@@ -49,6 +49,9 @@ on:
         default: false
         type: boolean
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -792,7 +795,39 @@ jobs:
           fi
           OUT="$GITHUB_WORKSPACE/boot_${DEV}_nokpm.img"
           python3 "$GITHUB_WORKSPACE/scripts/pack_boot.py" "$TPL" arch/arm64/boot/Image "$OUT"
+          gzip -9 -n -c "$OUT" > "$OUT.gz"
           echo "产物: $OUT  $(stat -c %s "$OUT") 字节  md5=$(md5sum "$OUT" | cut -d' ' -f1)"
+
+          # 顺手切出 kernel 段（手机端整段拼接刷机用，不需要电脑）
+          python3 - "$OUT" "$GITHUB_WORKSPACE/kernel_seg_${DEV}.bin" <<'PYEOF'
+          import sys
+          d = open(sys.argv[1], 'rb').read()
+          ks = int.from_bytes(d[8:12], 'little')
+          open(sys.argv[2], 'wb').write(d[4096:4096 + ks])
+          print(f'kernel 段: {ks} 字节')
+          PYEOF
+          gzip -9 -n -c "$GITHUB_WORKSPACE/kernel_seg_${DEV}.bin" > "$GITHUB_WORKSPACE/kernel_seg_${DEV}.bin.gz"
+          ls -la "$GITHUB_WORKSPACE"/boot_${DEV}_nokpm.img.gz "$GITHUB_WORKSPACE"/kernel_seg_${DEV}.bin.gz
+
+      - name: 自动发布（出可直接刷的包）
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DEV="${{ inputs.device }}"
+          [ -z "$DEV" ] && DEV=pudding
+          TAG="${DEV}-build-$(date -u +%y%m%d%H%M%S)"
+          FILES=""
+          [ -f "$GITHUB_WORKSPACE/boot_${DEV}_nokpm.img.gz" ] && FILES="$FILES $GITHUB_WORKSPACE/boot_${DEV}_nokpm.img.gz"
+          [ -f "$GITHUB_WORKSPACE/kernel_seg_${DEV}.bin.gz" ] && FILES="$FILES $GITHUB_WORKSPACE/kernel_seg_${DEV}.bin.gz"
+          [ -f "$GITHUB_WORKSPACE/scripts/flash_ondevice.sh" ] && FILES="$FILES $GITHUB_WORKSPACE/scripts/flash_ondevice.sh"
+          if [ -z "$FILES" ]; then echo "没有可发布的产物，跳过"; exit 0; fi
+          gh release create "$TAG" $FILES \
+            --title "$TAG" \
+            --notes "内核 $(strings -a ws/common/arch/arm64/boot/Image | grep -oE '6\.12\.[0-9]+-android16-6-[a-z0-9]+-abogki[0-9]+-4k' | head -1)
+          ACK 钉死 @ ${{ steps.rev.outputs.commit }}
+          刷法：fastboot flash boot_b boot_${DEV}_nokpm.img（96MB 整分区，保持 AVB 布局）
+          手机端：解压 kernel_seg_${DEV}.bin.gz 后用 scripts/flash_ondevice.sh 拼接刷入，不要用 magiskboot/AK3 重打包。"
 
       - name: 上传产物
         if: success()
@@ -804,3 +839,6 @@ jobs:
             ws/common/vmlinux.symvers
             ws/common/.config
             boot_*_nokpm.img
+            boot_*_nokpm.img.gz
+            kernel_seg_*.bin.gz
+            scripts/flash_ondevice.sh
