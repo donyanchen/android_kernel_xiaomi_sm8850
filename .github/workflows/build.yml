@@ -882,7 +882,7 @@ jobs:
           cp -f ws/common/vmlinux.symvers "$GITHUB_WORKSPACE/${DEV}.symvers" 2>/dev/null || true
           VER=$(strings -a ws/common/arch/arm64/boot/Image | grep -oE '6\.12\.[0-9]+-android16-6-[a-z0-9]+-abogki[0-9]+-4k' | head -1)
 
-          cat > "$GITHUB_WORKSPACE/README-刷机.md" <<'MDEOF'
+          cat > "$GITHUB_WORKSPACE/README-flash.md" <<'MDEOF'
           # __TAG__
 
           内核版本串：`__VER__`
@@ -916,10 +916,10 @@ jobs:
           - `__DEV__.config`：最终生效的 .config
           - `__DEV__.symvers`：vmlinux.symvers
           MDEOF
-          sed -i "s/__TAG__/$TAG/;s/__VER__/$VER/;s/__ACK__/${{ steps.rev.outputs.commit }}/g;s/__DEV__/$DEV/g" "$GITHUB_WORKSPACE/README-刷机.md"
+          sed -i "s/__TAG__/$TAG/;s/__VER__/$VER/;s/__ACK__/${{ steps.rev.outputs.commit }}/g;s/__DEV__/$DEV/g" "$GITHUB_WORKSPACE/README-flash.md"
 
           FILES="$IMG.gz $GITHUB_WORKSPACE/kernel_seg_${DEV}.bin.gz $GITHUB_WORKSPACE/scripts/flash_ondevice.sh"
-          FILES="$FILES $GITHUB_WORKSPACE/Image-6.12.69.gz $GITHUB_WORKSPACE/${DEV}.config $GITHUB_WORKSPACE/README-刷机.md"
+          FILES="$FILES $GITHUB_WORKSPACE/Image-6.12.69.gz $GITHUB_WORKSPACE/${DEV}.config $GITHUB_WORKSPACE/README-flash.md"
           [ -f "$GITHUB_WORKSPACE/${DEV}.symvers" ] && FILES="$FILES $GITHUB_WORKSPACE/${DEV}.symvers"
 
           gh release create "$TAG" $FILES --title "$TAG" --notes "内核 $VER
