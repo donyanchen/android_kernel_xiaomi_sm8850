@@ -772,14 +772,22 @@ jobs:
       - name: 打包整分区 boot 镜像（保持 AVB 布局）
         if: success()
         continue-on-error: true
+        env:
+          PRIVATE_REPO_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
         run: |
           cd ws/common
           DEV="${{ inputs.device }}"
           [ -z "$DEV" ] && DEV=pudding
-          # 私有仓库 configs/boot_template_<dev>.img = 一颗确认能开机的 96MB 整分区镜像
+          # 整分区骨架：优先用私有仓库 configs/boot_template_<dev>.img，
+          # 没有就从私有 Release(deps) 拉 boot_template_<dev>.img.gz
           TPL="$GITHUB_WORKSPACE/configs/boot_template_${DEV}.img"
           if [ ! -f "$TPL" ]; then
-            echo "⚠ 缺少整分区模板 $TPL，跳过打包（只上传裸 Image）"
+            if getdep "boot_template_${DEV}.img.gz" /tmp/tpl.img.gz; then
+              gunzip -c /tmp/tpl.img.gz > "$TPL"
+            fi
+          fi
+          if [ ! -f "$TPL" ]; then
+            echo "⚠ 没有整分区模板 boot_template_${DEV}.img(.gz)，跳过打包（只上传裸 Image）"
             exit 0
           fi
           OUT="$GITHUB_WORKSPACE/boot_${DEV}_nokpm.img"
