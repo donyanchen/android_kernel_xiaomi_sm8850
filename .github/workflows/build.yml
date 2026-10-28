@@ -329,6 +329,25 @@ jobs:
             echo "无 backport 目录，跳过"
             exit 0
           fi
+
+          # ---------- 应用前快照：确认补丁真的改到文件 ----------
+          echo "===== 补丁前状态 ====="
+          echo "  PWD = $PWD"
+          if git rev-parse --show-toplevel >/dev/null 2>&1; then
+            echo "  git 仓库根 = $(git rev-parse --show-toplevel)"
+            echo "  ⚠ 若仓库根不是 $PWD，补丁会被应用到错误路径！"
+          else
+            echo "  （非 git 仓库，git apply 按当前目录相对路径应用）"
+          fi
+          SNAP=/tmp/backport_before.md5
+          : > "$SNAP"
+          for f in fs/f2fs/data.c fs/f2fs/inode.c fs/f2fs/compress.c \
+                   net/unix/af_unix.c mm/vmscan.c block/blk-core.c \
+                   net/ipv6/addrconf.c kernel/sched/fair.c; do
+            [ -f "$f" ] && md5sum "$f" >> "$SNAP"
+          done
+          echo "  已记录 $(wc -l < "$SNAP") 个关键文件指纹"
+
           ok=0; skip=0
           # 临时排除列表（二分排查用），冒号分隔
           EXCLUDE="${BACKPORT_EXCLUDE:-}"
@@ -360,7 +379,44 @@ jobs:
             fi
           done
           echo "backport 结果: 成功 $ok 个，跳过 $skip 个"
-          echo "注意：单个补丁失败不阻塞编译，最终以 ABI 校验为准"
+
+          # ---------- 应用后校验：文件必须真的变了 ----------
+          echo
+          echo "===== 补丁后校验 ====="
+          CHANGED_FILES=0
+          [ -s "$SNAP" ] && CHANGED_FILES=$(md5sum -c "$SNAP" 2>/dev/null | grep -c FAILED || true)
+          echo "  关键文件被修改数: $CHANGED_FILES / $(wc -l < "$SNAP")"
+
+          # 具体特征检查
+          FAIL=0
+          if [ -f fs/f2fs/data.c ]; then
+            C=$(grep -c "f2fs_submit_all_merged_ipu_writes" fs/f2fs/data.c || true)
+            echo "  f2fs/data.c 新函数 f2fs_submit_all_merged_ipu_writes: $C 处"
+            [ "$C" -ge 1 ] || { echo "  ::error::f2fs GC 死锁补丁未落到源码"; FAIL=1; }
+          fi
+          if [ -f net/unix/af_unix.c ]; then
+            C=$(grep -c "last_len" net/unix/af_unix.c || true)
+            echo "  af_unix.c 残留 last_len 引用: $C 处（补丁后应为 0）"
+            [ "$C" -eq 0 ] || { echo "  ::error::unix-peek-uaf 补丁未落到源码"; FAIL=1; }
+          fi
+          if [ -f mm/vmscan.c ]; then
+            C=$(grep -c "don't abort memcg reclaim to ensure fairness" mm/vmscan.c || true)
+            echo "  vmscan.c 公平性注释残留: $C 处（mglru 补丁后应为 0）"
+            [ "$C" -eq 0 ] || { echo "  ::error::mglru-proactive-reclaim 补丁未落到源码"; FAIL=1; }
+          fi
+
+          if [ "$CHANGED_FILES" -eq 0 ]; then
+            echo "  ::error::补丁声称全部成功，但没有一个关键文件被修改"
+            FAIL=1
+          fi
+          if [ "$FAIL" = "1" ]; then
+            echo "----- git status（诊断用）-----"
+            git status --short 2>/dev/null | head -30 || true
+            echo "----- 查找补丁是否落到别处 -----"
+            find "$GITHUB_WORKSPACE" -maxdepth 2 -name "f2fs" -type d 2>/dev/null | head -5
+            exit 1
+          fi
+          echo "  ✓ 补丁已确认写入源码"
 
       - name: 集成高通开源子系统
         continue-on-error: true
@@ -505,31 +561,20 @@ jobs:
       - name: 编译
         run: |
           cd ws/common
-          # ccache shim 必须排在自定义 clang 之前，否则 LLVM=1 推导出的
-          # 'clang' 会绕过 ccache（这是之前 3000+ 个 .o 全部 miss 的根因）
-          export CCACHE_DIR="$HOME/.ccache"
-          export CCACHE_MAXSIZE=8G
-          export CCACHE_COMPILERCHECK=content
-          export CCACHE_SLOPPINESS="time_macros,include_file_mtime,include_file_ctime,file_stat_matches"
-          export CCACHE_NOHASHDIR=true
-          mkdir -p "$CCACHE_DIR"
-          # /usr/lib/ccache 里的 ccache/gcc/clang 软链是 apt 装 ccache 时自动建的
-          export PATH="/usr/lib/ccache:$PWD/../clang19/bin:$PWD/../build-tools/bin:$PWD/../rust/bin:$PATH"
+          export PATH="$PWD/../clang19/bin:$PWD/../build-tools/bin:$PWD/../rust/bin:$PATH"
           export KCFLAGS="-Wno-error=visibility -Wno-error=logical-op-parentheses -Wno-error=implicit-function-declaration -Wno-error=unused-result -Wno-error=c23-extensions"
           export ARCH=arm64
-          export LLVM=1
-          # 显式指定，双保险（LLVM=1 内部会覆盖 CC，所以放它后面）
           export CC="ccache clang"
-          export HOSTCC="ccache clang"
-          export HOSTCXX="ccache clang++"
+          export CCACHE_DIR="$HOME/.ccache"
+          export CCACHE_COMPILERCHECK=none
+          # 提高命中率：忽略时间戳/路径差异，只按内容哈希
+          export CCACHE_SLOPPINESS="time_macros,include_file_ctime,include_file_mtime,file_stat_matches,pch_defines"
+          export CCACHE_BASEDIR="$PWD"
+          export CCACHE_NOHASHDIR=true
+          export CCACHE_MAXSIZE=6G
           ccache -z >/dev/null 2>&1 || true
-          echo "=== ccache 配置 ==="
-          echo "  CC      = $CC"
-          echo "  which clang -> $(which clang)  ($(which clang | xargs -r readlink -f 2>/dev/null))"
-          echo "  which ccache -> $(which ccache)"
-          echo "  CCACHE_DIR = $CCACHE_DIR"
-          echo "  恢复后缓存大小: $(du -sh $CCACHE_DIR 2>/dev/null | cut -f1)"
-          ccache -s 2>&1 | head -12 || true
+          echo "ccache 状态: $(ccache -s 2>/dev/null | grep -E 'cache size|files in cache' | tr '\n' ' ')" 
+          export LLVM=1
           export RUSTC=rustc
           export BINDGEN=bindgen
           export LIBCLANG_PATH="$PWD/../clang19/lib"
@@ -560,9 +605,7 @@ jobs:
             echo "::error::编译失败"; tail -60 build.log; exit 1; }
           END=$(date +%s)
           echo "编译耗时: $((END-START)) 秒"
-          echo "=== ccache 统计 ==="
-          ccache -s 2>&1 | head -20 || true
-          echo "缓存目录大小: $(du -sh $CCACHE_DIR 2>/dev/null | cut -f1)"
+          ccache -s 2>/dev/null | grep -E 'cache hit|Hits|Misses|storage' || true
           tail -20 build.log
           test -f arch/arm64/boot/Image
           ls -lh arch/arm64/boot/Image
