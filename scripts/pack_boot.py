@@ -48,13 +48,20 @@ def pack(tpl_path, image_path, out_path):
         print(f'模板: 整分区镜像 {len(tpl)} 字节, kernel 段 {ksize} 字节')
 
         payload = gz(img)
-        # 模板 kernel 段里"紧随 gzip 流"的那个 72 字节空 FDT，原样带上
-        _o = zlib.decompressobj(31)
-        _o.decompress(bytes(tpl[PAGE:PAGE + ksize]))
-        tpl_gz_len = ksize - len(_o.unused_data)
-        fdt = bytes(tpl[PAGE + tpl_gz_len:PAGE + tpl_gz_len + 72])
-        tail = fdt if fdt[:4] == FDT_MAGIC else b''
-        print(f'  模板 gzip {tpl_gz_len} 字节, 随后 FDT: {"有" if tail else "无"}')
+        # 模板 kernel 段里"紧随 gzip 流"的那个 72 字节空 FDT，原样带上。
+        # 注意：有的机型模板里 kernel 段是裸 Image（未压缩，如 myron），此时没有 FDT，
+        # 解压会抛异常——直接按"无尾"处理，不能让它把构建搞挂。
+        tail = b''
+        try:
+            _o = zlib.decompressobj(31)
+            _o.decompress(bytes(tpl[PAGE:PAGE + ksize]))
+            tpl_gz_len = ksize - len(_o.unused_data)
+            fdt = bytes(tpl[PAGE + tpl_gz_len:PAGE + tpl_gz_len + 72])
+            if fdt[:4] == FDT_MAGIC:
+                tail = fdt
+            print(f'  模板 gzip {tpl_gz_len} 字节, 随后 FDT: {"有" if tail else "无"}')
+        except zlib.error:
+            print('  模板 kernel 段是裸 Image（未压缩），无 FDT 尾')
         body = payload + tail
         if len(body) > ksize:
             raise SystemExit(f'✗ 载荷 {len(body)} > kernel 段 {ksize}，压缩率变差，拒绝生成')
