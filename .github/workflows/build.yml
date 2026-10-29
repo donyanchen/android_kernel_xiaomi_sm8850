@@ -443,6 +443,7 @@ jobs:
           echo "  已记录 $(wc -l < "$SNAP") 个关键文件指纹"
 
           ok=0; skip=0
+          skipped_names=""
           # 临时排除列表（二分排查用），冒号分隔
           EXCLUDE="${BACKPORT_EXCLUDE:-}"
           for p in "$PAT"/*.patch; do
@@ -455,6 +456,7 @@ jobs:
               done
               if [ "$skip_hit" = "1" ]; then
                 echo "  [EXCLUDED] $name （二分排查排除）"
+                skipped_names="$skipped_names $name"
                 skip=$((skip+1))
                 continue
               fi
@@ -469,15 +471,33 @@ jobs:
               else
                 echo "  [FAIL] $name 应用出错"
                 tail -5 /tmp/patch.log
+                skipped_names="$skipped_names $name"
                 skip=$((skip+1))
               fi
             else
               echo "  [SKIP] $name 上下文不匹配"
               grep -E "FAILED|Hunk|can't find|Reversed" /tmp/patch_dry.log | head -3
+              skipped_names="$skipped_names $name"
               skip=$((skip+1))
             fi
           done
           echo "backport 结果: 成功 $ok 个，跳过 $skip 个"
+
+          # 跳过的补丁必须登记在 KNOWN_SKIP.txt，否则视为回归并中断构建
+          ALLOW="$PAT/KNOWN_SKIP.txt"
+          if [ -n "$skipped_names" ]; then
+            unlisted=""
+            for n in $skipped_names; do
+              if [ ! -f "$ALLOW" ] || ! grep -qF "$n" "$ALLOW"; then
+                unlisted="$unlisted $n"
+              fi
+            done
+            if [ -n "$unlisted" ]; then
+              echo "::error::以下 backport 补丁被跳过但未登记在 KNOWN_SKIP.txt:$unlisted"
+              exit 1
+            fi
+            echo "  （跳过的补丁均已在 KNOWN_SKIP.txt 登记）"
+          fi
 
           # ---------- 应用后校验：文件必须真的变了 ----------
           echo
@@ -643,6 +663,13 @@ jobs:
           if [ "$IN_FEATURES" = "true" ] && [ -f "$FEAT" ]; then
             echo "叠加 features.config（TLS / AF_UNIX_OOB 等）"
             cat "$FEAT" >> arch/arm64/configs/${DEV}_defconfig
+          fi
+          FRAG="$GITHUB_WORKSPACE/configs/${DEV}.fragment"
+          if [ -f "$FRAG" ]; then
+            echo "叠加 ${DEV}.fragment（ZSWAP / IP_SET / NTFS3 / EROFS-LZMA / ZRAM-zstd / LZ4KD）"
+            cat "$FRAG" >> arch/arm64/configs/${DEV}_defconfig
+          else
+            echo "⚠ 缺少 configs/${DEV}.fragment，特性项不会生效"
           fi
           # 跳过模块符号 CRC 校验（结构体实测与原厂一致）
           python3 "$GITHUB_WORKSPACE/scripts/patch_modversion.py" . || true

@@ -1,0 +1,6 @@
+# 已登记的 backport 跳过项。
+# 格式：<补丁文件名>  <跳过原因>
+# 这些补丁目前套不上 android16-6.12-2026-03 基线，构建时会被跳过并在这里登记；
+# 若哪天基线变了、补丁能干净套上，请把对应行删掉（CI 会自动恢复为强制应用）。
+430-posix-cpu-timer-exec-uaf.patch  上游已改用 guard(rcu) 与 cpu_timer_task_rcu()，hunk 上下文对不上
+f2fs-write-end-io-uaf-r21.patch  ACK 6.12.69 的 fs/f2fs/data.c 与 r21 补丁基线不同，第 2 个 hunk 失败

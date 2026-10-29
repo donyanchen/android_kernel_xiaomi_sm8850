@@ -75,3 +75,13 @@ CONFIG_EROFS_FS_ZIP=y
 CONFIG_EROFS_FS_ZIP_LZMA=y
 CONFIG_NTFS3_FS=y
 CONFIG_TMPFS_XATTR=y
+
+# ================================================================ LZ4KD
+# lz4 内核差分压缩：zram 后端 + crypto 实现。
+# 注意：CONFIG_ZRAM=m 时系统实际加载的是 vendor_dlkm 的 zram.ko，
+# 本内核编出来的 zram.ko 不随 AK3 分发时，这些算法不会出现在
+# /sys/block/zram0/comp_algorithm 里（要生效需一并分发 zram.ko）。
+CONFIG_ZRAM_BACKEND_LZ4K=y
+CONFIG_ZRAM_BACKEND_LZ4KD=y
+CONFIG_CRYPTO_LZ4K=y
+CONFIG_CRYPTO_LZ4KD=y
