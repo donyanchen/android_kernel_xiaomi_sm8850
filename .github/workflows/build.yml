@@ -308,8 +308,9 @@ jobs:
           # 导致每次构建的 SukiSU 代码都可能不同（同一 commit 却出现
           # ksu_ver 41085 / 41095 的差异），构建不可复现。
           # 传入 commit 后 git checkout <commit> 走 detached HEAD，版本固定。
-          # 1b0a5ee4c4e8 = 发布版 Xiaomi17-build-261026134716 使用的版本
-          SUKISU_REF="${SUKISU_REF:-1b0a5ee4c4e8}"
+            # 1b0a5ee4c4e8 = 发布版 Xiaomi17-build-261026134716 使用的版本（无 extension ABI，KPM 被判 NOT_SUPPORTED）
+          # a1add40a10 = 2026-10-29 main，含 ad73573dd9「publish capabilities and ABI from the kernel」
+          SUKISU_REF="${SUKISU_REF:-a1add40a10}"
           echo "SukiSU 固定版本: $SUKISU_REF"
           if [ "$KSU" = "fina" ]; then
             export FOLKSU_URL="https://github.com/donyanchen/FinaSU.git"
