@@ -43,9 +43,9 @@ on:
         default: true
         type: boolean
       features:
-        description: '启用额外特性配置'
+        description: '启用额外特性配置（TLS / AF_UNIX_OOB 等）。默认关闭 —— pudding-private 已按 #82 基线把这两项关掉'
         required: true
-        default: true
+        default: false
         type: boolean
       disp_version:
         description: '内核显示版本串（默认对齐原厂，改这里可自定义）'
@@ -70,6 +70,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    # 所有手动输入统一从 env 进来：shell 里只引用 "$IN_*"，
+    # 避免 ${{ inputs.x }} 被直接展开进命令行造成注入。
+    env:
+      IN_KSU: ${{ inputs.ksu }}
+      IN_DEVICE: ${{ inputs.device }}
+      IN_ACK_BRANCH: ${{ inputs.ack_branch }}
+      IN_ACK_COMMIT: ${{ inputs.ack_commit }}
+      IN_BOOT_TEMPLATE: ${{ inputs.boot_template }}
+      IN_KPM: ${{ inputs.kpm }}
+      IN_FEATURES: ${{ inputs.features }}
+      IN_DISP_VERSION: ${{ inputs.disp_version }}
+      IN_BACKPORT_EXCLUDE: ${{ inputs.backport_exclude }}
+      IN_SEW_OPT: ${{ inputs.sew_opt }}
+      IN_PUBLISH: ${{ inputs.publish }}
     steps:
       - uses: actions/checkout@v4
 
@@ -80,13 +94,48 @@ jobs:
             libelf-dev libdw-dev lz4 zstd python3 zip unzip \
             aria2 ccache rsync cpio libncurses-dev kmod
 
+      - name: 校验输入
+        run: |
+          - name: 校验输入
+            run: |
+              set -e
+              echo "device=$IN_DEVICE ksu=$IN_KSU branch=$IN_ACK_BRANCH commit=${IN_ACK_COMMIT:-<默认>} features=$IN_FEATURES kpm=$IN_KPM publish=$IN_PUBLISH"
+              case "$IN_DEVICE" in
+                pudding|myron) ;;
+                *) echo "::error::device 只能是 pudding 或 myron（收到 '$IN_DEVICE'）"; exit 1 ;;
+              esac
+              case "$IN_KSU" in
+                sukisu|fina) ;;
+                *) echo "::error::ksu 只能是 sukisu 或 fina（收到 '$IN_KSU'）"; exit 1 ;;
+              esac
+              case "$IN_ACK_BRANCH" in
+                *[!a-zA-Z0-9._/-]*|"") echo "::error::ack_branch 含非法字符"; exit 1 ;;
+              esac
+              if [ -n "$IN_ACK_COMMIT" ]; then
+                echo "$IN_ACK_COMMIT" | grep -Eq '^[0-9a-f]{40}$' || { echo "::error::ack_commit 必须是 40 位十六进制"; exit 1; }
+              fi
+              if [ -n "$IN_BOOT_TEMPLATE" ]; then
+                case "$IN_BOOT_TEMPLATE" in
+                  http://*|https://*)
+                    host=$(printf '%s' "$IN_BOOT_TEMPLATE" | sed -E 's#^[a-zA-Z]+://([^/]+).*#\1#')
+                    case "$host" in
+                      github.com|*.githubusercontent.com|raw.githubusercontent.com|objects.githubusercontent.com) ;;
+                      *) echo "::error::boot_template 的域名不在白名单: $host"; exit 1 ;;
+                    esac
+                    ;;
+                  *) printf '%s' "$IN_BOOT_TEMPLATE" | grep -Eq '^[A-Za-z0-9._-]+$' || { echo "::error::boot_template 资产名含非法字符"; exit 1; } ;;
+                esac
+              fi
+              if [ -n "$IN_DISP_VERSION" ] && [ "${IN_DISP_VERSION#@}" = "$IN_DISP_VERSION" ]; then
+                printf '%s' "$IN_DISP_VERSION" | grep -Eq '^[0-9a-zA-Z ._+#()@:/=-]+$' || { echo "::error::disp_version 含非法字符"; exit 1; }
+              fi
       - name: 解析上游提交（钉死，不跟分支 HEAD）
         id: rev
         run: |
           # 写死 commit：ACK 分支是移动分支，ls-remote 取 HEAD 会让每次构建的基线都不同
           # （#82 = 162041188e，10-27 之后 = bd23acc843，差 6 个提交，无法复现）。
           # 仓库里并没有 vendor/ack，所以"仓库内分块源码"分支永远不会命中。
-          SHA="${{ inputs.ack_commit }}"
+          SHA="$IN_ACK_COMMIT"
           [ -z "$SHA" ] && SHA="162041188e96c974a8078481672bfddc1ca10f9a"
           echo "commit=$SHA" >> "$GITHUB_OUTPUT"
           echo "ACK 钉死 @ $SHA"
@@ -110,7 +159,7 @@ jobs:
           # 依赖已迁到私有仓库，私有 Release 资产必须走 API 端点。
           # 用 base64 落盘，避免 printf/sed 的转义把脚本内容改坏。
           mkdir -p /usr/local/bin
-          echo 'IyEvdXNyL2Jpbi9lbnYgYmFzaAojIOS7juengeacieS7k+W6kyBwdWRkaW5nLXByaXZhdGUg55qEIFJlbGVhc2Ug5LiL6L295p6E5bu65L6d6LWWCiMg56eB5pyJIFJlbGVhc2Ug6LWE5Lqn5b+F6aG76LWwIEFQSSDnq6/ngrnvvIxicm93c2VyX2Rvd25sb2FkX3VybCDpnIDopoHorqTor4EKc2V0IC1lCgpOQU1FPSIkMSIKT1VUPSIkezI6LSQxfSIKVE9LRU49IiR7UFJJVkFURV9SRVBPX1RPS0VOOj/nvLrlsJEgc2VjcmV0IFBSSVZBVEVfUkVQT19UT0tFTn0iCkFQST0iaHR0cHM6Ly9hcGkuZ2l0aHViLmNvbS9yZXBvcy9kb255YW5jaGVuL3B1ZGRpbmctcHJpdmF0ZS9yZWxlYXNlcyIKCklEPSQoY3VybCAtc2YgLUggIkF1dGhvcml6YXRpb246IHRva2VuICRUT0tFTiIgIiRBUEkvdGFncy9kZXBzIiBcCiAgICAgfCBweXRob24zIC1jICJpbXBvcnQgc3lzLGpzb247ZD1qc29uLmxvYWQoc3lzLnN0ZGluKTtwcmludChuZXh0KGFbJ2lkJ10gZm9yIGEgaW4gZFsnYXNzZXRzJ10gaWYgYVsnbmFtZSddPT0nJE5BTUUnKSkiKQoKY3VybCAtZkwgLS1yZXRyeSAzIC0tcmV0cnktZGVsYXkgNSBcCiAgLUggIkF1dGhvcml6YXRpb246IHRva2VuICRUT0tFTiIgXAogIC1IICJBY2NlcHQ6IGFwcGxpY2F0aW9uL29jdGV0LXN0cmVhbSIgXAogIC1vICIkT1VUIiBcCiAgIiRBUEkvYXNzZXRzLyRJRCIKCmVjaG8gIiAg5LiL6L295a6M5oiQOiAkTkFNRSAtPiAkT1VUICgkKHN0YXQgLWMgJXMgIiRPVVQiKSDlrZfoioIpIgo=' | base64 -d > /usr/local/bin/getdep
+          echo 'IyEvdXNyL2Jpbi9lbnYgYmFzaAojIOS7juengeacieS7k+W6kyBSZWxlYXNlIOS4i+i9veaehOW7uuS+nei1lu+8jOW5tuaMiSBkZXBzLmpzb24g6YeM6K6w5b2V55qEIHNoYTI1Ni/lpKflsI/moKHpqozjgIIKIyDnp4HmnIkgUmVsZWFzZSDotYTkuqflv4XpobvotbAgQVBJIOerr+eCue+8jGJyb3dzZXJfZG93bmxvYWRfdXJsIOmcgOimgeiupOivgeOAggpzZXQgLWUKCk5BTUU9IiQxIgpPVVQ9IiR7MjotJDF9IgpUT0tFTj0iJHtQUklWQVRFX1JFUE9fVE9LRU46P+e8uuWwkSBzZWNyZXQgUFJJVkFURV9SRVBPX1RPS0VOfSIKQVBJPSJodHRwczovL2FwaS5naXRodWIuY29tL3JlcG9zL2RvbnlhbmNoZW4vcHVkZGluZy1wcml2YXRlL3JlbGVhc2VzIgpNRVRBPSIke0RFUFNfTUVUQTotL3RtcC9kZXBzX21ldGEuanNvbn0iCgpjdXJsIC1zZiAtSCAiQXV0aG9yaXphdGlvbjogdG9rZW4gJFRPS0VOIiAiJEFQSS90YWdzL2RlcHMiIC1vICIkTUVUQSIKCklEPSQoTUVUQT0iJE1FVEEiIERFUE5BTUU9IiROQU1FIiBweXRob24zIC1jICJpbXBvcnQganNvbixvcztkPWpzb24ubG9hZChvcGVuKG9zLmVudmlyb25bJ01FVEEnXSkpO3ByaW50KG5leHQoKGFbJ2lkJ10gZm9yIGEgaW4gZFsnYXNzZXRzJ10gaWYgYVsnbmFtZSddPT1vcy5lbnZpcm9uWydERVBOQU1FJ10pLCcnKSkiKQppZiBbIC16ICIkSUQiIF07IHRoZW4KICBlY2hvICIgIHgg56eB5pyJIFJlbGVhc2Ug6YeM5rKh5pyJ6L+Z5Liq6LWE5LqnOiAkTkFNRSIKICBleGl0IDEKZmkKCmN1cmwgLWZMIC0tcmV0cnkgMyAtLXJldHJ5LWRlbGF5IDUgXAogIC1IICJBdXRob3JpemF0aW9uOiB0b2tlbiAkVE9LRU4iIFwKICAtSCAiQWNjZXB0OiBhcHBsaWNhdGlvbi9vY3RldC1zdHJlYW0iIFwKICAtbyAiJE9VVCIgXAogICIkQVBJL2Fzc2V0cy8kSUQiCgplY2hvICIgIOS4i+i9veWujOaIkDogJE5BTUUgLT4gJE9VVCAoJChzdGF0IC1jICVzICIkT1VUIikg5a2X6IqCKSIKCiMg5qCh6aqM77yaZGVwcy5qc29uIOmHjOacieiusOW9leWwseW/hemhu+WvueS4iu+8iHNoYTI1NiArIOWtl+iKguaVsO+8iQpNRVRBPSIkTUVUQSIgREVQTkFNRT0iJE5BTUUiIE9VVD0iJE9VVCIgcHl0aG9uMyAtIDw8J1BZJwppbXBvcnQgaGFzaGxpYiwganNvbiwgb3MKbmFtZSA9IG9zLmVudmlyb25bJ0RFUE5BTUUnXQpwYXRoID0gb3MuZW52aXJvblsnT1VUJ10KbWV0YSA9IGpzb24ubG9hZChvcGVuKG9zLmVudmlyb25bJ01FVEEnXSkpCndhbnQgPSAobWV0YS5nZXQoJ2ZpbGVzJykgb3Ige30pLmdldChuYW1lKQppZiBub3Qgd2FudDoKICAgIHByaW50KCcgICEgZGVwcy5qc29uIOmHjOayoeaciSAlcyDnmoTorrDlvZXvvIzot7Pov4fmoKHpqozvvIjlu7rorq7ooaXkuIogc2hhMjU277yJJyAlIG5hbWUpCiAgICByYWlzZSBTeXN0ZW1FeGl0KDApCmggPSBoYXNobGliLnNoYTI1NigpCndpdGggb3BlbihwYXRoLCAncmInKSBhcyBmOgogICAgZm9yIGIgaW4gaXRlcihsYW1iZGE6IGYucmVhZCgxIDw8IDIwKSwgYicnKToKICAgICAgICBoLnVwZGF0ZShiKQpnb3QgPSBoLmhleGRpZ2VzdCgpCnNpemUgPSBvcy5wYXRoLmdldHNpemUocGF0aCkKaWYgd2FudC5nZXQoJ2J5dGVzJykgaXMgbm90IE5vbmUgYW5kIHNpemUgIT0gd2FudFsnYnl0ZXMnXToKICAgIHByaW50KCc6OmVycm9yOjolcyDlpKflsI/kuI3nrKbvvIglZCAhPSAlc++8iScgJSAobmFtZSwgc2l6ZSwgd2FudFsnYnl0ZXMnXSkpCiAgICByYWlzZSBTeXN0ZW1FeGl0KDEpCmlmIGdvdCAhPSB3YW50LmdldCgnc2hhMjU2Jyk6CiAgICBwcmludCgnOjplcnJvcjo6JXMgc2hhMjU2IOS4jeespu+8iCVzICE9ICVz77yJJyAlIChuYW1lLCBnb3QsIHdhbnQuZ2V0KCdzaGEyNTYnKSkpCiAgICByYWlzZSBTeXN0ZW1FeGl0KDEpCnByaW50KCcgIE9LIHNoYTI1NiDmoKHpqozpgJrov4c6ICVzJyAlIG5hbWUpClBZCg==' | base64 -d > /usr/local/bin/getdep
           chmod +x /usr/local/bin/getdep
           bash -n /usr/local/bin/getdep && echo "getdep 语法检查通过"
 
@@ -146,14 +195,24 @@ jobs:
             exit 0
           fi
           cd ws
-          BRANCH="${{ inputs.ack_branch }}"
+          BRANCH="$IN_ACK_BRANCH"
           echo "分支: $BRANCH"
           SHA="${{ steps.rev.outputs.commit }}"
           UPSTREAM="https://android.googlesource.com/kernel/common/+archive/${SHA}.tar.gz"
           echo "--- 尝试私有仓库 Release"
           if getdep ack-common.tar.gz ack.tar.gz; then
-            echo "✓ 来自私有仓库 Release"
-          else
+            echo "✓ 来自私有仓库 Release（sha256 已校验）"          if [ -f /tmp/deps_meta.json ]; then
+            python3 - "$SHA" <<'PYEOF'
+          import json, sys
+          sha = sys.argv[1]
+          meta = json.load(open('/tmp/deps_meta.json'))
+          rec = meta.get('ack_commit')
+          if rec and rec != sha:
+              print('::error::deps.json 记录的 ack_commit=%s 与本次解析出的 %s 不一致' % (rec, sha))
+              raise SystemExit(1)
+          print('  deps.json 记录的 ACK 基线: %s' % (rec or '(未记录，建议补上)'))
+          PYEOF
+          fi          else
             echo "--- 回退到上游"
             curl -L --retry 3 --retry-delay 5 -o ack.tar.gz "$UPSTREAM"
           fi
@@ -225,7 +284,7 @@ jobs:
           git config --global credential.helper store
           printf 'https://x-access-token:%s@github.com\n' "${{ secrets.PRIVATE_REPO_TOKEN }}" > "$HOME/.git-credentials"
           rm -rf /tmp/priv
-          DEV="${{ inputs.device }}"
+          DEV="$IN_DEVICE"
           echo "目标设备: $DEV"
           git clone --depth 1 "https://github.com/donyanchen/${DEV}-private.git" /tmp/priv
           # myron 仓库的 defconfig 叫 configs/<dev>_full.defconfig，命名已统一
@@ -242,7 +301,7 @@ jobs:
       - name: 集成 SukiSU
         run: |
           cd ws/common
-          KSU="${{ inputs.ksu }}"
+          KSU="$IN_KSU"
           [ -z "$KSU" ] && KSU=sukisu
           echo "Root 方案: $KSU"
           # SukiSU 版本必须钉死：setup.sh 传分支名会 checkout 分支 HEAD，
@@ -283,7 +342,7 @@ jobs:
         run: |
           cd ws/common
           # 版本串：优先用工作流输入；否则从私有仓库的 uname.txt 读原厂真值
-          DISP="${{ inputs.disp_version }}"
+          DISP="$IN_DISP_VERSION"
           if [ -z "$DISP" ] && [ -f "/tmp/priv/uname.txt" ]; then
             DISP="@/tmp/priv/uname.txt"
           fi
@@ -332,7 +391,7 @@ jobs:
           SEW_DIR=$(ls -d /tmp/sew/*/ | head -1)
           echo "移植包: $SEW_DIR"
           export KERNEL_ROOT="$GITHUB_WORKSPACE/ws"
-          DEV="${{ inputs.device }}"
+          DEV="$IN_DEVICE"
           [ -z "$DEV" ] && DEV=pudding
           export DEFCONFIG="$GITHUB_WORKSPACE/ws/common/arch/arm64/configs/${DEV}_defconfig"
           echo "DEFCONFIG 存在: $([ -f "$DEFCONFIG" ] && echo yes || echo no)"
@@ -558,7 +617,7 @@ jobs:
           export PATH="$PWD/../rust/bin:$PATH"
           export LIBCLANG_PATH="$PWD/../clang19/lib"
           export BINDGEN=bindgen RUSTC=rustc
-          DEV="${{ inputs.device }}"
+          DEV="$IN_DEVICE"
           [ -z "$DEV" ] && DEV=pudding
           CFG="$GITHUB_WORKSPACE/configs/${DEV}_full.defconfig"
           echo "目标设备: $DEV"
@@ -580,7 +639,7 @@ jobs:
             cat "$EXTRA" >> arch/arm64/configs/${DEV}_defconfig
           fi
           FEAT="$GITHUB_WORKSPACE/configs/features.config"
-          if [ "${{ inputs.features }}" = "true" ] && [ -f "$FEAT" ]; then
+          if [ "$IN_FEATURES" = "true" ] && [ -f "$FEAT" ]; then
             echo "叠加 features.config（TLS / AF_UNIX_OOB 等）"
             cat "$FEAT" >> arch/arm64/configs/${DEV}_defconfig
           fi
@@ -635,7 +694,7 @@ jobs:
           export KBUILD_BUILD_USER=kleaf
           export KBUILD_BUILD_HOST=build-host
           export KBUILD_BUILD_TIMESTAMP="Tue Sep  8 15:08:49 UTC 2026"
-          DEV="${{ inputs.device }}"
+          DEV="$IN_DEVICE"
           [ -z "$DEV" ] && DEV=pudding
           echo "编译目标设备: $DEV"
           ls -l arch/arm64/configs/${DEV}_defconfig || { echo "::error::缺少 ${DEV}_defconfig"; exit 1; }
@@ -697,7 +756,7 @@ jobs:
           if [ "$TOTAL" -ne "$GOOD" ]; then
             echo "::error::还有 banner 不是 #1（fake_version v3 没生效，检测器能扫出来）"; exit 1
           fi
-          if [ "${{ inputs.features }}" = "true" ]; then
+          if [ "$IN_FEATURES" = "true" ]; then
             for k in TLS AF_UNIX_OOB; do
               v=$(grep -E "^CONFIG_${k}=" .config || true)
               echo "  $k -> ${v:-未启用}"
@@ -777,7 +836,7 @@ jobs:
         if: always()
         run: |
           cd ws/common
-          DEV="${{ inputs.device }}"
+          DEV="$IN_DEVICE"
           [ -z "$DEV" ] && DEV=pudding
           if [ -f .config ] && [ -f "$GITHUB_WORKSPACE/configs/${DEV}_full.defconfig" ]; then
             echo "===== .config vs 设备配置 ====="
@@ -821,13 +880,13 @@ jobs:
           PRIVATE_REPO_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
         run: |
           cd ws/common
-          DEV="${{ inputs.device }}"
+          DEV="$IN_DEVICE"
           [ -z "$DEV" ] && DEV=pudding
           TPL="$GITHUB_WORKSPACE/configs/boot_template_${DEV}.img"
 
           # ① 本次指定了原版 boot（URL 或 Release 资产名）→ 用它，优先级最高
           #    固件更新后 boot 分区布局可能变，所以每次构建都可以带一份当次的官方 boot。
-          BOOT_IN="${{ inputs.boot_template }}"
+          BOOT_IN="$IN_BOOT_TEMPLATE"
           if [ -n "$BOOT_IN" ]; then
             echo "使用本次指定的原版 boot: $BOOT_IN"
             case "$BOOT_IN" in
@@ -853,6 +912,10 @@ jobs:
             exit 1
           fi
           OUT="$GITHUB_WORKSPACE/boot_${DEV}_nokpm.img"
+          # 模板布局闸门：和 configs/known_layouts.json 对不上就不许打包
+          # （OTA 之后分区布局会变，拿旧模板硬拼 = 刷出卡第一屏的砖）
+          python3 "$GITHUB_WORKSPACE/scripts/check_boot_layout.py" "$TPL" "$DEV" \
+            "$GITHUB_WORKSPACE/configs/known_layouts.json"
           python3 "$GITHUB_WORKSPACE/scripts/pack_boot.py" "$TPL" arch/arm64/boot/Image "$OUT"
           gzip -9 -n -c "$OUT" > "$OUT.gz"
           echo "产物: $OUT  $(stat -c %s "$OUT") 字节  md5=$(md5sum "$OUT" | cut -d' ' -f1)"
@@ -876,7 +939,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          DEV="${{ inputs.device }}"
+          DEV="$IN_DEVICE"
           [ -z "$DEV" ] && DEV=pudding
           TAG="${DEV}-build-$(date -u +%y%m%d%H%M%S)"
           IMG="$GITHUB_WORKSPACE/boot_${DEV}_nokpm.img"
@@ -931,7 +994,7 @@ jobs:
           FILES="$FILES $GITHUB_WORKSPACE/Image-6.12.69.gz $GITHUB_WORKSPACE/${DEV}.config $GITHUB_WORKSPACE/README-flash.md"
           [ -f "$GITHUB_WORKSPACE/${DEV}.symvers" ] && FILES="$FILES $GITHUB_WORKSPACE/${DEV}.symvers"
 
-          PUBLISH="${{ inputs.publish }}"
+          PUBLISH="$IN_PUBLISH"
           [ -z "$PUBLISH" ] && PUBLISH=draft
           case "$PUBLISH" in
             none) echo "publish=none，不建 Release（产物仍在 artifact 里）"; exit 0;;

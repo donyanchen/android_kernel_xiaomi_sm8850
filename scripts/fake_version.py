@@ -146,19 +146,31 @@ def patch_generated(root, ver, uts_version):
 
 
 def patch_sources(root, ver, uts_version):
-    """源码兜底：把 linux_banner / init_uts_ns 里的宏引用全部换成字面量"""
+    """源码兜底：把 linux_banner / init_uts_ns 里的宏引用全部换成字面量。
+
+    要能重复执行：除了宏本身，也必须匹配上一次跑留下的字面量。
+    只匹配宏的话，改了版本再跑一次就会把旧字面量留在源码里 —— banner 还是旧版本串。
+    """
     changed = 0
+
+    def sub_release(m):
+        return f'{m.group(1)}"{ver}"'
+
+    def sub_utsver(m):
+        return f'{m.group(1)}"{uts_version}"'
 
     vf = os.path.join(root, 'init', 'version-timestamp.c')
     if os.path.exists(vf):
         src = open(vf, encoding='utf-8', errors='replace').read()
-        orig = src
-        # UTS_RELEASE 一律换字面量
-        src = re.sub(r'"Linux version "\s*UTS_RELEASE',
-                     f'"Linux version " "{ver}"', src)
-        src = re.sub(r'(?<![\w"])UTS_RELEASE(?![\w"])', f'"{ver}"', src)
-        # UTS_VERSION 一律换字面量（不加否定前瞻，务必替换干净）
-        src = re.sub(r'(?<![\w"])UTS_VERSION(?![\w"])', f'"{uts_version}"', src)
+        # banner: "Linux version " UTS_RELEASE  /  "Linux version " "旧字面量"
+        src = re.sub(r'("Linux version "\s*)(?:UTS_RELEASE|"[^"]*")', sub_release, src)
+        # init_uts_ns.name.release = UTS_RELEASE  /  = "旧字面量"
+        src = re.sub(r'(\.release\s*=\s*)(?:UTS_RELEASE|"[^"]*")', sub_release, src)
+        # init_uts_ns.name.version = UTS_VERSION  /  = "旧字面量"
+        src = re.sub(r'(\.version\s*=\s*)(?:UTS_VERSION|"[^"]*")', sub_utsver, src)
+        # banner 结尾处的 UTS_VERSION（宏或上次留下的 "#1 SMP ..." 字面量）
+        src = re.sub(r'(?<![\w"])(?:UTS_VERSION|"#1 SMP[^"]*")(?![\w"])',
+                     f'"{uts_version}"', src)
         # LINUX_COMPILER 换字面量
         src = re.sub(r'(?<![\w"])LINUX_COMPILER(?![\w"])',
                      f'"{OFFICIAL_COMPILER}"', src)
@@ -170,8 +182,10 @@ def patch_sources(root, ver, uts_version):
     vc = os.path.join(root, 'init', 'version.c')
     if os.path.exists(vc):
         src = open(vc, encoding='utf-8', errors='replace').read()
-        src = re.sub(r'(?<![\w"])UTS_RELEASE(?![\w"])', f'"{ver}"', src)
-        src = re.sub(r'(?<![\w"])UTS_VERSION(?![\w"])', f'"{uts_version}"', src)
+        src = re.sub(r'(\.release\s*=\s*)(?:UTS_RELEASE|"[^"]*")', sub_release, src)
+        src = re.sub(r'(\.version\s*=\s*)(?:UTS_VERSION|"[^"]*")', sub_utsver, src)
+        src = re.sub(r'(?<![\w"])(?:UTS_VERSION|"#1 SMP[^"]*")(?![\w"])',
+                     f'"{uts_version}"', src)
         src = re.sub(r'(?<![\w"])LINUX_COMPILER(?![\w"])',
                      f'"{OFFICIAL_COMPILER}"', src)
         if write_if_changed(vc, src, 'init/version.c'):

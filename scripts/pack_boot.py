@@ -1,32 +1,30 @@
 #!/usr/bin/env python3
 """
-pack_boot.py —— 打包 Android boot 镜像（保持模板分区布局）
+pack_boot.py —— 打包 Android boot 镜像（严格保持模板分区布局）
 
-【为什么重写】
-小米17 (pudding) 的 boot 分区不是纯 boot.img，实测结构是：
+模板的 kernel 段有两种编码，本脚本按模板原样保留，只替换内核本体：
 
-    [4KB header + kernel 段][vbmeta @ 0x2304000][零填充][AVB 页脚 @ 末尾 64B]
-     kernel 段 = gzip(Image) + 72B 空 FDT + 零填充，总长固定的 36,711,382
+  ① gzip(Image) [+ 72B 空 FDT] + 零填充     —— 绝大多数机型（含 K90 当前固件）
+  ② 裸 arm64 Image [+ DTB] + 零填充        —— 旧布局（如 K90 的非活动槽）
 
-旧版脚本拼的是 `header + 裸 Image`，会把 vbmeta 段整段覆盖、AVB 页脚也一起丢掉，
-刷进去必定卡第一屏（b81.img 就是这么废的）。AnyKernel3/magiskboot 重打包同理：
-它把 kernel 段缩到 gzip 实际长度、把 vbmeta 挪到 0xfa4000，同样开不了机。
+其余字节（4KB header / vbmeta / AVB 页脚 / FDT 或 DTB 尾）一个字节都不动。
+模板是什么编码，输出就是什么编码：不会把裸 Image 换成 gzip，也不会反过来。
 
-所以：**模板是什么布局，输出就是什么布局，只换 kernel 段里的 gzip 载荷。**
-
-用法：
+用法:
     python3 pack_boot.py <模板.img> <Image> <输出.img>
-
-模板可以是：
-  ① 96MB 整分区镜像（推荐，必须是一颗确认能开机的，如 boot_pudding_nokpm.img）
-     -> 保持布局：gzip + 空 FDT + 零填充到模板 kernel_size，vbmeta/AVB 页脚原位不动
-  ② 4KB header 文件（老用法，仅适用于没有内嵌 vbmeta 的机型）
-     -> header + 裸 Image + 页对齐
 """
-import sys, gzip, io, zlib, struct, hashlib
+import gzip
+import hashlib
+import io
+import os
+import struct
+import sys
+import zlib
 
 PAGE = 4096
 FDT_MAGIC = b'\xd0\x0d\xfe\xed'
+ARM64_MAGIC = b'ARM\x64'
+GZIP_MAGIC = b'\x1f\x8b'
 
 
 def gz(data):
@@ -36,61 +34,122 @@ def gz(data):
     return buf.getvalue()
 
 
+def fdt_len(blob):
+    """FDT 总长度（大端 totalsize）。"""
+    if len(blob) < 8 or blob[:4] != FDT_MAGIC:
+        return 0
+    total = struct.unpack_from('>I', blob, 4)[0]
+    return total if 8 <= total <= len(blob) else 0
+
+
+def analyze_template(tpl):
+    """解析模板 kernel 段布局。
+
+    返回 dict：
+        ksize     模板 kernel 段长度（header 里的 kernel_size）
+        encoding  'gzip' / 'raw'
+        suffix    内核本体之后必须原样保留的字节（72B 空 FDT 或 DTB）
+        image_len 模板里内核本体占多少字节（仅用于打印）
+    """
+    ksize = struct.unpack('<I', bytes(tpl[8:12]))[0]
+    seg = bytes(tpl[PAGE:PAGE + ksize])
+
+    if seg[:2] == GZIP_MAGIC:
+        o = zlib.decompressobj(31)
+        try:
+            o.decompress(seg)
+        except zlib.error as e:
+            raise SystemExit(f'✗ 模板 kernel 段的 gzip 流损坏: {e}')
+        if not o.eof:
+            raise SystemExit('✗ 模板 kernel 段的 gzip 流不完整（缺 CRC/长度尾）')
+        gz_len = len(seg) - len(o.unused_data)
+        tail = seg[gz_len:]
+        suffix = b''
+        if tail[:4] == FDT_MAGIC:
+            n = fdt_len(tail)
+            suffix = tail[:n] if n else tail[:72]
+        return {'ksize': ksize, 'encoding': 'gzip', 'suffix': suffix, 'image_len': gz_len}
+
+    if seg[56:60] == ARM64_MAGIC:
+        size = struct.unpack_from('<Q', seg, 16)[0]
+        if not (0 < size <= len(seg)):
+            d = seg.find(FDT_MAGIC)
+            size = d if d > 0 else len(seg)
+        suffix = b''
+        d = seg.find(FDT_MAGIC, size)
+        if d == size:
+            n = fdt_len(seg[d:])
+            suffix = seg[d:d + n] if n else b''
+        return {'ksize': ksize, 'encoding': 'raw', 'suffix': suffix, 'image_len': size}
+
+    raise SystemExit('✗ 模板 kernel 段既不是 gzip 也不是裸 arm64 Image —— 模板选错了（多半是取了非活动槽）')
+
+
 def pack(tpl_path, image_path, out_path):
     tpl = bytearray(open(tpl_path, 'rb').read())
     img = open(image_path, 'rb').read()
     assert bytes(tpl[:8]) == b'ANDROID!', '模板 magic 不对'
 
-    full_partition = len(tpl) > PAGE
-
-    if full_partition:
-        ksize = struct.unpack('<I', tpl[8:12])[0]
-        print(f'模板: 整分区镜像 {len(tpl)} 字节, kernel 段 {ksize} 字节')
-
-        payload = gz(img)
-        # 模板 kernel 段里"紧随 gzip 流"的那个 72 字节空 FDT，原样带上。
-        # 注意：有的机型模板里 kernel 段是裸 Image（未压缩，如 myron），此时没有 FDT，
-        # 解压会抛异常——直接按"无尾"处理，不能让它把构建搞挂。
-        tail = b''
-        try:
-            _o = zlib.decompressobj(31)
-            _o.decompress(bytes(tpl[PAGE:PAGE + ksize]))
-            tpl_gz_len = ksize - len(_o.unused_data)
-            fdt = bytes(tpl[PAGE + tpl_gz_len:PAGE + tpl_gz_len + 72])
-            if fdt[:4] == FDT_MAGIC:
-                tail = fdt
-            print(f'  模板 gzip {tpl_gz_len} 字节, 随后 FDT: {"有" if tail else "无"}')
-        except zlib.error:
-            print('  模板 kernel 段是裸 Image（未压缩），无 FDT 尾')
-        body = payload + tail
-        if len(body) > ksize:
-            raise SystemExit(f'✗ 载荷 {len(body)} > kernel 段 {ksize}，压缩率变差，拒绝生成')
-        body += b'\x00' * (ksize - len(body))
-        print(f'  gzip 载荷 {len(payload)} 字节（压缩率 {len(payload)*100//len(img)}%）')
-
-        tpl[PAGE:PAGE + ksize] = body
-
-        # 完整性检查：vbmeta / AVB 页脚必须还在原位
-        avb0 = bytes(tpl).find(b'AVB0')
-        avbf = bytes(tpl).find(b'AVBf')
-        print(f'  vbmeta AVB0 @ {hex(avb0)}, AVB 页脚 @ {hex(avbf)}')
-        assert avb0 > 0 and avbf > 0, '模板本身缺 vbmeta/AVB 页脚，换一颗能开机的模板'
-    else:
+    if len(tpl) <= PAGE:
+        # 老用法：4KB header 模板（无内嵌 vbmeta 的机型）
         hdr = bytearray(tpl) + bytes(PAGE - len(tpl))
         print('模板: 4KB header（无内嵌 vbmeta 的机型）')
         struct.pack_into('<I', hdr, 8, len(img))
         struct.pack_into('<I', hdr, 12, 0)
         tpl = bytearray(hdr) + bytearray(img)
         tpl += b'\x00' * ((-len(tpl)) % PAGE)
+        open(out_path, 'wb').write(tpl)
+        print(f'输出: {out_path}  {len(tpl)} 字节  md5={hashlib.md5(bytes(tpl)).hexdigest()}')
+        return 0
 
-    open(out_path, 'wb').write(tpl)
+    info = analyze_template(tpl)
+    ksize = info['ksize']
+    suffix = info['suffix']
+    print(f'模板: 整分区镜像 {len(tpl)} 字节, kernel 段 {ksize} 字节')
+    print(f'  模板 kernel 段编码: {info["encoding"]}（内核本体 {info["image_len"]} 字节'
+          + (f', 尾部 {len(suffix)} 字节 FDT/DTB）' if suffix else ', 无尾部）'))
 
-    # 回读校验
-    chk = open(out_path, 'rb').read()
-    if full_partition:
-        back = gzip.decompress(chk[PAGE:PAGE + len(gz(img))])
+    if info['encoding'] == 'gzip':
+        payload = gz(img)
+        print(f'  gzip 载荷 {len(payload)} 字节（压缩率 {len(payload)*100//max(len(img),1)}%）')
     else:
-        back = chk[PAGE:PAGE + len(img)]
+        payload = img
+        print(f'  裸 Image 载荷 {len(payload)} 字节（保持模板的裸 Image 编码，不压缩）')
+
+    body = payload + suffix
+    if len(body) > ksize:
+        raise SystemExit(
+            f'✗ 载荷 {len(body)} > kernel 段 {ksize}，装不下，拒绝生成\n'
+            f'  （{"gzip 后压不进这个段；该段只有 %d 字节" % ksize}）')
+    body += b'\x00' * (ksize - len(body))
+
+    tpl[PAGE:PAGE + ksize] = body
+
+    avb0 = bytes(tpl).find(b'AVB0')
+    avbf = bytes(tpl).find(b'AVBf')
+    print(f'  vbmeta AVB0 @ {hex(avb0)}, AVB 页脚 @ {hex(avbf)}')
+    assert avb0 > 0 and avbf > 0, '模板本身缺 vbmeta/AVB 页脚，换一颗能开机的模板'
+
+    open(out_path, 'wb').write(bytes(tpl))
+
+    # 回读校验：kernel 段必须能还原出输入的 Image
+    chk = open(out_path, 'rb').read()
+    seg = chk[PAGE:PAGE + ksize]
+    if info['encoding'] == 'gzip':
+        o = zlib.decompressobj(31)
+        back = o.decompress(seg)
+        if not o.eof:
+            raise SystemExit('✗ 输出里的 gzip 流不完整')
+        rest = seg[len(seg) - len(o.unused_data):]
+    else:
+        back = seg[:len(img)]
+        rest = seg[len(img):]
+    if suffix and not rest.startswith(suffix):
+        raise SystemExit('✗ 输出里内核之后的 FDT/DTB 尾被改动')
+    if not rest[len(suffix):].strip(b'\x00'):
+        pass
+    else:
+        raise SystemExit('✗ 输出里内核之后的填充区不是全零')
     md5_in = hashlib.md5(img).hexdigest()
     md5_back = hashlib.md5(back).hexdigest()
     print(f'输出: {out_path}  {len(chk)} 字节  md5={hashlib.md5(chk).hexdigest()}')
