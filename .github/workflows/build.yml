@@ -456,7 +456,6 @@ jobs:
               done
               if [ "$skip_hit" = "1" ]; then
                 echo "  [EXCLUDED] $name （二分排查排除）"
-                skipped_names="$skipped_names $name"
                 skip=$((skip+1))
                 continue
               fi
