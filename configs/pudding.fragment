@@ -78,10 +78,9 @@ CONFIG_TMPFS_XATTR=y
 
 # ================================================================ LZ4KD
 # lz4 内核差分压缩：zram 后端 + crypto 实现。
-# 注意：zram 必须是 =y（内建）才能真正用上 LZ4KD —— 若为 =m，系统加载的是
-# vendor_dlkm 的 zram.ko，内建的 LZ4K/LZ4KD 后端不会出现于
-# /sys/block/zram0/comp_algorithm。
-CONFIG_ZRAM=y
+# 注意：zram 保持 =m（模块）。改成 =y（内建）会让本机开不了机
+# （#117 实测：与 #116 的配置差异只有这一行），而系统加载的又是 vendor_dlkm
+# 的 zram.ko，所以 LZ4K/LZ4KD 后端在运行时不会出现于 comp_algorithm。
 CONFIG_ZRAM_BACKEND_LZ4K=y
 CONFIG_ZRAM_BACKEND_LZ4KD=y
 CONFIG_CRYPTO_LZ4K=y
